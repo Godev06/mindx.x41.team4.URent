@@ -1,30 +1,58 @@
-import { Clock } from "lucide-react";
+import { ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { PRODUCTS } from "../../shared/data";
 import { Badge } from "../../shared/components/Badge";
+import { OrderCard } from "../components/OrderCard";
 
 export function OrdersPage() {
-  return (
-    <div className="space-y-6 animate-in zoom-in-95 duration-500">
-      <h1 className="text-2xl font-bold">Don hang</h1>
+  const navigate = useNavigate();
+  const activeOrders = PRODUCTS.filter((item) => item.status === "Active").length;
+  const completedOrders = PRODUCTS.filter((item) => item.status === "Completed").length;
 
-      <div className="space-y-4">
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Đơn hàng</h1>
+        <p className="mt-1 text-sm text-slate-500">Theo dõi thuê và trả thiết bị của bạn.</p>
+      </div>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-900/[0.04]">
+          <p className="text-xs font-medium text-slate-500">Đơn đang xử lý</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{activeOrders}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-900/[0.04]">
+          <p className="text-xs font-medium text-slate-500">Đơn hoàn tất</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">{completedOrders}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-900/[0.04]">
+          <p className="text-xs font-medium text-slate-500">Tỷ lệ đúng hạn</p>
+          <p className="mt-2 text-2xl font-bold text-slate-900">96%</p>
+        </div>
+      </section>
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-slate-900">Danh sách đơn gần đây</h2>
+        <Badge variant="yellow">Chọn đơn để xử lý QR</Badge>
+      </div>
+
+      <section className="space-y-4">
         {PRODUCTS.slice(1, 3).map((order) => (
-          <div key={order.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex gap-6">
-            <div className="w-24 h-24 bg-gray-100 rounded-xl flex items-center justify-center text-4xl">{order.image}</div>
-            <div className="flex-1 space-y-2">
-              <div className="flex justify-between">
-                <h3 className="font-bold text-lg">{order.name}</h3>
-                <span className="font-bold">${order.price * 2}</span>
-              </div>
-              <p className="text-xs text-gray-400">Ma don: #URBT-85219</p>
-              <div className="flex items-center gap-2 text-xs">
-                <Clock size={14} /> 24/10/2024
-              </div>
-              <Badge variant={order.status === "Active" ? "blue" : "green"}>{order.status}</Badge>
+          <div key={order.id} className="space-y-2">
+            <OrderCard order={order} onClick={() => navigate(`/orders/${order.id}`)} />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => navigate(`/orders/${order.id}`)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500"
+              >
+                Xem chi tiết đơn
+                <ChevronRight size={14} />
+              </button>
             </div>
           </div>
         ))}
-      </div>
+      </section>
     </div>
   );
 }

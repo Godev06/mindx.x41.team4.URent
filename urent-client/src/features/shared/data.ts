@@ -8,6 +8,7 @@ export const PRODUCTS: Product[] = [
     price: 45,
     status: "Available",
     image: "📷",
+    imageUrl: "https://images.pexels.com/photos/65538/pexels-photo-65538.jpeg?auto=compress&cs=tinysrgb&w=800",
     rating: 4.9,
     reviews: 124,
     owner: { name: "Alex Chen", avatar: "👨‍💻", rating: 5.0, trips: 48 },
@@ -27,6 +28,7 @@ export const PRODUCTS: Product[] = [
     price: 65,
     status: "Active",
     image: "💻",
+    imageUrl: "https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     id: 3,
@@ -35,6 +37,7 @@ export const PRODUCTS: Product[] = [
     price: 120,
     status: "Completed",
     image: "📸",
+    imageUrl: "https://images.pexels.com/photos/51383/photo-camera-subject-photographer-51383.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     id: 4,
@@ -43,6 +46,7 @@ export const PRODUCTS: Product[] = [
     price: 15,
     status: "Available",
     image: "⛺",
+    imageUrl: "https://images.pexels.com/photos/618848/pexels-photo-618848.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     id: 5,
@@ -51,6 +55,7 @@ export const PRODUCTS: Product[] = [
     price: 5,
     status: "Available",
     image: "📚",
+    imageUrl: "https://images.pexels.com/photos/46274/pexels-photo-46274.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
 ];
 

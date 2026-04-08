@@ -17,6 +17,7 @@ export interface Product {
   price: number;
   status: ProductStatus;
   image: string;
+  imageUrl?: string;
   rating?: number;
   reviews?: number;
   owner?: ProductOwner;
