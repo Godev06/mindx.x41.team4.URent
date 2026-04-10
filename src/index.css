@@ -1,0 +1,46 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-surface: #f8fafc;
+  --color-elevated: #ffffff;
+  --color-brand-primary: #0f766e;
+  --color-brand-accent: #f97316;
+
+  --color-surface-dark: #0f172a;
+  --color-elevated-dark: #1e293b;
+  --color-text-dark: #f1f5f9;
+  --color-text-muted-dark: #cbd5e1;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    --color-primary: #0f766e;
+    --color-secondary: #f97316;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  html.dark body {
+    @apply bg-slate-900 text-slate-100;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply text-teal-700 dark:text-teal-400;
+  }
+
+  a {
+    color: var(--color-brand-primary);
+  }
+
+  a:hover {
+    color: var(--color-brand-accent);
+  }
+}
