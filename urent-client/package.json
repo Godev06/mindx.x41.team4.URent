@@ -3,11 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
+    "dev:host": "vite --host",
+    "typecheck": "tsc -b --pretty false",
     "build": "tsc -b && vite build",
+    "build:vercel": "npm run build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:host": "vite preview --host"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
