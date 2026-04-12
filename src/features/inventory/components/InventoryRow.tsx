@@ -1,11 +1,13 @@
 import { Badge } from "../../shared/components/Badge";
 import type { InventoryItem } from "../../shared/types";
+import { useI18n } from "../../shared/context/LanguageContext";
 
 interface InventoryRowProps {
   item: InventoryItem;
 }
 
 export function InventoryRow({ item }: InventoryRowProps) {
+  const { lang } = useI18n();
   const statusVariant =
     item.status === "In Stock"
       ? "green"
@@ -26,14 +28,14 @@ export function InventoryRow({ item }: InventoryRowProps) {
           <Badge variant={statusVariant}>{item.status}</Badge>
         </div>
         <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          {item.category} • Số lượng: {item.quantity}
+          {item.category} • {lang === "vi" ? "Số lượng" : "Quantity"}:{" "}
+          {item.quantity}
         </p>
       </div>
       <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-200">
         ${item.price}
         <span className="font-normal text-slate-400 dark:text-slate-500">
-          {" "}
-          / ngày
+          {lang === "vi" ? " / ngày" : " / day"}
         </span>
       </span>
     </div>

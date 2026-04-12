@@ -20,7 +20,9 @@ export function ChatListItem({
   messages = [],
 }: ChatListItemProps) {
   const navigate = useNavigate();
-  const [draftMessage, setDraftMessage] = useState<string>("");
+  const [draftMessage, setDraftMessage] = useState<string>(() => {
+    return localStorage.getItem(`message_draft_${chat.id}`) || "";
+  });
 
   // Get the latest message from others (not from user)
   const latestMessage = messages
@@ -33,10 +35,6 @@ export function ChatListItem({
     )[0];
 
   useEffect(() => {
-    const savedDraft = localStorage.getItem(`message_draft_${chat.id}`);
-    setDraftMessage(savedDraft || "");
-
-    // Listen for draft message changes
     const handleDraftChange = (event: CustomEvent) => {
       const { chatId, message } = event.detail;
       if (chatId === chat.id) {
@@ -84,8 +82,8 @@ export function ChatListItem({
       onClick={handleClick}
       className={`w-full rounded-xl px-3 py-3 text-left transition-colors ${
         selected
-          ? "bg-orange-50 dark:bg-orange-900/30 ring-1 ring-orange-200/80 dark:ring-orange-600/50"
-          : "hover:bg-slate-50 dark:hover:bg-slate-700/50"
+          ? "bg-teal-50 ring-1 ring-teal-200/90 dark:bg-teal-500/12 dark:ring-teal-400/30"
+          : "hover:bg-teal-50/70 dark:hover:bg-teal-500/10"
       }`}
     >
       <div className="flex gap-3">

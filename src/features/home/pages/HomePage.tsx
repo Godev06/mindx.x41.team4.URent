@@ -2,7 +2,8 @@ import { PRODUCTS } from "../../shared/data";
 import { Badge } from "../../shared/components/Badge";
 import { HeroBanner } from "../components/HeroBanner";
 import { ProductCard } from "../components/ProductCard";
-import { useTheme } from "../../settings/context/ThemeContext";
+import { useTheme } from "../../settings/hooks/useTheme";
+import { useI18n } from "../../shared/context/LanguageContext";
 
 interface HomePageProps {
   onProductClick: (id: number) => void;
@@ -10,11 +11,30 @@ interface HomePageProps {
 
 export function HomePage({ onProductClick }: HomePageProps) {
   const { theme } = useTheme();
+  const { lang } = useI18n();
   const highlighted = PRODUCTS.slice(0, 4);
+  const t =
+    lang === "vi"
+      ? {
+          readyDevices: "Thiết bị sẵn sàng",
+          monthlyCompleted: "Đơn hoàn tất tháng này",
+          suggested: "Gợi ý cho bạn",
+          suggestedDesc: "Thiết bị được thuê nhiều trong tuần qua.",
+          topPicks: "Top picks",
+          dayUnit: "/ ngày",
+        }
+      : {
+          readyDevices: "Ready devices",
+          monthlyCompleted: "Completed this month",
+          suggested: "Recommended for you",
+          suggestedDesc: "Most-rented devices from last week.",
+          topPicks: "Top picks",
+          dayUnit: "/ day",
+        };
 
   return (
     <div className="space-y-10">
-      <HeroBanner />
+      <HeroBanner lang={lang} />
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
         <div
@@ -29,7 +49,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            Thiết bị sẵn sàng
+            {t.readyDevices}
           </h1>
           <p
             className={`mt-1 text-2xl font-bold ${
@@ -51,7 +71,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            Đơn hoàn tất tháng này
+            {t.monthlyCompleted}
           </h1>
           <p
             className={`mt-1 text-2xl font-bold ${
@@ -67,13 +87,11 @@ export function HomePage({ onProductClick }: HomePageProps) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Gợi ý cho bạn
+              {t.suggested}
             </h2>
-            <p className="text-sm text-slate-500">
-              Thiết bị được thuê nhiều trong tuần qua.
-            </p>
+            <p className="text-sm text-slate-500">{t.suggestedDesc}</p>
           </div>
-          <Badge variant="blue">Top picks</Badge>
+          <Badge variant="blue">{t.topPicks}</Badge>
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -82,6 +100,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
               key={product.id}
               product={product}
               onSelect={onProductClick}
+              dayUnit={t.dayUnit}
             />
           ))}
         </div>

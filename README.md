@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+# URent Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend React + Vite + TypeScript da duoc ket noi voi backend URent cho cac flow auth/profile sau:
 
-Currently, two official plugins are available:
+- GET /health
+- POST /api/auth/register
+- POST /api/auth/register/verify-otp
+- POST /api/auth/login
+- POST /api/auth/login/verify-otp
+- POST /api/auth/forgot-password
+- POST /api/auth/reset-password
+- GET /api/auth/me
+- PATCH /api/profile
+- POST /api/profile/avatar
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Cau truc de xuat
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+src/
+  lib/api/
+    apiClient.ts
+    apiError.ts
+    tokenStorage.ts
+  features/
+    auth/
+      components/
+      context/
+      hooks/
+      pages/
+      services/
+      utils/
+      constants.ts
+      types.ts
+    profile/
+      pages/
+      services/
+    shared/
+      components/
+      utils/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Bien moi truong
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Tao file `.env` tu `.env.example`.
+2. Neu khong khai bao, frontend se dung mac dinh `http://localhost:5003`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_API_BASE_URL=http://localhost:5003
 ```
+
+## Chay du an
+
+```bash
+npm install
+npm run dev
+```
+
+## Auth architecture
+
+- Axios client chung co timeout, request interceptor gan `Authorization: Bearer <token>` tu `localStorage` key `auth_token`.
+- Response interceptor chuan hoa loi sang message de doc va xu ly `401` bang cach xoa token, logout session va dua ve trang login.
+- `AuthProvider` quan ly `user`, `token`, bootstrap session, `login/logout`, `refreshCurrentUser`.
+- Cac route private di qua `ProtectedRoute`, route auth di qua `PublicOnlyRoute`.
+- Toan bo form auth/profile co validation frontend cho email, password, otp, profile fields va avatar file.
+
+## Test end-to-end
+
+1. Health check: vao `/login`, xac nhan the `Backend status` hien `Healthy` khi backend dang chay.
+2. Register: vao `/register`, nhap email hop le + password >= 6, submit de backend gui OTP, sau do vao `/register/verify-otp` va nhap OTP 6 ky tu.
+3. Login OTP: vao `/login`, nhap email/password, submit, sau do nhap OTP o `/login/verify-otp`; verify thanh cong phai vao duoc dashboard va token xuat hien trong localStorage key `auth_token`.
+4. Me/profile bootstrap: refresh browser khi da dang nhap, frontend phai goi `/api/auth/me` va giu session.
+5. Forgot/reset password: vao `/forgot-password`, gui email, sang `/reset-password`, nhap email + OTP + mat khau moi.
+6. Update profile: vao `/profile`, sua `displayName`, `bio`, `phone`, submit va kiem tra du lieu moi hien ngay sau khi PATCH thanh cong.
+7. Upload avatar: tren `/profile`, chon anh <= 5MB, backend tra du lieu moi va avatar phai cap nhat tren UI.
+8. Session expiry: chu dong lam token het han hoac dung token sai, request tiep theo phai bi logout va quay lai `/login`.

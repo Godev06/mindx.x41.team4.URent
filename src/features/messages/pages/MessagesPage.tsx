@@ -1,28 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MessageSquare, Search } from "lucide-react";
 import { CHATS, MESSAGES, USER_PROFILE } from "../../shared/data";
-import { useTheme } from "../../settings/context/ThemeContext.tsx";
+import { useTheme } from "../../settings/hooks/useTheme";
 import { ChatListItem } from "../components/ChatListItem";
 import { MessagesChatBox } from "../components/MessagesChatBox";
 import { getAvatarStyle } from "../../shared/utils/avatar";
+import { useI18n } from "../../shared/context/LanguageContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 
 export function MessagesPage() {
   const { theme } = useTheme();
+  const { lang } = useI18n();
+  const { user } = useAuth();
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const parsedId = id ? Number(id) : undefined;
-  const [selectedChatId, setSelectedChatId] = useState(
-    parsedId ?? CHATS[0]?.id ?? 0,
-  );
   const [searchTerm, setSearchTerm] = useState("");
   const [messages, setMessages] = useState(MESSAGES);
-
-  useEffect(() => {
-    if (parsedId && Number.isFinite(parsedId)) {
-      setSelectedChatId(parsedId);
-    }
-  }, [parsedId]);
+  const t =
+    lang === "vi"
+      ? {
+          title: "Tin nhắn",
+          desc: "Chọn cuộc trò chuyện để xem chi tiết.",
+          search: "Tìm kiếm tin nhắn, người...",
+          recent: "Tin nhắn gần nhất:",
+          noResult: "Không tìm thấy kết quả",
+          noMessage: "Chưa có tin nhắn nào",
+          dayUnit: "/ngày",
+          locale: "vi-VN",
+        }
+      : {
+          title: "Messages",
+          desc: "Select a conversation to view details.",
+          search: "Search messages, people...",
+          recent: "Most recent message:",
+          noResult: "No results found",
+          noMessage: "No messages yet",
+          dayUnit: "/day",
+          locale: "en-US",
+        };
+  const selectedChatId =
+    parsedId && Number.isFinite(parsedId) ? parsedId : (CHATS[0]?.id ?? 0);
+  const currentUserName = user?.displayName ?? user?.email ?? USER_PROFILE.name;
+  const currentUserAvatar = user?.avatarUrl ?? USER_PROFILE.avatar;
 
   const selectedChat =
     CHATS.find((chat) => chat.id === selectedChatId) ?? CHATS[0];
@@ -93,7 +114,6 @@ export function MessagesPage() {
     if (e.key === "Enter" && searchTerm.trim()) {
       const recentMessage = findMostRecentMessage(searchTerm.trim());
       if (recentMessage) {
-        setSelectedChatId(recentMessage.chatId);
         navigate(`/messages/${recentMessage.chatId}`);
         // Scroll to the message after a short delay to ensure chat is loaded
         setTimeout(() => {
@@ -129,8 +149,8 @@ export function MessagesPage() {
         chatId: selectedChatId,
         content: content.trim(),
         sender: "user" as const,
-        senderName: USER_PROFILE.name,
-        senderAvatar: USER_PROFILE.avatar,
+        senderName: currentUserName,
+        senderAvatar: currentUserAvatar,
         timestamp: new Date().toISOString(),
       };
 
@@ -148,10 +168,10 @@ export function MessagesPage() {
     const newMessage = {
       id: messages.length + 1,
       chatId: selectedChatId,
-      content: `🛍️ ${product.image} ${product.name} - $${product.price}/ngày`,
+      content: `🛍️ ${product.image} ${product.name} - $${product.price}${t.dayUnit}`,
       sender: "user" as const,
-      senderName: USER_PROFILE.name,
-      senderAvatar: USER_PROFILE.avatar,
+      senderName: currentUserName,
+      senderAvatar: currentUserAvatar,
       timestamp: new Date().toISOString(),
     };
 
@@ -169,8 +189,8 @@ export function MessagesPage() {
       chatId: selectedChatId,
       content: `📍 ${location.address}\n${googleMapsLink}`,
       sender: "user" as const,
-      senderName: USER_PROFILE.name,
-      senderAvatar: USER_PROFILE.avatar,
+      senderName: currentUserName,
+      senderAvatar: currentUserAvatar,
       timestamp: new Date().toISOString(),
     };
 
@@ -203,12 +223,12 @@ export function MessagesPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              Tin nhắn
+              {t.title}
             </h2>
             <p
               className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
             >
-              Chọn cuộc trò chuyện để xem chi tiết.
+              {t.desc}
             </p>
             <div className="mt-3">
               <div className="relative">
@@ -220,7 +240,7 @@ export function MessagesPage() {
                 />
                 <input
                   type="text"
-                  placeholder="Tìm kiếm tin nhắn, người..."
+                  placeholder={t.search}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
@@ -245,18 +265,36 @@ export function MessagesPage() {
                 className={`flex items-center gap-2 text-xs ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}
               >
                 <MessageSquare size={12} />
-                <span className="font-medium">Tin nhắn gần nhất:</span>
+                <span className="font-medium">{t.recent}</span>
               </div>
               <div className="mt-2 flex items-start gap-3">
                 {(() => {
-                  const { initials, colorClass } = getAvatarStyle(
-                    recentMessage.senderName,
-                  );
-                  return (
+                  const recentName =
+                    recentMessage.sender === "user"
+                      ? currentUserName
+                      : recentMessage.senderName;
+                  const recentAvatar =
+                    recentMessage.sender === "user"
+                      ? currentUserAvatar
+                      : recentMessage.senderAvatar;
+                  const { initials, colorClass } = getAvatarStyle(recentName);
+                  const isAvatarUrl =
+                    !!recentAvatar &&
+                    /^(https?:\/\/|\/)?.+\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(
+                      recentAvatar,
+                    );
+
+                  return isAvatarUrl ? (
+                    <img
+                      src={recentAvatar}
+                      alt={recentName}
+                      className="h-8 w-8 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
                     <div
                       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorClass}`}
                     >
-                      {initials}
+                      {recentAvatar || initials}
                     </div>
                   );
                 })()}
@@ -273,7 +311,7 @@ export function MessagesPage() {
                       className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
                     >
                       {new Date(recentMessage.timestamp).toLocaleString(
-                        "vi-VN",
+                        t.locale,
                         {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -299,7 +337,7 @@ export function MessagesPage() {
                   key={chat.id}
                   chat={chat}
                   selected={selectedChatId === chat.id}
-                  onSelect={setSelectedChatId}
+                  onSelect={(chatId) => navigate(`/messages/${chatId}`)}
                   searchTerm={searchTerm}
                   messages={messages}
                 />
@@ -313,9 +351,7 @@ export function MessagesPage() {
                 <p
                   className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
                 >
-                  {searchTerm
-                    ? "Không tìm thấy kết quả"
-                    : "Chưa có tin nhắn nào"}
+                  {searchTerm ? t.noResult : t.noMessage}
                 </p>
               </div>
             )}
@@ -323,6 +359,7 @@ export function MessagesPage() {
         </div>
 
         <MessagesChatBox
+          key={selectedChatId}
           selectedChat={selectedChat}
           selectedChatId={selectedChatId}
           chatMessages={chatMessages}

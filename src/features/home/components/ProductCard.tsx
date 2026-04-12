@@ -4,9 +4,14 @@ import type { Product } from "../../shared/types";
 interface ProductCardProps {
   product: Product;
   onSelect: (id: number) => void;
+  dayUnit?: string;
 }
 
-export function ProductCard({ product, onSelect }: ProductCardProps) {
+export function ProductCard({
+  product,
+  onSelect,
+  dayUnit = "/ ngày",
+}: ProductCardProps) {
   return (
     <button
       type="button"
@@ -40,8 +45,7 @@ export function ProductCard({ product, onSelect }: ProductCardProps) {
             ${product.price}
           </span>
           <span className="text-sm font-normal text-slate-500 dark:text-slate-400">
-            {" "}
-            / ngày
+            {` ${dayUnit}`}
           </span>
         </div>
         <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 dark:bg-teal-700 text-white transition-colors group-hover:bg-amber-500 dark:group-hover:bg-amber-600">

@@ -3,10 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { ORDERS } from "../../shared/data";
 import { Badge } from "../../shared/components/Badge";
 import { OrderCard } from "../components/OrderCard";
-import { useTheme } from "../../settings/context/ThemeContext.tsx";
+import { useTheme } from "../../settings/hooks/useTheme";
+import { useI18n } from "../../shared/context/LanguageContext";
 
 export function OrdersPage() {
   const { theme } = useTheme();
+  const { lang } = useI18n();
   const navigate = useNavigate();
   const activeOrders = ORDERS.filter(
     (item) =>
@@ -17,6 +19,26 @@ export function OrdersPage() {
   const completedOrders = ORDERS.filter(
     (item) => item.status === "delivered",
   ).length;
+  const t =
+    lang === "vi"
+      ? {
+          title: "Đơn hàng",
+          desc: "Theo dõi thuê và trả thiết bị của bạn.",
+          active: "Đơn đang xử lý",
+          done: "Đơn hoàn tất",
+          recent: "Danh sách đơn gần đây",
+          qrHint: "Chọn đơn để xử lý QR",
+          viewDetail: "Xem chi tiết đơn",
+        }
+      : {
+          title: "Orders",
+          desc: "Track your device rental and return workflow.",
+          active: "Processing orders",
+          done: "Completed orders",
+          recent: "Recent orders",
+          qrHint: "Select an order to process QR",
+          viewDetail: "View order details",
+        };
 
   return (
     <div className="space-y-8">
@@ -26,14 +48,14 @@ export function OrdersPage() {
             theme === "dark" ? "text-slate-100" : "text-slate-900"
           }`}
         >
-          Đơn hàng
+          {t.title}
         </h1>
         <p
           className={`mt-1 text-sm ${
             theme === "dark" ? "text-slate-400" : "text-slate-500"
           }`}
         >
-          Theo dõi thuê và trả thiết bị của bạn.
+          {t.desc}
         </p>
       </div>
 
@@ -50,7 +72,7 @@ export function OrdersPage() {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            Đơn đang xử lý
+            {t.active}
           </p>
           <p
             className={`mt-2 text-2xl font-bold ${
@@ -72,7 +94,7 @@ export function OrdersPage() {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            Đơn hoàn tất
+            {t.done}
           </p>
           <p
             className={`mt-2 text-2xl font-bold ${
@@ -85,10 +107,8 @@ export function OrdersPage() {
       </section>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">
-          Danh sách đơn gần đây
-        </h2>
-        <Badge variant="yellow">Chọn đơn để xử lý QR</Badge>
+        <h2 className="text-sm font-semibold text-slate-900">{t.recent}</h2>
+        <Badge variant="yellow">{t.qrHint}</Badge>
       </div>
 
       <section className="space-y-4">
@@ -108,7 +128,7 @@ export function OrdersPage() {
                 }
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500"
               >
-                Xem chi tiết đơn
+                {t.viewDetail}
                 <ChevronRight size={14} />
               </button>
             </div>

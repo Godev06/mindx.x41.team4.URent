@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Bell } from "lucide-react";
-import { useTheme } from "../../settings/context/ThemeContext.tsx";
+import { useTheme } from "../../settings/hooks/useTheme";
+import { useI18n } from "../../shared/context/LanguageContext";
 
 const notifications = [
   {
@@ -28,12 +29,59 @@ const notifications = [
 
 export function NotificationsPage() {
   const { theme } = useTheme();
+  const { lang } = useI18n();
+  const t =
+    lang === "vi"
+      ? {
+          title: "Trung tâm thông báo",
+          desc: "Xem tất cả thông báo và chi tiết thông tin mới nhất của bạn.",
+          count: "thông báo",
+          listTitle: "Danh sách thông báo",
+          listDesc: "Chọn một mục để xem chi tiết nội dung.",
+          detailTitle: "Chi tiết thông báo",
+          detailDesc:
+            "Xem nội dung và hướng dẫn hành động cho thông báo đã chọn.",
+          notifItems: notifications,
+        }
+      : {
+          title: "Notification Center",
+          desc: "View all notifications and your latest updates.",
+          count: "notifications",
+          listTitle: "Notification list",
+          listDesc: "Select an item to view full details.",
+          detailTitle: "Notification details",
+          detailDesc:
+            "View content and suggested actions for the selected notification.",
+          notifItems: [
+            {
+              id: 1,
+              title: "Order #A102 shipped",
+              time: "2 minutes ago",
+              description:
+                "Your order has been shipped successfully. Open details to view delivery status and schedule.",
+            },
+            {
+              id: 2,
+              title: "New message from Lan",
+              time: "10 minutes ago",
+              description:
+                "Lan sent you a new message about pickup time. Open messages to reply now.",
+            },
+            {
+              id: 3,
+              title: "20% promotion for cameras",
+              time: "1 hour ago",
+              description:
+                "A 20% discount campaign for cameras is live. Check eligible products and reserve early.",
+            },
+          ],
+        };
   const [selectedNotificationId, setSelectedNotificationId] = useState(
-    notifications[0]?.id ?? 1,
+    t.notifItems[0]?.id ?? 1,
   );
   const selectedNotification =
-    notifications.find((item) => item.id === selectedNotificationId) ??
-    notifications[0];
+    t.notifItems.find((item) => item.id === selectedNotificationId) ??
+    t.notifItems[0];
 
   return (
     <div className="space-y-4">
@@ -51,14 +99,14 @@ export function NotificationsPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              Trung tâm thông báo
+              {t.title}
             </h1>
             <p
               className={`mt-1 text-sm ${
                 theme === "dark" ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              Xem tất cả thông báo và chi tiết thông tin mới nhất của bạn.
+              {t.desc}
             </p>
           </div>
           <div
@@ -69,7 +117,7 @@ export function NotificationsPage() {
             }`}
           >
             <Bell size={16} strokeWidth={2} />
-            {notifications.length} thông báo
+            {t.notifItems.length} {t.count}
           </div>
         </div>
       </div>
@@ -94,20 +142,20 @@ export function NotificationsPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              Danh sách thông báo
+              {t.listTitle}
             </h2>
             <p
               className={`mt-1 text-xs ${
                 theme === "dark" ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              Chọn một mục để xem chi tiết nội dung.
+              {t.listDesc}
             </p>
           </div>
           <div
             className={`divide-y ${theme === "dark" ? "divide-slate-800" : "divide-slate-100"}`}
           >
-            {notifications.map((notification) => (
+            {t.notifItems.map((notification) => (
               <button
                 key={notification.id}
                 type="button"
@@ -155,14 +203,14 @@ export function NotificationsPage() {
                   theme === "dark" ? "text-slate-100" : "text-slate-900"
                 }`}
               >
-                Chi tiết thông báo
+                {t.detailTitle}
               </p>
               <p
                 className={`mt-1 text-xs ${
                   theme === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                Xem nội dung và hướng dẫn hành động cho thông báo đã chọn.
+                {t.detailDesc}
               </p>
             </div>
             <span

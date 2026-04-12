@@ -1,4 +1,27 @@
-export function HeroBanner() {
+interface HeroBannerProps {
+  lang: "vi" | "en";
+}
+
+export function HeroBanner({ lang }: HeroBannerProps) {
+  const t =
+    lang === "vi"
+      ? {
+          badge: "U-Rent Exclusive",
+          title: "Thuê thiết bị công nghệ - linh hoạt, minh bạch, giá hợp lý.",
+          description:
+            "Không cần mua mới: thuê theo ngày hoặc tuần, giao nhận nhanh và thanh toán an toàn.",
+          verify: "Xác minh người cho thuê",
+          support: "Hỗ trợ 7 ngày/tuần",
+        }
+      : {
+          badge: "U-Rent Exclusive",
+          title: "Rent tech devices - flexible, transparent, and affordable.",
+          description:
+            "No need to buy new: rent by day or week with fast delivery and secure payments.",
+          verify: "Verified owners",
+          support: "Support 7 days/week",
+        };
+
   return (
     <div className="relative overflow-hidden rounded-3xl border border-teal-600/20 bg-gradient-to-br from-teal-700 via-teal-600 to-teal-800 p-8 text-white shadow-xl shadow-teal-900/15 md:p-10">
       <div
@@ -12,20 +35,20 @@ export function HeroBanner() {
 
       <div className="relative z-10 max-w-xl">
         <span className="mb-4 inline-flex items-center rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-100 ring-1 ring-amber-300/25">
-          U-Rent Exclusive
+          {t.badge}
         </span>
         <h1 className="text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-[2.35rem] md:leading-[1.15]">
-          Thuê thiết bị công nghệ — linh hoạt, minh bạch, giá hợp lý.
+          {t.title}
         </h1>
         <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-300 sm:text-base">
-          Không cần mua mới: thuê theo ngày hoặc tuần, giao nhận nhanh và thanh toán an toàn.
+          {t.description}
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <span className="rounded-xl bg-white/10 px-4 py-2 text-xs font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
-            ✓ Xác minh người cho thuê
+            {`✓ ${t.verify}`}
           </span>
           <span className="rounded-xl bg-white/10 px-4 py-2 text-xs font-medium text-white ring-1 ring-white/15 backdrop-blur-sm">
-            ✓ Hỗ trợ 7 ngày/tuần
+            {`✓ ${t.support}`}
           </span>
         </div>
       </div>

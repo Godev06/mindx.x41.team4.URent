@@ -1,6 +1,7 @@
 import { Clock } from "lucide-react";
 import { Badge } from "../../shared/components/Badge";
 import type { Order } from "../../shared/types";
+import { useI18n } from "../../shared/context/LanguageContext";
 
 interface OrderCardProps {
   order: Order;
@@ -8,6 +9,7 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order, onClick }: OrderCardProps) {
+  const { lang } = useI18n();
   const statusVariant =
     order.status === "delivered"
       ? "green"
@@ -35,7 +37,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
           </span>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          Mã đơn:{" "}
+          {lang === "vi" ? "Mã đơn:" : "Order code:"}{" "}
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {order.id}
           </span>
@@ -46,16 +48,24 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
             className="text-slate-400 dark:text-slate-500"
             strokeWidth={2}
           />
-          Trả dự kiến: {order.endDate}
+          {lang === "vi" ? "Trả dự kiến" : "Expected return"}: {order.endDate}
         </div>
         <Badge variant={statusVariant}>
-          {order.status === "delivered"
-            ? "Đã giao"
-            : order.status === "shipped"
-              ? "Đang giao"
-              : order.status === "confirmed"
-                ? "Đã xác nhận"
-                : "Chờ xử lý"}
+          {lang === "vi"
+            ? order.status === "delivered"
+              ? "Đã giao"
+              : order.status === "shipped"
+                ? "Đang giao"
+                : order.status === "confirmed"
+                  ? "Đã xác nhận"
+                  : "Chờ xử lý"
+            : order.status === "delivered"
+              ? "Delivered"
+              : order.status === "shipped"
+                ? "Shipping"
+                : order.status === "confirmed"
+                  ? "Confirmed"
+                  : "Pending"}
         </Badge>
       </div>
     </article>

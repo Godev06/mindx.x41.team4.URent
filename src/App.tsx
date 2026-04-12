@@ -2,13 +2,9 @@ import {
   Navigate,
   Route,
   Routes,
-  useLocation,
   useNavigate,
   useParams,
 } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
-import { AppHeader } from "./features/layout/components/AppHeader";
-import { AppSidebar } from "./features/layout/components/AppSidebar";
 import { HomePage } from "./features/home/pages/HomePage";
 import { InventoryPage } from "./features/inventory/pages/InventoryPage";
 import { OrderDetailPage } from "./features/orders/pages/OrderDetailPage";
@@ -18,8 +14,16 @@ import { NotificationsPage } from "./features/notifications/pages/NotificationsP
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
 import { ProfilePage } from "./features/profile/pages/ProfilePage";
 import { ProductDetailPage } from "./features/product/pages/ProductDetailPage";
-import { useTheme } from "./features/settings/context/ThemeContext";
-import { Badge } from "./features/shared/components/Badge";
+import { ContactPage } from "./features/contact/pages/ContactPage";
+import { AppShell } from "./features/layout/components/AppShell";
+import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
+import { PublicOnlyRoute } from "./features/auth/components/PublicOnlyRoute";
+import { ForgotPasswordPage } from "./features/auth/pages/ForgotPasswordPage";
+import { LoginPage } from "./features/auth/pages/LoginPage";
+import { RegisterPage } from "./features/auth/pages/RegisterPage";
+import { ResetPasswordPage } from "./features/auth/pages/ResetPasswordPage";
+import { VerifyRegisterOtpPage } from "./features/auth/pages/VerifyRegisterOtpPage";
+import { APP_ROUTES } from "./features/auth/constants";
 
 function ProductRoute() {
   const { id } = useParams();
@@ -32,83 +36,49 @@ function ProductRoute() {
 
 export default function App() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { isThemeTransitioning, theme } = useTheme();
-  const [isLoading, setIsLoading] = useState(false);
-  const firstUpdate = useRef(true);
-
-  useEffect(() => {
-    if (firstUpdate.current) {
-      firstUpdate.current = false;
-      return;
-    }
-
-    setIsLoading(true);
-    const timer = window.setTimeout(() => {
-      setIsLoading(false);
-    }, 200);
-
-    return () => window.clearTimeout(timer);
-  }, [location.pathname]);
-
   const handleProductClick = (id: number) => {
     navigate(`/product/${id}`);
   };
 
   return (
-    <div className="relative flex min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-teal-100 selection:text-teal-900">
-      <div
-        className={`pointer-events-none fixed inset-x-0 top-6 z-50 flex justify-center transition-all duration-300 ${
-          isThemeTransitioning
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-2 opacity-0"
-        }`}
-        aria-hidden={!isThemeTransitioning}
-      >
-        <div
-          className={`transition-transform duration-300 ${
-            isThemeTransitioning ? "scale-100" : "scale-95"
-          }`}
-        >
-          <Badge variant={theme === "dark" ? "gray" : "blue"}>
-            <span className="mr-2 h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />
-            Đang chuyển giao diện...
-          </Badge>
-        </div>
-      </div>
-      <div
-        className={`pointer-events-none absolute inset-x-0 top-0 h-1 bg-teal-600 transition-transform duration-200 ease-out z-40 ${
-          isLoading ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
-        }`}
-        style={{ transformOrigin: "left center" }}
-      />
-      <AppSidebar />
+    <Routes>
+      <Route element={<PublicOnlyRoute />}>
+        <Route path={APP_ROUTES.login} element={<LoginPage />} />
+        <Route path={APP_ROUTES.register} element={<RegisterPage />} />
+        <Route
+          path={APP_ROUTES.registerVerifyOtp}
+          element={<VerifyRegisterOtpPage />}
+        />
+        <Route
+          path={APP_ROUTES.forgotPassword}
+          element={<ForgotPasswordPage />}
+        />
+        <Route
+          path={APP_ROUTES.resetPassword}
+          element={<ResetPasswordPage />}
+        />
+      </Route>
 
-      <main className="min-h-screen w-full flex-1 pl-18">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
-          <div className="sticky top-0 z-30 -mx-4 border-b border-slate-200/70 dark:border-slate-700/70 bg-slate-50/85 dark:bg-slate-900/85 px-4 py-5 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-            <AppHeader />
-          </div>
-          <div className="mt-4">
-            <Routes>
-              <Route
-                path="/"
-                element={<HomePage onProductClick={handleProductClick} />}
-              />
-              <Route path="/orders" element={<OrdersPage />} />
-              <Route path="/orders/:orderId" element={<OrderDetailPage />} />
-              <Route path="/inventory" element={<InventoryPage />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/messages/:id" element={<MessagesPage />} />
-              <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/product/:id" element={<ProductRoute />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </div>
-      </main>
-    </div>
+      <Route element={<ProtectedRoute />}>
+        <Route element={<AppShell />}>
+          <Route
+            path={APP_ROUTES.home}
+            element={<HomePage onProductClick={handleProductClick} />}
+          />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/messages/:id" element={<MessagesPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path={APP_ROUTES.profile} element={<ProfilePage />} />
+          <Route path="/product/:id" element={<ProductRoute />} />
+          <Route path={APP_ROUTES.contact} element={<ContactPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<Navigate to={APP_ROUTES.home} replace />} />
+    </Routes>
   );
 }

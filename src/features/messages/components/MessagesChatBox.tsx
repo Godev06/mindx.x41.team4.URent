@@ -8,11 +8,12 @@ import {
   Plus,
 } from "lucide-react";
 import type { Chat, Message } from "../../shared/types";
-import { useTheme } from "../../settings/context/ThemeContext.tsx";
-import { USER_PROFILE } from "../../shared/data";
+import { useTheme } from "../../settings/hooks/useTheme";
 import { getAvatarStyle } from "../../shared/utils/avatar";
 import { ProductPicker } from "./ProductPicker";
 import { LocationPicker } from "./LocationPicker";
+import { useI18n } from "../../shared/context/LanguageContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 
 interface SharedProduct {
   id: number;
@@ -39,6 +40,10 @@ interface MessagesChatBoxProps {
   onSendLocation: (location: SharedLocation) => void;
 }
 
+const getDraftMessage = (chatId: number) => {
+  return localStorage.getItem(`message_draft_${chatId}`) ?? "";
+};
+
 export function MessagesChatBox({
   selectedChat,
   selectedChatId,
@@ -50,19 +55,36 @@ export function MessagesChatBox({
   onSendLocation,
 }: MessagesChatBoxProps) {
   const { theme } = useTheme();
-  const [messageInput, setMessageInput] = useState("");
+  const { lang } = useI18n();
+  const { user } = useAuth();
+  const [messageInput, setMessageInput] = useState(() =>
+    getDraftMessage(selectedChatId),
+  );
   const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const savedMessage = localStorage.getItem(
-      `message_draft_${selectedChatId}`,
-    );
-    setMessageInput(savedMessage ?? "");
-  }, [selectedChatId]);
+  const t =
+    lang === "vi"
+      ? {
+          noMatch: "Không tìm thấy tin nhắn nào khớp với",
+          emptyChat: "Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!",
+          inputPlaceholder: "Nhập tin nhắn...",
+          moreOptions: "Thêm tùy chọn",
+          sendProduct: "Gửi sản phẩm",
+          shareLocation: "Chia sẻ vị trí",
+          locale: "vi-VN",
+        }
+      : {
+          noMatch: "No messages match",
+          emptyChat: "No messages yet. Start the conversation!",
+          inputPlaceholder: "Type a message...",
+          moreOptions: "More options",
+          sendProduct: "Send product",
+          shareLocation: "Share location",
+          locale: "en-US",
+        };
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -136,6 +158,41 @@ export function MessagesChatBox({
     }
   };
 
+  const renderAvatar = (message: Message) => {
+    const resolvedName =
+      message.sender === "user"
+        ? (user?.displayName ?? user?.email ?? message.senderName)
+        : message.senderName;
+    const resolvedAvatar =
+      message.sender === "user"
+        ? (user?.avatarUrl ?? message.senderAvatar)
+        : message.senderAvatar;
+    const { initials, colorClass } = getAvatarStyle(resolvedName);
+    const isAvatarUrl =
+      !!resolvedAvatar &&
+      /^(https?:\/\/|\/)?.+\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(
+        resolvedAvatar,
+      );
+
+    if (isAvatarUrl) {
+      return (
+        <img
+          src={resolvedAvatar}
+          alt={resolvedName}
+          className="h-8 w-8 shrink-0 rounded-full object-cover"
+        />
+      );
+    }
+
+    return (
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorClass}`}
+      >
+        {resolvedAvatar || initials}
+      </div>
+    );
+  };
+
   return (
     <div
       className={`hidden min-w-0 flex-1 flex-col md:flex ${
@@ -170,19 +227,7 @@ export function MessagesChatBox({
                   message.sender === "user" ? "justify-end" : "justify-start"
                 }`}
               >
-                {message.sender === "other" &&
-                  (() => {
-                    const { initials, colorClass } = getAvatarStyle(
-                      message.senderName,
-                    );
-                    return (
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorClass}`}
-                      >
-                        {initials}
-                      </div>
-                    );
-                  })()}
+                {message.sender === "other" && renderAvatar(message)}
 
                 <div
                   className={`max-w-sm rounded-2xl px-4 py-2 text-sm wrap-break-word ${
@@ -205,26 +250,14 @@ export function MessagesChatBox({
                           : "text-slate-500"
                     }`}
                   >
-                    {new Date(message.timestamp).toLocaleTimeString("vi-VN", {
+                    {new Date(message.timestamp).toLocaleTimeString(t.locale, {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
                   </p>
                 </div>
 
-                {message.sender === "user" &&
-                  (() => {
-                    const { initials, colorClass } = getAvatarStyle(
-                      message.senderName,
-                    );
-                    return (
-                      <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${colorClass}`}
-                      >
-                        {initials}
-                      </div>
-                    );
-                  })()}
+                {message.sender === "user" && renderAvatar(message)}
               </div>
             ))
           ) : chatMessages.length > 0 && searchTerm ? (
@@ -236,7 +269,7 @@ export function MessagesChatBox({
               <p
                 className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
               >
-                Không tìm thấy tin nhắn nào khớp với "{searchTerm}"
+                {`${t.noMatch} "${searchTerm}"`}
               </p>
             </div>
           ) : (
@@ -256,7 +289,7 @@ export function MessagesChatBox({
                   theme === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!
+                {t.emptyChat}
               </p>
             </div>
           )}
@@ -271,7 +304,7 @@ export function MessagesChatBox({
           <div className="relative flex items-end gap-2">
             <textarea
               ref={textareaRef}
-              placeholder="Nhập tin nhắn..."
+              placeholder={t.inputPlaceholder}
               value={messageInput}
               onChange={(event) => setMessageInput(event.target.value)}
               onKeyPress={handleMessageInputKeyPress}
@@ -288,11 +321,11 @@ export function MessagesChatBox({
                 onClick={() =>
                   setIsMoreMenuOpen((currentValue) => !currentValue)
                 }
-                title="Thêm tùy chọn"
+                title={t.moreOptions}
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition ${
                   theme === "dark"
-                    ? "border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-600 hover:bg-slate-700"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    ? "border-slate-700 bg-slate-800 text-slate-300 hover:border-teal-500/40 hover:bg-teal-500/10 hover:text-teal-300"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
                 }`}
               >
                 <Plus size={18} strokeWidth={2} />
@@ -313,12 +346,12 @@ export function MessagesChatBox({
                     }}
                     className={`flex w-full items-center gap-2 px-4 py-2 text-sm first:rounded-t-lg ${
                       theme === "dark"
-                        ? "text-slate-200 hover:bg-slate-700 hover:text-blue-400"
-                        : "text-slate-700 hover:bg-blue-50 hover:text-blue-600"
+                        ? "text-slate-200 hover:bg-teal-500/10 hover:text-teal-300"
+                        : "text-slate-700 hover:bg-teal-50 hover:text-teal-700"
                     }`}
                   >
                     <Package size={16} strokeWidth={2} />
-                    Gửi sản phẩm
+                    {t.sendProduct}
                   </button>
                   <button
                     type="button"
@@ -328,12 +361,12 @@ export function MessagesChatBox({
                     }}
                     className={`flex w-full items-center gap-2 border-t px-4 py-2 text-sm last:rounded-b-lg ${
                       theme === "dark"
-                        ? "border-slate-700 text-slate-200 hover:bg-slate-700 hover:text-green-400"
-                        : "border-slate-100 text-slate-700 hover:bg-green-50 hover:text-green-600"
+                        ? "border-slate-700 text-slate-200 hover:bg-teal-500/10 hover:text-teal-300"
+                        : "border-slate-100 text-slate-700 hover:bg-teal-50 hover:text-teal-700"
                     }`}
                   >
                     <MapPin size={16} strokeWidth={2} />
-                    Chia sẻ vị trí
+                    {t.shareLocation}
                   </button>
                 </div>
               )}

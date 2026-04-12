@@ -1,37 +1,28 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { ThemeContext, type Theme } from "./ThemeContextObject";
 
-type Theme = "light" | "dark";
-type Language = "Tiếng Việt" | "English" | "中文";
+const resolveSystemTheme = (): Theme => {
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  ) {
+    return "dark";
+  }
 
-interface ThemeContextValue {
-  theme: Theme;
-  isThemeTransitioning: boolean;
-  emailNotifications: boolean;
-  screenNotifications: boolean;
-  language: Language;
-  toggleTheme: () => void;
-  setEmailNotifications: (enabled: boolean) => void;
-  setScreenNotifications: (enabled: boolean) => void;
-  setLanguage: (language: Language) => void;
-}
-
-const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
+  return "light";
+};
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const applyThemeTimerRef = useRef<number | null>(null);
   const finishTransitionTimerRef = useRef<number | null>(null);
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem("theme");
-    return savedTheme === "dark" ? "dark" : "light";
+    if (savedTheme === "dark" || savedTheme === "light") {
+      return savedTheme;
+    }
+
+    return resolveSystemTheme();
   });
+
   const [isThemeTransitioning, setIsThemeTransitioning] =
     useState<boolean>(false);
   const [emailNotifications, setEmailNotifications] = useState<boolean>(() => {
@@ -44,12 +35,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return savedValue === null ? true : savedValue === "true";
     },
   );
-  const [language, setLanguage] = useState<Language>(() => {
-    const savedValue = localStorage.getItem("settings.language");
-    return savedValue === "English" || savedValue === "中文"
-      ? savedValue
-      : "Tiếng Việt";
-  });
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -71,15 +56,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [screenNotifications]);
 
   useEffect(() => {
-    localStorage.setItem("settings.language", language);
-  }, [language]);
-
-  useEffect(() => {
     return () => {
-      if (applyThemeTimerRef.current !== null) {
-        window.clearTimeout(applyThemeTimerRef.current);
-      }
-
       if (finishTransitionTimerRef.current !== null) {
         window.clearTimeout(finishTransitionTimerRef.current);
       }
@@ -92,7 +69,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       isThemeTransitioning,
       emailNotifications,
       screenNotifications,
-      language,
       toggleTheme: () => {
         if (isThemeTransitioning) {
           return;
@@ -100,48 +76,25 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
         setIsThemeTransitioning(true);
 
-        if (applyThemeTimerRef.current !== null) {
-          window.clearTimeout(applyThemeTimerRef.current);
-        }
-
         if (finishTransitionTimerRef.current !== null) {
           window.clearTimeout(finishTransitionTimerRef.current);
         }
 
-        applyThemeTimerRef.current = window.setTimeout(() => {
-          setTheme((currentTheme) =>
-            currentTheme === "light" ? "dark" : "light",
-          );
-        }, 120);
+        setTheme((currentTheme) =>
+          currentTheme === "light" ? "dark" : "light",
+        );
 
         finishTransitionTimerRef.current = window.setTimeout(() => {
           setIsThemeTransitioning(false);
-        }, 420);
+        }, 220);
       },
       setEmailNotifications,
       setScreenNotifications,
-      setLanguage,
     }),
-    [
-      emailNotifications,
-      isThemeTransitioning,
-      language,
-      screenNotifications,
-      theme,
-    ],
+    [emailNotifications, isThemeTransitioning, screenNotifications, theme],
   );
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-
-  return context;
 }

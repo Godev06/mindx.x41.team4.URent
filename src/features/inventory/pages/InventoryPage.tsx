@@ -1,10 +1,12 @@
 import { INVENTORY_ITEMS } from "../../shared/data";
 import { Badge } from "../../shared/components/Badge";
-import { useTheme } from "../../settings/context/ThemeContext.tsx";
+import { useTheme } from "../../settings/hooks/useTheme";
 import { InventoryRow } from "../components/InventoryRow";
+import { useI18n } from "../../shared/context/LanguageContext";
 
 export function InventoryPage() {
   const { theme } = useTheme();
+  const { lang } = useI18n();
   const activeCount = INVENTORY_ITEMS.filter(
     (item) => item.status === "In Stock",
   ).length;
@@ -15,6 +17,28 @@ export function InventoryPage() {
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
+  const t =
+    lang === "vi"
+      ? {
+          title: "Kho hàng của tôi",
+          desc: "Theo dõi và quản lý sản phẩm đang cho thuê.",
+          totalProducts: "Tổng sản phẩm",
+          availableWarning: "Có sẵn/Cảnh báo",
+          totalValue: "Tổng giá trị kho",
+          listTitle: "Danh sách hàng hóa",
+          listDesc: "Cập nhật trạng thái và giá theo thời gian thực.",
+          syncLive: "Sync live",
+        }
+      : {
+          title: "My Inventory",
+          desc: "Track and manage your listed rental products.",
+          totalProducts: "Total products",
+          availableWarning: "Available/Warning",
+          totalValue: "Total inventory value",
+          listTitle: "Inventory list",
+          listDesc: "Update status and pricing in real time.",
+          syncLive: "Sync live",
+        };
 
   return (
     <div className="space-y-8">
@@ -24,14 +48,14 @@ export function InventoryPage() {
             theme === "dark" ? "text-slate-100" : "text-slate-900"
           }`}
         >
-          Kho hàng của tôi
+          {t.title}
         </h1>
         <p
           className={`mt-1 text-sm ${
             theme === "dark" ? "text-slate-400" : "text-slate-500"
           }`}
         >
-          Theo dõi và quản lý sản phẩm đang cho thuê.
+          {t.desc}
         </p>
       </div>
 
@@ -48,7 +72,7 @@ export function InventoryPage() {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            Tổng sản phẩm
+            {t.totalProducts}
           </p>
           <p
             className={`mt-2 text-2xl font-bold ${
@@ -70,7 +94,7 @@ export function InventoryPage() {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            Có sẵn/Cảnh báo
+            {t.availableWarning}
           </p>
           <p
             className={`mt-2 text-2xl font-bold ${
@@ -92,7 +116,7 @@ export function InventoryPage() {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            Tổng giá trị kho
+            {t.totalValue}
           </p>
           <p
             className={`mt-2 text-2xl font-bold ${
@@ -122,17 +146,17 @@ export function InventoryPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              Danh sách hàng hóa
+              {t.listTitle}
             </h2>
             <p
               className={`text-xs ${
                 theme === "dark" ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              Cập nhật trạng thái và giá theo thời gian thực.
+              {t.listDesc}
             </p>
           </div>
-          <Badge variant="gray">Sync live</Badge>
+          <Badge variant="gray">{t.syncLive}</Badge>
         </div>
         <div
           className={`divide-y px-2 py-1 ${
