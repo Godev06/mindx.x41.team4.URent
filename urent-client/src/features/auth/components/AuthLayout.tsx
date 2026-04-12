@@ -17,7 +17,7 @@ export function AuthLayout({
   footer,
   children,
 }: AuthLayoutProps) {
-  const { t, toggleLang } = useI18n();
+  const { t } = useI18n();
   const { theme } = useTheme();
   const [healthMessage, setHealthMessage] = useState(
     "Đang kiểm tra backend...",
