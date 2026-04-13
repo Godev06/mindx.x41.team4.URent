@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { AppHeader } from "./AppHeader";
+import { AppHeader, MobileBottomNav } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { PageLoader } from "../../shared/components/PageLoader";
@@ -54,20 +54,21 @@ export function AppShell() {
           hideLabel
         />
       </div>
-      <main className="relative min-h-screen">
-        <div className="sticky top-0 z-30 py-5">
-          <div className="mx-auto w-[95%]">
+      <main className="relative flex min-h-screen flex-col pb-24 lg:pb-0">
+        <div className="sticky top-0 z-30 px-3 py-3 sm:px-4 sm:py-4 lg:py-5">
+          <div className="mx-auto w-full max-w-7xl">
             <AppHeader />
           </div>
         </div>
 
-        <div className="mx-auto w-[95%]">
-          <div className="pb-8">
+        <div className="mx-auto w-full max-w-7xl flex-1 px-3 sm:px-4">
+          <div className="pb-6 sm:pb-8">
             <Outlet />
           </div>
         </div>
         <AppFooter />
       </main>
+      <MobileBottomNav />
     </div>
   );
 }

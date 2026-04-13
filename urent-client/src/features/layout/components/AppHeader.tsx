@@ -11,12 +11,10 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { APP_ROUTES } from "../../auth/constants";
 import { useAuth } from "../../auth/hooks/useAuth";
-import { useI18n } from "../../shared/context/LanguageContext";
 import { SidebarItem } from "../../shared/components/SidebarItem";
+import { useI18n } from "../../shared/context/LanguageContext";
 import { getAvatarStyle } from "../../shared/utils/avatar";
 import { MAIN_NAV_ITEMS } from "../constants/navItems";
-
-// ─── Shared types ────────────────────────────────────────────────────────────
 
 interface ProfileMenuItem {
   label: string;
@@ -44,10 +42,7 @@ export function AppHeader() {
   const t =
     lang === "vi"
       ? {
-          brandEyebrow: "Storefront",
-          brandTag: "Nền tảng thuê tài sản thông minh",
           searchPlaceholder: "Tìm máy ảnh, laptop, hoặc mã đơn hàng...",
-          searchLabel: "Tìm kiếm nhanh",
           userFallback: "U-Rent User",
           home: "Trang chủ",
           orders: "Đơn hàng",
@@ -61,14 +56,18 @@ export function AppHeader() {
           profileMenuAria: "Menu hồ sơ",
           homeAria: "U-Rent - Trang chủ",
           notificationsTitle: "Thông báo mới",
+          notificationsSubtitle:
+            "Cập nhật đơn hàng, tin nhắn và ưu đãi gần đây.",
+          notificationsBadge: "Mới",
+          notificationsHint: "Vừa cập nhật, nhấn để xem chi tiết",
+          profilePanelTitle: "Tài khoản của bạn",
+          profilePanelSubtitle: "Quản lý hồ sơ, cài đặt và đơn thuê nhanh hơn.",
+          profileStatus: "Đang hoạt động",
           viewAll: "Xem tất cả",
           notifItems: notifications,
         }
       : {
-          brandEyebrow: "Storefront",
-          brandTag: "Smart asset rental platform",
           searchPlaceholder: "Search cameras, laptops, or order code...",
-          searchLabel: "Quick search",
           userFallback: "U-Rent User",
           home: "Home",
           orders: "Orders",
@@ -82,6 +81,14 @@ export function AppHeader() {
           profileMenuAria: "Profile menu",
           homeAria: "U-Rent - Home",
           notificationsTitle: "New notifications",
+          notificationsSubtitle:
+            "Recent updates for orders, messages, and offers.",
+          notificationsBadge: "New",
+          notificationsHint: "Recently updated, tap to view details",
+          profilePanelTitle: "Your account",
+          profilePanelSubtitle:
+            "Manage your profile, settings, and rentals faster.",
+          profileStatus: "Active now",
           viewAll: "View all",
           notifItems: [
             { id: 1, title: "Order #A102 shipped", time: "2 minutes ago" },
@@ -111,6 +118,11 @@ export function AppHeader() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    setIsNotifOpen(false);
+    setIsProfileOpen(false);
+  }, [pathname]);
+
   const navLabelMap: Record<string, string> = {
     "/": t.home,
     "/orders": t.orders,
@@ -118,7 +130,7 @@ export function AppHeader() {
     "/messages": t.messages,
   };
 
-  const profileMenuItems = [
+  const profileMenuItems: ProfileMenuItem[] = [
     {
       label: t.profile,
       icon: User,
@@ -158,12 +170,37 @@ export function AppHeader() {
   const { initials, colorClass } = getAvatarStyle(displayName);
   const isSettingsPage = pathname.startsWith("/settings");
   const isNotificationsPage = pathname.startsWith("/notifications");
+  const supportsSearch = ["/", "/orders", "/inventory"].some((p) =>
+    p === "/" ? pathname === "/" : pathname.startsWith(p),
+  );
+  const unreadCount = t.notifItems.length;
+  const handleNotificationClick = () => {
+    if (window.matchMedia("(max-width: 1023px)").matches) {
+      setIsNotifOpen(false);
+      setIsProfileOpen(false);
+      navigate("/notifications");
+      return;
+    }
+
+    setIsNotifOpen((open) => !open);
+  };
+  const isMobilePanelOpen = isNotifOpen || isProfileOpen;
 
   return (
     <nav className="sticky top-0 z-50 rounded-3xl border border-slate-200 bg-white/95 px-4 py-3 shadow-[0_4px_24px_-8px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-5 lg:px-6 dark:border-white/8 dark:bg-[#0b1220]/88 dark:shadow-[0_18px_50px_-24px_rgba(2,8,23,0.85)]">
-      <div className="flex w-full items-center gap-5 lg:gap-7">
-        {/* Brand */}
-        <div className="flex shrink-0 items-center gap-3">
+      {isMobilePanelOpen ? (
+        <button
+          type="button"
+          aria-label="Close panel"
+          className="fixed inset-0 z-30 bg-slate-950/25 backdrop-blur-[1px] lg:hidden"
+          onClick={() => {
+            setIsNotifOpen(false);
+            setIsProfileOpen(false);
+          }}
+        />
+      ) : null}
+      <div className="flex w-full flex-wrap items-center gap-3 sm:gap-4 lg:flex-nowrap lg:gap-7">
+        <div className="flex min-w-0 shrink items-center gap-3">
           <button
             type="button"
             onClick={() => navigate(APP_ROUTES.home)}
@@ -179,20 +216,18 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => navigate(APP_ROUTES.home)}
-            className="text-left"
+            className="min-w-0 text-left"
           >
-            <h1 className="bg-linear-to-r from-slate-800 to-slate-600 bg-clip-text text-lg leading-tight font-bold text-transparent dark:from-white dark:to-slate-300">
+            <h1 className="truncate bg-linear-to-r from-slate-800 to-slate-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg dark:from-white dark:to-slate-300">
               U-Rent
             </h1>
-            <p className="text-[10px] font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500">
+            <p className="hidden text-[10px] font-semibold tracking-widest text-slate-400 uppercase sm:block dark:text-slate-500">
               Workspace
             </p>
           </button>
         </div>
-        {/* Search — only on home, orders, inventory */}
-        {["/", "/orders", "/inventory"].some((p) =>
-          p === "/" ? pathname === "/" : pathname.startsWith(p),
-        ) && (
+
+        {supportsSearch && (
           <div className="relative hidden max-w-xl flex-1 lg:flex">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors dark:text-slate-500"
@@ -207,13 +242,12 @@ export function AppHeader() {
           </div>
         )}
 
-        {/* Right side: desktop nav + actions */}
-        <div className="ml-auto flex items-center gap-3 lg:gap-4">
-          {/* Desktop nav */}
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-3 lg:gap-4">
           <div className="hidden items-center gap-1 rounded-full border border-slate-200 bg-slate-100 p-1.5 lg:flex dark:border-white/8 dark:bg-white/4">
             {MAIN_NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const isActive = item.isActive(pathname);
+
               return (
                 <button
                   key={item.path}
@@ -234,50 +268,84 @@ export function AppHeader() {
             })}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2.5 border-l border-slate-200 pl-3.5 sm:gap-3.5 sm:pl-4.5 dark:border-white/10">
-            {/* Bell */}
+          <div className="flex items-center gap-2 border-l border-slate-200 pl-2.5 sm:gap-3.5 sm:pl-4.5 dark:border-white/10">
             <div className="relative" ref={notifRef}>
               <button
                 type="button"
-                className={`relative rounded-xl p-2 transition ${
+                className={`relative rounded-xl p-2.5 transition sm:p-2 ${
                   isNotificationsPage || isNotifOpen
                     ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
                     : "text-slate-500 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-teal-300"
                 }`}
                 aria-label={t.notificationsAria}
                 aria-expanded={isNotifOpen}
-                onClick={() => setIsNotifOpen((open) => !open)}
+                onClick={handleNotificationClick}
               >
                 <Bell size={20} strokeWidth={2} />
                 <span className="absolute top-2 right-2 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-[#0b1220]" />
               </button>
 
               {isNotifOpen && (
-                <div className="absolute right-0 z-20 mt-3 w-[320px] overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-800 shadow-xl ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:text-slate-100 dark:ring-black/40">
-                  <div className="border-b border-slate-100 px-4 py-3 text-sm font-semibold dark:border-white/10">
-                    {t.notificationsTitle}
+                <div className="absolute right-0 z-20 mt-3 hidden w-92 overflow-hidden rounded-[1.75rem] border border-slate-200/90 bg-white text-slate-800 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:text-slate-100 dark:ring-black lg:block">
+                  <div className="border-b border-slate-100 bg-linear-to-br from-teal-50 via-white to-cyan-50 px-4 py-4 dark:border-white/10 dark:from-teal-500/10 dark:via-[#101a2a] dark:to-cyan-500/10">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold text-slate-900 dark:text-white lg:text-sm">
+                          {t.notificationsTitle}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400 lg:text-xs lg:leading-5">
+                          {t.notificationsSubtitle}
+                        </p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-teal-600 px-3 py-1 text-xs font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900 lg:px-2.5 lg:text-[11px]">
+                        {unreadCount}
+                      </span>
+                    </div>
                   </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    {t.notifItems.map((item) => (
+
+                  <div className="max-h-80 space-y-2 overflow-y-auto p-2.5">
+                    {t.notifItems.map((item, index) => (
                       <button
                         key={item.id}
                         type="button"
-                        className="w-full px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-white/6"
+                        className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-left transition hover:border-teal-200 hover:bg-white hover:shadow-sm dark:border-white/8 dark:bg-white/4 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
                       >
-                        <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                          {item.title}
+                        <div className="flex items-start gap-3">
+                          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
+                            <Bell size={16} strokeWidth={2.2} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="line-clamp-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                    {item.title}
+                                  </p>
+                                  {index === 0 ? (
+                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                                      {t.notificationsBadge}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+                              <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                                {item.time}
+                              </span>
+                            </div>
+                            <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                              <span>{t.notificationsHint}</span>
+                            </div>
+                          </div>
                         </div>
-                        <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-                          {item.time}
-                        </p>
                       </button>
                     ))}
                   </div>
-                  <div className="border-t border-slate-100 px-4 py-3 text-center text-sm dark:border-white/10">
+
+                  <div className="border-t border-slate-100 bg-slate-50/80 px-3 py-3 dark:border-white/10 dark:bg-white/3">
                     <button
                       type="button"
-                      className="font-semibold text-teal-600 transition hover:text-teal-700 dark:text-teal-300 dark:hover:text-teal-200"
+                      className="flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
                       onClick={() => {
                         setIsNotifOpen(false);
                         navigate("/notifications");
@@ -290,10 +358,9 @@ export function AppHeader() {
               )}
             </div>
 
-            {/* Settings */}
             <button
               type="button"
-              className={`rounded-xl p-2 transition ${
+              className={`hidden rounded-xl p-2 transition lg:inline-flex ${
                 isSettingsPage
                   ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
@@ -304,11 +371,10 @@ export function AppHeader() {
               <Settings size={20} strokeWidth={2} />
             </button>
 
-            {/* Profile */}
             <div className="relative" ref={profileRef}>
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-2.5 rounded-full border border-slate-200 bg-slate-50 p-1.5 pr-3.5 transition-all hover:border-slate-300 hover:bg-slate-100 sm:pr-4 dark:border-white/12 dark:bg-white/5 dark:hover:border-white/25 dark:hover:bg-white/8"
+                className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1.5 pr-2.5 transition-all hover:border-slate-300 hover:bg-slate-100 sm:gap-2.5 sm:pr-4 dark:border-white/12 dark:bg-white/5 dark:hover:border-white/25 dark:hover:bg-white/8"
                 onClick={() => setIsProfileOpen((open) => !open)}
                 aria-label={t.profileMenuAria}
                 aria-expanded={isProfileOpen}
@@ -326,7 +392,7 @@ export function AppHeader() {
                     {initials}
                   </div>
                 )}
-                <div className="hidden text-left sm:block">
+                <div className="hidden text-left lg:block">
                   <p className="text-xs font-semibold text-slate-800 dark:text-white">
                     {displayName}
                   </p>
@@ -337,42 +403,74 @@ export function AppHeader() {
               </button>
 
               {isProfileOpen && (
-                <div className="absolute right-0 z-20 mt-3 w-56 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:ring-black/40">
-                  <div className="border-b border-slate-100 px-4 py-3 dark:border-white/10">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                      {displayName}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      {user?.email ?? ""}
-                    </p>
+                <div className="fixed inset-x-3 top-23 z-40 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:ring-black/40 sm:top-28 lg:absolute lg:inset-x-auto lg:top-auto lg:right-0 lg:z-20 lg:mt-3 lg:w-72 lg:rounded-[1.75rem]">
+                  <div className="border-b border-slate-100 bg-linear-to-br from-cyan-50 via-white to-teal-50 px-4 py-4 dark:border-white/10 dark:from-cyan-500/10 dark:via-[#101a2a] dark:to-teal-500/10">
+                    <div className="flex items-start gap-3">
+                      {user?.avatarUrl ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={displayName}
+                          className="h-11 w-11 shrink-0 rounded-2xl object-cover ring-2 ring-white/70 dark:ring-white/10"
+                        />
+                      ) : (
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-inner ${colorClass}`}
+                        >
+                          {initials}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-base font-semibold text-slate-900 dark:text-white lg:text-sm">
+                          {t.profilePanelTitle}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400 lg:text-xs lg:leading-5">
+                          {t.profilePanelSubtitle}
+                        </p>
+                        <div className="mt-3 rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-slate-200/70 dark:bg-white/5 dark:ring-white/10">
+                          <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                            {displayName}
+                          </p>
+                          <div className="mt-1 flex items-center justify-between gap-2">
+                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                              {user?.email ?? ""}
+                            </p>
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                              {t.profileStatus}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {profileMenuItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={item.onClick}
-                        className={`flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-sm transition last:border-b-0 dark:border-white/10 ${
-                          item.isDanger
-                            ? "text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
-                            : "text-slate-700 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-white/6"
-                        }`}
-                      >
-                        <Icon
-                          size={16}
-                          strokeWidth={2}
-                          className={
+                  <div className="space-y-2.5 p-3 lg:space-y-2 lg:p-2.5">
+                    {profileMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.label}
+                          type="button"
+                          onClick={item.onClick}
+                          className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-[15px] transition lg:py-3 lg:text-sm ${
                             item.isDanger
-                              ? "text-red-600 dark:text-red-400"
-                              : "text-teal-600 dark:text-teal-300"
-                          }
-                        />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
+                              ? "border border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500/15 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                              : "border border-slate-200/80 bg-slate-50/80 text-slate-700 hover:border-teal-200 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:text-slate-100 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
+                          }`}
+                        >
+                          <div
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
+                              item.isDanger
+                                ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
+                                : "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                            }`}
+                          >
+                            <Icon size={16} strokeWidth={2} />
+                          </div>
+                          <span className="font-medium">{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -380,33 +478,78 @@ export function AppHeader() {
         </div>
       </div>
 
-      {/* Mobile nav */}
-      <div className="mt-3.5 flex items-center gap-2.5 overflow-x-auto lg:hidden">
-        {MAIN_NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = item.isActive(pathname);
-          return (
-            <button
-              key={item.path}
-              type="button"
-              onClick={() => navigate(item.path)}
-              className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-sm transition-all ${
-                isActive
-                  ? "bg-teal-600 font-semibold text-white dark:bg-white dark:text-slate-900"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
-              }`}
-            >
-              <Icon size={16} strokeWidth={2} />
-              <span>{navLabelMap[item.path] ?? item.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      {supportsSearch && (
+        <div className="mt-3 lg:hidden">
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors dark:text-slate-500"
+              size={16}
+              strokeWidth={2}
+            />
+            <input
+              type="search"
+              placeholder={t.searchPlaceholder}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-10 text-[15px] text-slate-800 placeholder:text-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400/40"
+            />
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
 
-// ─── AppSidebar ───────────────────────────────────────────────────────────────
+export function MobileBottomNav() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { lang } = useI18n();
+
+  const navLabelMap: Record<string, string> =
+    lang === "vi"
+      ? {
+          "/": "Trang chủ",
+          "/orders": "Đơn hàng",
+          "/inventory": "Kho",
+          "/messages": "Tin nhắn",
+        }
+      : {
+          "/": "Home",
+          "/orders": "Orders",
+          "/inventory": "Inventory",
+          "/messages": "Messages",
+        };
+
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(env(safe-area-inset-bottom)+0.625rem)] lg:hidden">
+      <div className="mx-auto max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_-8px_32px_-18px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1220]/92 dark:shadow-[0_-12px_36px_-22px_rgba(2,8,23,0.95)]">
+        <div className="grid grid-cols-4 gap-1">
+          {MAIN_NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const isActive = item.isActive(pathname);
+
+            return (
+              <button
+                key={item.path}
+                type="button"
+                onClick={() => navigate(item.path)}
+                className={`flex min-h-15 flex-col items-center justify-center gap-1 rounded-[1.1rem] px-1.5 py-2 text-center transition-all duration-200 ${
+                  isActive
+                    ? "bg-teal-600 text-white shadow-lg shadow-teal-900/20 dark:bg-white dark:text-slate-900"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
+                }`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
+                <span className="text-[11px] font-semibold leading-none tracking-tight">
+                  {navLabelMap[item.path] ?? item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function AppSidebar() {
   const navigate = useNavigate();

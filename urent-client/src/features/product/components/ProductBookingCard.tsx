@@ -40,7 +40,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
         };
 
   return (
-    <div className="sticky top-24 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/4 sm:p-8">
+    <div className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/4 sm:p-6 lg:sticky lg:top-24 lg:p-8">
       <div className="mb-6 flex items-end justify-between gap-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">

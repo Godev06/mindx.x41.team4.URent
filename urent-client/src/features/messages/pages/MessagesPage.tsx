@@ -42,6 +42,7 @@ export function MessagesPage() {
         };
   const selectedChatId =
     parsedId && Number.isFinite(parsedId) ? parsedId : (CHATS[0]?.id ?? 0);
+  const isMobileChatView = Boolean(id);
   const currentUserName = user?.displayName ?? user?.email ?? USER_PROFILE.name;
   const currentUserAvatar = user?.avatarUrl ?? USER_PROFILE.avatar;
 
@@ -200,16 +201,16 @@ export function MessagesPage() {
   return (
     <div className="space-y-4">
       <div
-        className={`flex h-[min(800px,calc(110vh-15rem))] rounded-2xl border shadow-sm ring-1 ${
+        className={`flex min-h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-2xl border shadow-sm ring-1 md:h-[min(800px,calc(110vh-15rem))] md:min-h-0 md:flex-row ${
           theme === "dark"
             ? "border-slate-700 bg-slate-900 ring-white/10"
             : "border-slate-200/90 bg-white ring-slate-900/4"
         }`}
       >
         <div
-          className={`flex w-full flex-col md:w-[min(100%,20rem)] md:border-r ${
-            theme === "dark" ? "border-slate-700" : "border-slate-200/90"
-          }`}
+          className={`w-full flex-col md:flex md:w-[min(100%,20rem)] md:border-r ${
+            isMobileChatView ? "hidden" : "flex"
+          } ${theme === "dark" ? "border-slate-700" : "border-slate-200/90"}`}
         >
           <div
             className={`px-5 py-4 ${
@@ -357,18 +358,22 @@ export function MessagesPage() {
             )}
           </div>
         </div>
-
-        <MessagesChatBox
-          key={selectedChatId}
-          selectedChat={selectedChat}
-          selectedChatId={selectedChatId}
-          chatMessages={chatMessages}
-          filteredMessages={filteredMessages}
-          searchTerm={searchTerm}
-          onSendMessage={handleSendMessage}
-          onSendProduct={handleSendProduct}
-          onSendLocation={handleSendLocation}
-        />
+        <div
+          className={`${isMobileChatView ? "flex" : "hidden"} min-h-0 flex-1 md:flex`}
+        >
+          <MessagesChatBox
+            key={selectedChatId}
+            selectedChat={selectedChat}
+            selectedChatId={selectedChatId}
+            chatMessages={chatMessages}
+            filteredMessages={filteredMessages}
+            searchTerm={searchTerm}
+            onBack={() => navigate("/messages")}
+            onSendMessage={handleSendMessage}
+            onSendProduct={handleSendProduct}
+            onSendLocation={handleSendLocation}
+          />
+        </div>
       </div>
     </div>
   );

@@ -1,12 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { APP_ROUTES } from "../constants";
 import { useAuth } from "../hooks/useAuth";
-import { useI18n } from "../../shared/context/LanguageContext";
 
 export function ProtectedRoute() {
   const location = useLocation();
   const { isAuthenticated, isInitializing } = useAuth();
-  const { t } = useI18n();
 
   if (isInitializing) {
     return (

@@ -59,15 +59,15 @@ export function AuthLayout({
           : "bg-slate-100 text-slate-700"
       }`}
     >
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center">
-        <div className="grid w-full grid-cols-1 items-center gap-8 lg:grid-cols-12">
-          <section className="space-y-6 lg:col-span-6">
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl items-center sm:min-h-[calc(100vh-4rem)]">
+        <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:items-center lg:gap-8">
+          <section className="space-y-5 lg:col-span-6">
             <div className="space-y-3">
               <div className="inline-flex items-center rounded-full border border-[#00bfa5]/20 bg-[#00bfa5]/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#00bfa5]">
                 {t.layoutBadge}
               </div>
               <h1
-                className={`text-3xl font-extrabold leading-tight tracking-tight md:text-5xl ${
+                className={`text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl ${
                   theme === "dark" ? "text-white" : "text-slate-900"
                 }`}
               >
@@ -111,7 +111,7 @@ export function AuthLayout({
               }`}
             >
               <div
-                className={`relative overflow-hidden rounded-[31px] p-6 md:p-8 ${
+                className={`relative overflow-hidden rounded-[31px] p-5 sm:p-6 md:p-8 ${
                   theme === "dark" ? "bg-[#0d1117]" : "bg-white"
                 }`}
               >

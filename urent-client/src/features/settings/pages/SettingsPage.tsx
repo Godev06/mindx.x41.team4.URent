@@ -87,7 +87,7 @@ export function SettingsPage() {
   return (
     <div className="space-y-5">
       <section
-        className={`${shellClass} ${shellTone} relative overflow-hidden px-5 py-5 sm:px-6 sm:py-6`}
+        className={`${shellClass} ${shellTone} relative overflow-hidden px-4 py-5 sm:px-6 sm:py-6`}
       >
         <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-teal-500/12 blur-3xl" />
         <div className="absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-sky-500/10 blur-3xl" />
@@ -146,8 +146,8 @@ export function SettingsPage() {
       </section>
 
       <section className={`${shellClass} ${shellTone} overflow-hidden`}>
-        <div className="border-b border-slate-200/70 px-4 py-4 dark:border-slate-700/70 sm:px-6">
-          <nav className="flex flex-wrap gap-2">
+        <div className="border-b border-slate-200/70 px-3 py-3 dark:border-slate-700/70 sm:px-6 sm:py-4">
+          <nav className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -157,7 +157,7 @@ export function SettingsPage() {
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all ${
+                  className={`inline-flex shrink-0 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all ${
                     isActive
                       ? "border border-teal-200/70 bg-teal-50/90 text-teal-800 shadow-sm shadow-teal-100/70 dark:border-teal-500/20 dark:bg-teal-500/10 dark:text-teal-200 dark:shadow-none"
                       : "border border-transparent bg-transparent text-slate-600 hover:border-slate-200/80 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800/70 dark:hover:text-slate-100"
@@ -179,7 +179,7 @@ export function SettingsPage() {
           </nav>
         </div>
 
-        <div className="p-4 sm:p-6">
+        <div className="p-3 sm:p-6">
           {activeTab === "security" && (
             <div className="grid gap-4 xl:grid-cols-[1.25fr_0.9fr]">
               <div className={cardClass}>

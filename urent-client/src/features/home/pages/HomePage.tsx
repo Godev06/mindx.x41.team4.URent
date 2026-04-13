@@ -32,10 +32,10 @@ export function HomePage({ onProductClick }: HomePageProps) {
         };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 sm:space-y-10">
       <HeroBanner lang={lang} />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-2">
+      <section className="grid gap-3 sm:gap-4 sm:grid-cols-2 xl:grid-cols-2">
         <div
           className={`rounded-xl border p-4 shadow-sm ring-1 ${
             theme === "dark"
@@ -51,7 +51,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
             {t.readyDevices}
           </h1>
           <p
-            className={`mt-1 text-2xl font-bold ${
+            className={`mt-1 text-[1.75rem] font-bold leading-none sm:text-2xl ${
               theme === "dark" ? "text-slate-100" : "text-slate-900"
             }`}
           >
@@ -73,7 +73,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
             {t.monthlyCompleted}
           </h1>
           <p
-            className={`mt-1 text-2xl font-bold ${
+            className={`mt-1 text-[1.75rem] font-bold leading-none sm:text-2xl ${
               theme === "dark" ? "text-slate-100" : "text-slate-900"
             }`}
           >

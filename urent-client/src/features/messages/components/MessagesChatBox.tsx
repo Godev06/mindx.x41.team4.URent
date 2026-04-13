@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  ArrowLeft,
   MessageSquare,
   Send,
   Search,
@@ -35,6 +36,7 @@ interface MessagesChatBoxProps {
   chatMessages: Message[];
   filteredMessages: Message[];
   searchTerm: string;
+  onBack?: () => void;
   onSendMessage: (content: string) => void;
   onSendProduct: (product: SharedProduct) => void;
   onSendLocation: (location: SharedLocation) => void;
@@ -50,6 +52,7 @@ export function MessagesChatBox({
   chatMessages,
   filteredMessages,
   searchTerm,
+  onBack,
   onSendMessage,
   onSendProduct,
   onSendLocation,
@@ -195,21 +198,35 @@ export function MessagesChatBox({
 
   return (
     <div
-      className={`hidden min-w-0 flex-1 flex-col md:flex ${
+      className={`flex min-w-0 flex-1 flex-col ${
         theme === "dark"
           ? "bg-linear-to-b from-slate-900 to-slate-950"
           : "bg-linear-to-b from-slate-50/80 to-white"
       }`}
     >
       <div
-        className={`flex h-16 items-center px-6 ${
+        className={`flex min-h-16 items-center gap-3 px-4 sm:px-6 ${
           theme === "dark"
             ? "border-b border-slate-700"
             : "border-b border-slate-200/70"
         }`}
       >
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition md:hidden ${
+              theme === "dark"
+                ? "border-slate-700 text-slate-200 hover:bg-slate-800"
+                : "border-slate-200 text-slate-700 hover:bg-slate-100"
+            }`}
+            aria-label="Back to conversations"
+          >
+            <ArrowLeft size={18} strokeWidth={2} />
+          </button>
+        ) : null}
         <p
-          className={`text-sm font-semibold ${
+          className={`min-w-0 truncate text-sm font-semibold ${
             theme === "dark" ? "text-slate-100" : "text-slate-800"
           }`}
         >
@@ -217,7 +234,7 @@ export function MessagesChatBox({
         </p>
       </div>
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex-1 space-y-4 overflow-y-auto p-4 scroll-smooth">
+        <div className="flex-1 space-y-4 overflow-y-auto p-3 scroll-smooth sm:p-4">
           {filteredMessages.length > 0 ? (
             filteredMessages.map((message) => (
               <div
@@ -230,7 +247,7 @@ export function MessagesChatBox({
                 {message.sender === "other" && renderAvatar(message)}
 
                 <div
-                  className={`max-w-sm rounded-2xl px-4 py-2 text-sm wrap-break-word ${
+                  className={`max-w-[min(85vw,24rem)] rounded-2xl px-4 py-2 text-sm wrap-break-word sm:max-w-sm ${
                     message.sender === "user"
                       ? "bg-teal-600 text-white"
                       : theme === "dark"
@@ -332,7 +349,7 @@ export function MessagesChatBox({
               </button>
               {isMoreMenuOpen && (
                 <div
-                  className={`absolute bottom-full right-0 z-10 mb-2 min-w-max rounded-lg border shadow-lg ${
+                  className={`absolute bottom-full right-0 z-10 mb-2 min-w-[11rem] rounded-lg border shadow-lg ${
                     theme === "dark"
                       ? "border-slate-700 bg-slate-800"
                       : "border-slate-200 bg-white"
