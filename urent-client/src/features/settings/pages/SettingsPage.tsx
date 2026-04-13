@@ -11,6 +11,7 @@ import {
 import { ACTIVITY_LOGS } from "../../shared/data";
 import { useTheme } from "../hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { PageLoader } from "../../shared/components/PageLoader";
 
 function SettingSwitch({
   checked,
@@ -51,7 +52,7 @@ export function SettingsPage() {
     setEmailNotifications,
     setScreenNotifications,
   } = useTheme();
-  const { t, setLang, lang } = useI18n();
+  const { t, setLang, lang, isLanguageTransitioning } = useI18n();
   const [activeTab, setActiveTab] = useState<
     "security" | "activity" | "preferences"
   >("security");
@@ -418,6 +419,15 @@ export function SettingsPage() {
                         disabled={isThemeTransitioning}
                       />
                     </div>
+                    {isThemeTransitioning ? (
+                      <div className="mt-3">
+                        <PageLoader
+                          inline
+                          tone="slate"
+                          label={t.settingsThemeApplying}
+                        />
+                      </div>
+                    ) : null}
                   </div>
 
                   <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/80 dark:bg-slate-900/50">
@@ -496,6 +506,7 @@ export function SettingsPage() {
                     </label>
                     <select
                       value={lang}
+                      disabled={isLanguageTransitioning}
                       onChange={(event) =>
                         setLang(event.target.value as "vi" | "en")
                       }

@@ -4,10 +4,12 @@ import { AppHeader } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { PageLoader } from "../../shared/components/PageLoader";
+import { useI18n } from "../../shared/context/LanguageContext";
 
 export function AppShell() {
   const location = useLocation();
   const { isThemeTransitioning } = useTheme();
+  const { t, isLanguageTransitioning } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const firstUpdate = useRef(true);
 
@@ -35,18 +37,23 @@ export function AppShell() {
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-teal-100/60 via-white/40 to-transparent dark:from-teal-500/10 dark:via-slate-900/20 dark:to-transparent" />
       <div
         className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-white/35 backdrop-blur-[2px] transition-all duration-300 dark:bg-slate-950/35 ${
-          isThemeTransitioning ? "opacity-100" : "opacity-0"
+          isThemeTransitioning || isLoading || isLanguageTransitioning
+            ? "opacity-100"
+            : "opacity-0"
         }`}
-        aria-hidden={!isThemeTransitioning}
+        aria-hidden={
+          !isThemeTransitioning && !isLoading && !isLanguageTransitioning
+        }
       >
-        <PageLoader label="Loading..." />
+        <PageLoader
+          label={
+            isLanguageTransitioning
+              ? t.settingsLanguageApplying
+              : t.loadingTransition
+          }
+          hideLabel
+        />
       </div>
-      <div
-        className={`pointer-events-none absolute inset-x-0 top-0 z-40 h-1 bg-teal-600 transition-transform duration-200 ease-out ${
-          isLoading ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
-        }`}
-        style={{ transformOrigin: "left center" }}
-      />
       <main className="relative min-h-screen">
         <div className="sticky top-0 z-30 py-5">
           <div className="mx-auto w-[95%]">

@@ -13,6 +13,8 @@ export const translations = {
     emailLabel: "Email",
     otpLabel: "Mã OTP",
     otpPlaceholder: "Nhập 6 ký tự OTP",
+    loadingSession: "Đang tải thông tin phiên làm việc...",
+    loadingTransition: "Đang tải giao diện...",
 
     // settings
     settingsPageTitle: "Cài đặt",
@@ -62,9 +64,11 @@ export const translations = {
     settingsDark: "Tối",
     settingsLight: "Sáng",
     settingsToggleTheme: "Chuyển đổi giao diện",
+    settingsThemeApplying: "Đang áp dụng giao diện...",
     settingsEmailNotifications: "Thông báo qua email",
     settingsScreenNotifications: "Thông báo trên màn hình",
     settingsLanguage: "Ngôn ngữ",
+    settingsLanguageApplying: "Đang áp dụng ngôn ngữ...",
 
     // login
     loginTitle: "Chào mừng trở lại",
@@ -186,6 +190,8 @@ export const translations = {
     emailLabel: "Email",
     otpLabel: "OTP Code",
     otpPlaceholder: "Enter 6-digit OTP",
+    loadingSession: "Loading session information...",
+    loadingTransition: "Loading interface...",
 
     // settings
     settingsPageTitle: "Settings",
@@ -235,9 +241,11 @@ export const translations = {
     settingsDark: "Dark",
     settingsLight: "Light",
     settingsToggleTheme: "Toggle theme",
+    settingsThemeApplying: "Applying theme...",
     settingsEmailNotifications: "Email notifications",
     settingsScreenNotifications: "On-screen notifications",
     settingsLanguage: "Language",
+    settingsLanguageApplying: "Applying language...",
 
     // login
     loginTitle: "Welcome back",

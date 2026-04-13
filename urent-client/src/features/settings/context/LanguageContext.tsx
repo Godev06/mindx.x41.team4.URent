@@ -2,7 +2,9 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -15,6 +17,7 @@ import {
 interface LanguageContextValue {
   lang: Lang;
   t: T;
+  isLanguageTransitioning: boolean;
   setLang: (lang: Lang) => void;
   toggleLang: () => void;
 }
@@ -41,23 +44,63 @@ const resolveStoredLang = (): Lang => {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(resolveStoredLang);
+  const [isLanguageTransitioning, setIsLanguageTransitioning] = useState(false);
+  const transitionTimerRef = useRef<number | null>(null);
 
-  const setLang = useCallback((nextLang: Lang) => {
-    setLangState(nextLang);
-    localStorage.setItem(STORAGE_KEY, nextLang);
+  const startTransition = useCallback(() => {
+    setIsLanguageTransitioning(true);
+
+    if (transitionTimerRef.current !== null) {
+      window.clearTimeout(transitionTimerRef.current);
+    }
+
+    transitionTimerRef.current = window.setTimeout(() => {
+      setIsLanguageTransitioning(false);
+      transitionTimerRef.current = null;
+    }, 380);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (transitionTimerRef.current !== null) {
+        window.clearTimeout(transitionTimerRef.current);
+      }
+    };
+  }, []);
+
+  const setLang = useCallback(
+    (nextLang: Lang) => {
+      setLangState((current) => {
+        if (current === nextLang) {
+          return current;
+        }
+
+        startTransition();
+        localStorage.setItem(STORAGE_KEY, nextLang);
+        return nextLang;
+      });
+    },
+    [startTransition],
+  );
 
   const toggleLang = useCallback(() => {
     setLangState((current) => {
       const next: Lang = current === "vi" ? "en" : "vi";
+      startTransition();
       localStorage.setItem(STORAGE_KEY, next);
       return next;
     });
-  }, []);
+  }, [startTransition]);
 
   const value = useMemo<LanguageContextValue>(
-    () => ({ lang, t: translations[lang] as T, setLang, toggleLang }),
-    [lang, setLang, toggleLang],
+    () => ({
+      lang,
+      t: translations[lang] as T,
+      isLanguageTransitioning,
+      setLang,
+      toggleLang,
+    }),
+    [lang, isLanguageTransitioning, setLang, toggleLang],
   );
 
   return (

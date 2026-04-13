@@ -6,6 +6,7 @@ interface PageLoaderProps {
   inline?: boolean;
   tone?: "teal" | "emerald" | "amber" | "slate";
   showSpinner?: boolean;
+  hideLabel?: boolean;
 }
 
 export function PageLoader({
@@ -14,6 +15,7 @@ export function PageLoader({
   inline = false,
   tone = "teal",
   showSpinner = true,
+  hideLabel = false,
 }: PageLoaderProps) {
   const toneClass =
     tone === "emerald"
@@ -83,24 +85,26 @@ export function PageLoader({
             <span className={`h-1.5 w-1.5 rounded-full ${dotToneClass}`} />
           )}
 
-          <div className={inline ? "" : "space-y-1"}>
-            <p
-              className={`${toneClass} ${
-                inline
-                  ? "text-[11px] font-semibold tracking-tight"
-                  : "text-sm font-semibold"
-              }`}
-            >
-              {label || "Loading"}
-            </p>
-            {!inline ? (
-              <div className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                <span
-                  className={`block h-full w-2/3 animate-pulse rounded-full ${dotToneClass}`}
-                />
-              </div>
-            ) : null}
-          </div>
+          {!hideLabel ? (
+            <div className={inline ? "" : "space-y-1"}>
+              <p
+                className={`${toneClass} ${
+                  inline
+                    ? "text-[11px] font-semibold tracking-tight"
+                    : "text-sm font-semibold"
+                }`}
+              >
+                {label || "Loading"}
+              </p>
+              {!inline ? (
+                <div className="h-1.5 w-28 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                  <span
+                    className={`block h-full w-2/3 animate-pulse rounded-full ${dotToneClass}`}
+                  />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
