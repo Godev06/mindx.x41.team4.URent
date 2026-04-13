@@ -8,7 +8,18 @@ import { profileRouter } from './routes/profile.route';
 
 export const app = express();
 
-app.use(cors({ origin: env.clientUrl }));
+app.use(
+	cors({
+		origin(origin, callback) {
+			if (!origin || env.clientOrigins.includes(origin)) {
+				callback(null, true);
+				return;
+			}
+
+			callback(new Error(`CORS blocked for origin: ${origin}`));
+		}
+	})
+);
 app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 

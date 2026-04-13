@@ -1,0 +1,16 @@
+{
+  "name": "urent-workspace",
+  "private": true,
+  "version": "1.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n frontend,backend -c blue,green \"npm run dev --prefix urent-client\" \"npm run dev --prefix urent-server\"",
+    "dev:client": "npm run dev --prefix urent-client",
+    "dev:server": "npm run dev --prefix urent-server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
