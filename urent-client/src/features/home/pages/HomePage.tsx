@@ -1,5 +1,4 @@
 import { PRODUCTS } from "../../shared/data";
-import { Badge } from "../../shared/components/Badge";
 import { HeroBanner } from "../components/HeroBanner";
 import { ProductCard } from "../components/ProductCard";
 import { useTheme } from "../../settings/hooks/useTheme";
@@ -91,7 +90,9 @@ export function HomePage({ onProductClick }: HomePageProps) {
             </h2>
             <p className="text-sm text-slate-500">{t.suggestedDesc}</p>
           </div>
-          <Badge variant="blue">{t.topPicks}</Badge>
+          <span className="inline-flex items-center rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300">
+            {t.topPicks}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

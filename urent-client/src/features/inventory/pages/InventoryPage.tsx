@@ -1,5 +1,4 @@
 import { INVENTORY_ITEMS } from "../../shared/data";
-import { Badge } from "../../shared/components/Badge";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { InventoryRow } from "../components/InventoryRow";
 import { useI18n } from "../../shared/context/LanguageContext";
@@ -156,7 +155,9 @@ export function InventoryPage() {
               {t.listDesc}
             </p>
           </div>
-          <Badge variant="gray">{t.syncLive}</Badge>
+          <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-slate-700 dark:border-slate-600/50 dark:bg-slate-700/30 dark:text-slate-300">
+            {t.syncLive}
+          </span>
         </div>
         <div
           className={`divide-y px-2 py-1 ${

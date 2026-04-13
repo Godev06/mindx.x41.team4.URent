@@ -1,7 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ORDERS } from "../../shared/data";
-import { Badge } from "../../shared/components/Badge";
 import { OrderCard } from "../components/OrderCard";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
@@ -108,7 +107,9 @@ export function OrdersPage() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-900">{t.recent}</h2>
-        <Badge variant="yellow">{t.qrHint}</Badge>
+        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+          {t.qrHint}
+        </span>
       </div>
 
       <section className="space-y-4">

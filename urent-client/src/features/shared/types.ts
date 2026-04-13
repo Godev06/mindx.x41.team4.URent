@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
 export type ProductStatus = "Available" | "Active" | "Completed";
-export type BadgeVariant = "blue" | "green" | "yellow" | "gray";
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 export type NotificationType = "order" | "message" | "promotion" | "system";
 

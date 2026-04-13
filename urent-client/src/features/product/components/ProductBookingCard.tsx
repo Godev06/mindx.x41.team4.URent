@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Calendar, Minus, Plus, ShieldCheck } from "lucide-react";
-import { Badge } from "../../shared/components/Badge";
 import type { Product } from "../../shared/types";
 import { useI18n } from "../../shared/context/LanguageContext";
 
@@ -56,7 +55,9 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
             </span>
           </div>
         </div>
-        <Badge variant="green">{t.ready}</Badge>
+        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+          {t.ready}
+        </span>
       </div>
 
       <div className="mb-6 space-y-4 rounded-xl bg-slate-50/90 p-4 ring-1 ring-slate-200/80">

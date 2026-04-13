@@ -8,7 +8,7 @@ export function ProtectedRoute() {
   const { isAuthenticated, isInitializing } = useAuth();
 
   if (isInitializing) {
-    return <PageLoader fullScreen label="Dang xac thuc phien lam viec..." />;
+    return <PageLoader fullScreen label="Loading..." />;
   }
 
   if (!isAuthenticated) {

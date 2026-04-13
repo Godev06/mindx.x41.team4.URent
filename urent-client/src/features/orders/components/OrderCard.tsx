@@ -1,5 +1,4 @@
 import { Clock } from "lucide-react";
-import { Badge } from "../../shared/components/Badge";
 import type { Order } from "../../shared/types";
 import { useI18n } from "../../shared/context/LanguageContext";
 
@@ -18,6 +17,14 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
         : order.status === "confirmed"
           ? "yellow"
           : "gray";
+  const statusClass =
+    statusVariant === "green"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+      : statusVariant === "blue"
+        ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300"
+        : statusVariant === "yellow"
+          ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
+          : "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-600/50 dark:bg-slate-700/30 dark:text-slate-300";
 
   return (
     <article
@@ -50,7 +57,9 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
           />
           {lang === "vi" ? "Trả dự kiến" : "Expected return"}: {order.endDate}
         </div>
-        <Badge variant={statusVariant}>
+        <span
+          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-tight ${statusClass}`}
+        >
           {lang === "vi"
             ? order.status === "delivered"
               ? "Đã giao"
@@ -66,7 +75,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
                 : order.status === "confirmed"
                   ? "Confirmed"
                   : "Pending"}
-        </Badge>
+        </span>
       </div>
     </article>
   );

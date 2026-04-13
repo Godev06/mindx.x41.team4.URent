@@ -12,7 +12,6 @@ import {
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ORDERS, PRODUCTS } from "../../shared/data";
-import { Badge } from "../../shared/components/Badge";
 import { useI18n } from "../../shared/context/LanguageContext";
 
 export function OrderDetailPage() {
@@ -163,7 +162,9 @@ export function OrderDetailPage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               {t.statusNow}
             </p>
-            <Badge variant="green">{t.statusBadge}</Badge>
+            <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+              {t.statusBadge}
+            </span>
           </div>
         </div>
       </div>
@@ -355,7 +356,9 @@ export function OrderDetailPage() {
                   )}
                 </div>
                 <div>
-                  <Badge variant="blue">{t.marketplace}</Badge>
+                  <span className="inline-flex items-center rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-teal-700 dark:border-teal-500/30 dark:bg-teal-500/10 dark:text-teal-300">
+                    {t.marketplace}
+                  </span>
                   <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {product.name}
                   </p>

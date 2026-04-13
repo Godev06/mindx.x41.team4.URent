@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from "react";
 import { AppHeader } from "./AppHeader";
 import { AppFooter } from "./AppFooter";
 import { useTheme } from "../../settings/hooks/useTheme";
-import { Badge } from "../../shared/components/Badge";
+import { PageLoader } from "../../shared/components/PageLoader";
 
 export function AppShell() {
   const location = useLocation();
-  const { isThemeTransitioning, theme } = useTheme();
+  const { isThemeTransitioning } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const firstUpdate = useRef(true);
 
@@ -34,23 +34,12 @@ export function AppShell() {
     <div className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-teal-100 selection:text-teal-900">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-teal-100/60 via-white/40 to-transparent dark:from-teal-500/10 dark:via-slate-900/20 dark:to-transparent" />
       <div
-        className={`pointer-events-none fixed inset-x-0 top-6 z-50 flex justify-center transition-all duration-300 ${
-          isThemeTransitioning
-            ? "translate-y-0 opacity-100"
-            : "-translate-y-2 opacity-0"
+        className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-white/35 backdrop-blur-[2px] transition-all duration-300 dark:bg-slate-950/35 ${
+          isThemeTransitioning ? "opacity-100" : "opacity-0"
         }`}
         aria-hidden={!isThemeTransitioning}
       >
-        <div
-          className={`transition-transform duration-300 ${
-            isThemeTransitioning ? "scale-100" : "scale-95"
-          }`}
-        >
-          <Badge variant={theme === "dark" ? "gray" : "blue"}>
-            <span className="mr-2 h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />
-            Dang chuyen giao dien...
-          </Badge>
-        </div>
+        <PageLoader label="Loading..." />
       </div>
       <div
         className={`pointer-events-none absolute inset-x-0 top-0 z-40 h-1 bg-teal-600 transition-transform duration-200 ease-out ${
