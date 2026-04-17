@@ -1,7 +1,6 @@
 import {
   createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -110,10 +109,5 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useI18n(): LanguageContextValue {
-  const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error("useI18n must be used within a LanguageProvider");
-  }
-  return context;
-}
+export type { LanguageContextValue };
+export { LanguageContext };

@@ -82,8 +82,11 @@ export function RegisterPage() {
         description: result.message,
         variant: "success",
       });
-      navigate(APP_ROUTES.registerVerifyOtp, {
-        state: { email: form.email.trim() },
+      navigate(APP_ROUTES.authOtp, {
+        state: {
+          email: form.email.trim(),
+          purpose: "register",
+        },
       });
     } catch (error: unknown) {
       setErrorMessage(normalizeApiError(error).message);

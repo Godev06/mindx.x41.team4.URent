@@ -118,6 +118,8 @@ export function AppHeader() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Close dropdowns when the route changes.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setIsNotifOpen(false);
     setIsProfileOpen(false);
@@ -404,45 +406,6 @@ export function AppHeader() {
 
               {isProfileOpen && (
                 <div className="fixed inset-x-3 top-23 z-40 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:ring-black/40 sm:top-28 lg:absolute lg:inset-x-auto lg:top-auto lg:right-0 lg:z-20 lg:mt-3 lg:w-72 lg:rounded-[1.75rem]">
-                  <div className="border-b border-slate-100 bg-linear-to-br from-cyan-50 via-white to-teal-50 px-4 py-4 dark:border-white/10 dark:from-cyan-500/10 dark:via-[#101a2a] dark:to-teal-500/10">
-                    <div className="flex items-start gap-3">
-                      {user?.avatarUrl ? (
-                        <img
-                          src={user.avatarUrl}
-                          alt={displayName}
-                          className="h-11 w-11 shrink-0 rounded-2xl object-cover ring-2 ring-white/70 dark:ring-white/10"
-                        />
-                      ) : (
-                        <div
-                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-inner ${colorClass}`}
-                        >
-                          {initials}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-base font-semibold text-slate-900 dark:text-white lg:text-sm">
-                          {t.profilePanelTitle}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400 lg:text-xs lg:leading-5">
-                          {t.profilePanelSubtitle}
-                        </p>
-                        <div className="mt-3 rounded-2xl bg-white/80 px-3 py-2 ring-1 ring-slate-200/70 dark:bg-white/5 dark:ring-white/10">
-                          <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-                            {displayName}
-                          </p>
-                          <div className="mt-1 flex items-center justify-between gap-2">
-                            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
-                              {user?.email ?? ""}
-                            </p>
-                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                              {t.profileStatus}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="space-y-2.5 p-3 lg:space-y-2 lg:p-2.5">
                     {profileMenuItems.map((item) => {
                       const Icon = item.icon;
@@ -681,14 +644,7 @@ export function AppSidebar() {
 
         {isProfileOpen && (
           <div className="absolute bottom-12 left-0 z-50 w-48 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg ring-1 ring-slate-900/5 dark:border-slate-700 dark:bg-slate-800 dark:ring-white/4">
-            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-700">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {displayName}
-              </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {user?.email ?? ""}
-              </p>
-            </div>
+            <div className="border-b border-slate-100 px-4 py-3 dark:border-slate-700"></div>
             {profileMenuItems.map((item) => {
               const Icon = item.icon;
               return (

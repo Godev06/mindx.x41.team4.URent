@@ -13,19 +13,17 @@ export interface RegisterPayload {
   password: string;
 }
 
-export interface VerifyRegisterOtpPayload {
+export type OtpPurpose = "register" | "login" | "reset password";
+
+export interface VerifyOtpPayload {
   email: string;
   otp: string;
+  purpose: OtpPurpose;
 }
 
 export interface LoginPayload {
   email: string;
   password: string;
-}
-
-export interface VerifyLoginOtpPayload {
-  email: string;
-  otp: string;
 }
 
 export interface ForgotPasswordPayload {
@@ -46,6 +44,7 @@ export interface ProfileUpdatePayload {
 
 export interface MutationResult {
   message: string;
+  requiresTwoFactor?: boolean;
 }
 
 export interface AuthSession {
@@ -65,11 +64,8 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   isInitializing: boolean;
   login: (payload: LoginPayload) => Promise<AuthSession | MutationResult>;
-  verifyLoginOtp: (payload: VerifyLoginOtpPayload) => Promise<AuthSession>;
+  verifyOtp: (payload: VerifyOtpPayload) => Promise<AuthSession | MutationResult>;
   register: (payload: RegisterPayload) => Promise<MutationResult>;
-  verifyRegisterOtp: (
-    payload: VerifyRegisterOtpPayload,
-  ) => Promise<AuthSession | MutationResult>;
   forgotPassword: (payload: ForgotPasswordPayload) => Promise<MutationResult>;
   resetPassword: (payload: ResetPasswordPayload) => Promise<MutationResult>;
   refreshCurrentUser: () => Promise<AuthUser | null>;

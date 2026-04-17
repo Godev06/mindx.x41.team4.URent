@@ -1,5 +1,9 @@
 import { apiClient } from "../../../lib/api/apiClient";
 import {
+  ApiError,
+  normalizeApiError,
+} from "../../../lib/api/apiError";
+import {
   mapAuthSession,
   mapAuthUser,
   mapMutationResult,
@@ -12,11 +16,15 @@ import type {
   MutationResult,
   RegisterPayload,
   ResetPasswordPayload,
-  VerifyLoginOtpPayload,
-  VerifyRegisterOtpPayload,
+  VerifyOtpPayload,
   AuthSession,
   AuthUser,
 } from "../types";
+
+const shouldFallbackToLegacyOtpEndpoint = (error: unknown) => {
+  const apiError = normalizeApiError(error);
+  return apiError.statusCode === 404 || apiError.statusCode === 405;
+};
 
 export const authService = {
   async checkHealth(): Promise<HealthStatus> {
@@ -35,20 +43,6 @@ export const authService = {
     return mapMutationResult(response.data, "Da gui OTP dang ky den email cua ban.");
   },
 
-  async verifyRegisterOtp(
-    payload: VerifyRegisterOtpPayload,
-  ): Promise<AuthSession | MutationResult> {
-    const response = await apiClient.post<unknown>(
-      "/api/auth/register/verify-otp",
-      payload,
-    );
-
-    return (
-      mapAuthSession(response.data, "Dang ky thanh cong.") ??
-      mapMutationResult(response.data, "Dang ky thanh cong. Vui long dang nhap.")
-    );
-  },
-
   async login(payload: LoginPayload): Promise<AuthSession | MutationResult> {
     const response = await apiClient.post<unknown>("/api/auth/login", payload);
     return (
@@ -60,18 +54,35 @@ export const authService = {
     );
   },
 
-  async verifyLoginOtp(payload: VerifyLoginOtpPayload): Promise<AuthSession> {
-    const response = await apiClient.post<unknown>(
-      "/api/auth/login/verify-otp",
-      payload,
-    );
+  async verifyOtp(payload: VerifyOtpPayload): Promise<AuthSession | MutationResult> {
+    try {
+      const response = await apiClient.post<unknown>("/api/auth/verify-otp", payload);
+      return (
+        mapAuthSession(response.data, "Dang nhap thanh cong.") ??
+        mapMutationResult(response.data, "Xac minh OTP thanh cong.")
+      );
+    } catch (error: unknown) {
+      if (
+        shouldFallbackToLegacyOtpEndpoint(error) &&
+        (payload.purpose === "register" || payload.purpose === "login")
+      ) {
+        const legacyPath =
+          payload.purpose === "register"
+            ? "/api/auth/register/verify-otp"
+            : "/api/auth/login/verify-otp";
+        const legacyResponse = await apiClient.post<unknown>(legacyPath, {
+          email: payload.email,
+          otp: payload.otp,
+        });
 
-    const session = mapAuthSession(response.data, "Dang nhap thanh cong.");
-    if (!session) {
-      throw new Error("Phan hoi dang nhap khong chua token hop le.");
+        return (
+          mapAuthSession(legacyResponse.data, "Dang nhap thanh cong.") ??
+          mapMutationResult(legacyResponse.data, "Xac minh OTP thanh cong.")
+        );
+      }
+
+      throw error instanceof ApiError ? error : normalizeApiError(error);
     }
-
-    return session;
   },
 
   async forgotPassword(payload: ForgotPasswordPayload): Promise<MutationResult> {
@@ -83,12 +94,12 @@ export const authService = {
   },
 
   async resetPassword(payload: ResetPasswordPayload): Promise<MutationResult> {
-    const { otp, ...rest } = payload;
     const response = await apiClient.post<unknown>(
       "/api/auth/reset-password",
       {
-        ...rest,
-        token: otp,
+        email: payload.email,
+        otp: payload.otp,
+        newPassword: payload.newPassword,
       },
     );
     return mapMutationResult(response.data, "Dat lai mat khau thanh cong.");

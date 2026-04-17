@@ -5,6 +5,8 @@ import {
   login,
   register,
   resetPassword,
+  verifyAuthOtp,
+  verifyLoginOtp,
   verifyRegisterOtp
 } from '../controllers/auth.controller';
 import { authGuard } from '../middlewares/auth.middleware';
@@ -14,7 +16,8 @@ import {
   loginSchema,
   otpSchema,
   registerSchema,
-  resetPasswordSchema
+  resetPasswordSchema,
+  verifyOtpSchema
 } from '../validators/auth.validator';
 
 export const authRouter = Router();
@@ -22,6 +25,8 @@ export const authRouter = Router();
 authRouter.post('/register', validateBody(registerSchema), register);
 authRouter.post('/register/verify-otp', validateBody(otpSchema), verifyRegisterOtp);
 authRouter.post('/login', validateBody(loginSchema), login);
+authRouter.post('/login/verify-otp', validateBody(otpSchema), verifyLoginOtp);
+authRouter.post('/verify-otp', validateBody(verifyOtpSchema), verifyAuthOtp);
 authRouter.post('/forgot-password', validateBody(forgotPasswordSchema), forgotPassword);
 authRouter.post('/reset-password', validateBody(resetPasswordSchema), resetPassword);
 authRouter.get('/me', authGuard, getMe);

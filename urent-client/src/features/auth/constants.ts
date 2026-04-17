@@ -8,9 +8,8 @@ export const API_REQUEST_TIMEOUT = 15000;
 export const APP_ROUTES = {
   home: "/",
   login: "/login",
-  loginVerifyOtp: "/login/verify-otp",
+  authOtp: "/auth/verify-otp",
   register: "/register",
-  registerVerifyOtp: "/register/verify-otp",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   profile: "/profile",

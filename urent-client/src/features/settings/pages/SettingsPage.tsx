@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   BellRing,
@@ -12,6 +12,9 @@ import { ACTIVITY_LOGS } from "../../shared/data";
 import { useTheme } from "../hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { PageLoader } from "../../shared/components/PageLoader";
+import { useToast } from "../../shared/hooks/useToast";
+import { normalizeApiError } from "../../../lib/api/apiError";
+import { settingsService } from "../services/settingsService";
 
 function SettingSwitch({
   checked,
@@ -53,9 +56,69 @@ export function SettingsPage() {
     setScreenNotifications,
   } = useTheme();
   const { t, setLang, lang, isLanguageTransitioning } = useI18n();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<
     "security" | "activity" | "preferences"
   >("security");
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [isLoadingTwoFactor, setIsLoadingTwoFactor] = useState(true);
+  const [isSavingTwoFactor, setIsSavingTwoFactor] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSettings = async () => {
+      try {
+        const settings = await settingsService.getSettings();
+        if (isMounted) {
+          setTwoFactorEnabled(settings.twoFactorEnabled);
+        }
+      } catch (error: unknown) {
+        if (isMounted) {
+          showToast({
+            title: t.settingsTwoFactor,
+            description:
+              normalizeApiError(error).message || t.settingsTwoFactorLoadError,
+            variant: "error",
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingTwoFactor(false);
+        }
+      }
+    };
+
+    void loadSettings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [showToast, t.settingsTwoFactor, t.settingsTwoFactorLoadError]);
+
+  const handleTwoFactorChange = async (enabled: boolean) => {
+    setIsSavingTwoFactor(true);
+
+    try {
+      const settings = await settingsService.updateTwoFactorEnabled(enabled);
+      setTwoFactorEnabled(settings.twoFactorEnabled);
+      showToast({
+        title: t.settingsTwoFactorUpdated,
+        description: settings.twoFactorEnabled
+          ? t.settingsTwoFactorEnabled
+          : t.settingsTwoFactorDisabled,
+        variant: "success",
+      });
+    } catch (error: unknown) {
+      showToast({
+        title: t.settingsTwoFactor,
+        description: normalizeApiError(error).message,
+        variant: "error",
+      });
+    } finally {
+      setIsSavingTwoFactor(false);
+    }
+  };
 
   const tabs = [
     {
@@ -250,13 +313,16 @@ export function SettingsPage() {
                         </p>
                       </div>
                       <SettingSwitch
-                        checked={false}
-                        onChange={() => undefined}
+                        checked={twoFactorEnabled}
+                        onChange={handleTwoFactorChange}
+                        disabled={isLoadingTwoFactor || isSavingTwoFactor}
                       />
                     </div>
 
                     <div className="mt-4 inline-flex items-center rounded-full border border-teal-200/70 bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 dark:border-teal-500/20 dark:bg-teal-500/10 dark:text-teal-300">
-                      {t.settingsSecurity2FAHint}
+                      {twoFactorEnabled
+                        ? t.settingsTwoFactorEnabled
+                        : t.settingsSecurity2FAHint}
                     </div>
                   </div>
                 </div>

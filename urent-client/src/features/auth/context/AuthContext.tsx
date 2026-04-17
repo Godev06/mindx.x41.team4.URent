@@ -15,10 +15,10 @@ import type {
   LoginPayload,
   MutationResult,
   RegisterPayload,
-  VerifyLoginOtpPayload,
-  VerifyRegisterOtpPayload,
   ForgotPasswordPayload,
+  OtpPurpose,
   ResetPasswordPayload,
+  VerifyOtpPayload,
 } from "../types";
 import {
   clearStoredAuthToken,
@@ -96,6 +96,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
   }, []);
 
+  const clearPendingEmailByPurpose = useCallback((purpose: OtpPurpose) => {
+    if (purpose === "login") {
+      authFlowStorage.clearPendingLoginEmail();
+      return;
+    }
+
+    if (purpose === "register") {
+      authFlowStorage.clearPendingRegisterEmail();
+      return;
+    }
+
+    authFlowStorage.clearPendingResetEmail();
+  }, []);
+
   useEffect(() => {
     if (!token) {
       setIsInitializing(false);
@@ -143,26 +157,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
         authFlowStorage.setPendingLoginEmail(payload.email);
         return result;
       },
-      verifyLoginOtp: async (
-        payload: VerifyLoginOtpPayload,
-      ): Promise<AuthSession> => {
-        const session = await authService.verifyLoginOtp(payload);
-        const hydratedSession = await hydrateUserFromSession(session);
-        authFlowStorage.clearPendingLoginEmail();
-        setToken(hydratedSession.token);
-        setUser(hydratedSession.user);
-        return hydratedSession;
-      },
-      register: async (payload: RegisterPayload): Promise<MutationResult> => {
-        const result = await authService.register(payload);
-        authFlowStorage.setPendingRegisterEmail(payload.email);
-        return result;
-      },
-      verifyRegisterOtp: async (
-        payload: VerifyRegisterOtpPayload,
+      verifyOtp: async (
+        payload: VerifyOtpPayload,
       ): Promise<AuthSession | MutationResult> => {
-        const result = await authService.verifyRegisterOtp(payload);
-        authFlowStorage.clearPendingRegisterEmail();
+        const result = await authService.verifyOtp(payload);
+        clearPendingEmailByPurpose(payload.purpose);
+
+        if (payload.purpose === "login" && !("token" in result)) {
+          throw new Error("Phan hoi dang nhap khong chua token hop le.");
+        }
 
         if ("token" in result) {
           const hydratedSession = await hydrateUserFromSession(result);
@@ -171,6 +174,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
           return hydratedSession;
         }
 
+        return result;
+      },
+      register: async (payload: RegisterPayload): Promise<MutationResult> => {
+        const result = await authService.register(payload);
+        authFlowStorage.setPendingRegisterEmail(payload.email);
         return result;
       },
       forgotPassword: async (
@@ -193,7 +201,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       },
       logout,
     };
-  }, [isInitializing, logout, refreshCurrentUser, token, user]);
+  }, [
+    clearPendingEmailByPurpose,
+    isInitializing,
+    logout,
+    refreshCurrentUser,
+    token,
+    user,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

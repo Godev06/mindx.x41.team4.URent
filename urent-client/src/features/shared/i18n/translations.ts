@@ -12,7 +12,17 @@ export const translations = {
     // common
     emailLabel: "Email",
     otpLabel: "Mã OTP",
-    otpPlaceholder: "Nhập 6 ký tự OTP",
+    otpPlaceholder: "Nhập 6 chữ số OTP",
+    otpBackButton: "Quay lại",
+    otpResendNow: "Gửi lại mã",
+    otpResendSubmitting: "Đang gửi lại...",
+    otpResendCountdownPrefix: "Gửi lại sau",
+    otpVerifySubmit: "Xác minh OTP",
+    otpVerifySubmitting: "Đang xác minh...",
+    otpRegisterVerifyFail: "Invalid or expired OTP",
+    otpLoginVerifyFail: "Invalid or expired login OTP",
+    otpResetVerifyFail: "Invalid or expired reset OTP",
+    otpRegisterSuccessToast: "Email verified successfully",
     loadingSession: "Đang tải thông tin phiên làm việc...",
     loadingTransition: "Đang tải giao diện...",
 
@@ -54,6 +64,10 @@ export const translations = {
     settingsSecurity2FADesc:
       "Thêm một bước xác minh trước khi đăng nhập hoặc thực hiện tác vụ nhạy cảm.",
     settingsSecurity2FAHint: "Khuyến nghị bật để bảo vệ tốt hơn.",
+    settingsTwoFactorEnabled: "Đang bật",
+    settingsTwoFactorDisabled: "Đang tắt",
+    settingsTwoFactorUpdated: "Đã cập nhật xác thực hai bước",
+    settingsTwoFactorLoadError: "Không tải được trạng thái xác thực hai bước.",
     settingsActivityTitle: "Hoạt động gần đây",
     settingsActivityDesc: "Xem lịch sử hoạt động và đăng nhập.",
     settingsCurrent: "Hiện tại",
@@ -85,6 +99,7 @@ export const translations = {
     loginSuccessToast: "Đăng nhập thành công",
     loginErrorFallback:
       "Đăng nhập chưa hoàn tất, vui lòng kiểm tra backend.",
+    loginTwoFactorToastTitle: "Cần xác minh bổ sung",
 
     // register
     registerTitle: "Tạo tài khoản miễn phí",
@@ -119,7 +134,7 @@ export const translations = {
     forgotSubmitting: "Đang gửi OTP...",
     forgotRemember: "Nhớ mật khẩu rồi?",
     forgotBackLogin: "Quay lại đăng nhập",
-    forgotSuccessToast: "Đã gửi OTP đặt lại mật khẩu",
+    forgotSuccessToast: "Reset password OTP sent to your email",
 
     // reset password
     resetTitle: "Đặt lại mật khẩu",
@@ -156,6 +171,12 @@ export const translations = {
     verifyLoginSubmitting: "Đang xác minh...",
     verifyLoginSuccessToast: "Đăng nhập thành công",
 
+    // verify reset otp
+    verifyResetTitle: "Xác minh OTP đặt lại mật khẩu",
+    verifyResetDesc:
+      "Nhập mã OTP 6 chữ số đã gửi đến email của bạn để tiếp tục đặt lại mật khẩu.",
+    verifyResetBack: "Quay lại quên mật khẩu",
+
     // footer
     footerWorkspace: "Workspace",
     footerDescription:
@@ -190,6 +211,16 @@ export const translations = {
     emailLabel: "Email",
     otpLabel: "OTP Code",
     otpPlaceholder: "Enter 6-digit OTP",
+    otpBackButton: "Back",
+    otpResendNow: "Resend code",
+    otpResendSubmitting: "Resending...",
+    otpResendCountdownPrefix: "Resend in",
+    otpVerifySubmit: "Verify OTP",
+    otpVerifySubmitting: "Verifying...",
+    otpRegisterVerifyFail: "Invalid or expired OTP",
+    otpLoginVerifyFail: "Invalid or expired login OTP",
+    otpResetVerifyFail: "Invalid or expired reset OTP",
+    otpRegisterSuccessToast: "Email verified successfully",
     loadingSession: "Loading session information...",
     loadingTransition: "Loading interface...",
 
@@ -231,6 +262,10 @@ export const translations = {
     settingsSecurity2FADesc:
       "Require an extra verification step before sign-in or sensitive actions.",
     settingsSecurity2FAHint: "Recommended for stronger protection.",
+    settingsTwoFactorEnabled: "Enabled",
+    settingsTwoFactorDisabled: "Disabled",
+    settingsTwoFactorUpdated: "Two-factor authentication updated",
+    settingsTwoFactorLoadError: "Unable to load two-factor status.",
     settingsActivityTitle: "Recent Activity",
     settingsActivityDesc: "View your activity and sign-in history.",
     settingsCurrent: "Current",
@@ -261,6 +296,7 @@ export const translations = {
     loginForgot: "Forgot password?",
     loginSuccessToast: "Signed in successfully",
     loginErrorFallback: "Login incomplete, please check the backend.",
+    loginTwoFactorToastTitle: "Additional verification required",
 
     // register
     registerTitle: "Create a free account",
@@ -295,7 +331,7 @@ export const translations = {
     forgotSubmitting: "Sending OTP...",
     forgotRemember: "Remembered your password?",
     forgotBackLogin: "Back to sign in",
-    forgotSuccessToast: "Password reset OTP sent",
+    forgotSuccessToast: "Reset password OTP sent to your email",
 
     // reset password
     resetTitle: "Reset password",
@@ -331,6 +367,12 @@ export const translations = {
     verifyLoginSubmit: "Complete sign-in",
     verifyLoginSubmitting: "Verifying...",
     verifyLoginSuccessToast: "Signed in successfully",
+
+    // verify reset otp
+    verifyResetTitle: "Verify reset OTP",
+    verifyResetDesc:
+      "Enter the 6-digit OTP sent to your email to continue password reset.",
+    verifyResetBack: "Back to forgot password",
 
     // footer
     footerWorkspace: "Workspace",

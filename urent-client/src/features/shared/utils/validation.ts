@@ -13,8 +13,8 @@ export const validatePassword = (value: string) => {
 };
 
 export const validateOtp = (value: string) => {
-  if (value.trim().length !== 6) {
-    return "OTP phai gom dung 6 ky tu.";
+  if (!/^\d{6}$/.test(value.trim())) {
+    return "OTP phai gom dung 6 chu so.";
   }
 
   return "";

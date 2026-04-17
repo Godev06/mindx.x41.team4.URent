@@ -117,7 +117,15 @@ export const mapMutationResult = (
   value: unknown,
   fallback: string,
 ): MutationResult => {
-  return { message: extractMessage(value, fallback) };
+  const record = getRecord(unwrapApiData(value)) ?? getRecord(value);
+
+  return {
+    message: extractMessage(value, fallback),
+    requiresTwoFactor:
+      typeof record?.requiresTwoFactor === "boolean"
+        ? record.requiresTwoFactor
+        : undefined,
+  };
 };
 
 export const mapAuthSession = (

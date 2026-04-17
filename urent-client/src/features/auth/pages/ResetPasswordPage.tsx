@@ -1,15 +1,11 @@
 import { useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { APP_ROUTES } from "../constants";
 import { AuthLayout } from "../components/AuthLayout";
 import { AlertMessage } from "../../shared/components/AlertMessage";
 import { useAuth } from "../hooks/useAuth";
 import { useToast } from "../../shared/hooks/useToast";
-import {
-  validateEmail,
-  validateOtp,
-  validatePassword,
-} from "../../shared/utils/validation";
+import { validateEmail, validatePassword } from "../../shared/utils/validation";
 import { authFlowStorage } from "../utils/flowStorage";
 import { normalizeApiError } from "../../../lib/api/apiError";
 import { authUi } from "../styles";
@@ -22,12 +18,15 @@ export function ResetPasswordPage() {
   const { showToast } = useToast();
   const { t } = useI18n();
   const initialEmail = useMemo(() => {
-    const state = location.state as { email?: string } | null;
+    const state = location.state as { email?: string; otp?: string } | null;
     return state?.email ?? authFlowStorage.getPendingResetEmail();
+  }, [location.state]);
+  const verifiedOtp = useMemo(() => {
+    const state = location.state as { email?: string; otp?: string } | null;
+    return state?.otp?.trim() ?? "";
   }, [location.state]);
   const [form, setForm] = useState({
     email: initialEmail,
-    otp: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -37,11 +36,10 @@ export function ResetPasswordPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const emailError = validateEmail(form.email);
-    const otpError = validateOtp(form.otp);
     const passwordError = validatePassword(form.newPassword);
 
-    if (emailError || otpError || passwordError) {
-      setErrorMessage(emailError || otpError || passwordError);
+    if (emailError || passwordError) {
+      setErrorMessage(emailError || passwordError);
       return;
     }
 
@@ -56,7 +54,7 @@ export function ResetPasswordPage() {
     try {
       const result = await resetPassword({
         email: form.email.trim(),
-        otp: form.otp.trim(),
+        otp: verifiedOtp,
         newPassword: form.newPassword,
       });
 
@@ -75,6 +73,10 @@ export function ResetPasswordPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (!verifiedOtp) {
+    return <Navigate to={APP_ROUTES.forgotPassword} replace />;
+  }
 
   return (
     <AuthLayout
@@ -101,20 +103,6 @@ export function ResetPasswordPage() {
               setForm((current) => ({ ...current, email: event.target.value }))
             }
             placeholder="you@example.com"
-          />
-        </label>
-        <label className={authUi.label}>
-          {t.otpLabel}
-          <input
-            className={authUi.input}
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            value={form.otp}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, otp: event.target.value }))
-            }
-            placeholder={t.otpPlaceholder}
           />
         </label>
         <label className={authUi.label}>

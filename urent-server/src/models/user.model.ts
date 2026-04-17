@@ -6,6 +6,8 @@ export interface UserDocument extends mongoose.Document {
   isEmailVerified: boolean;
   otpCode?: string;
   otpExpiresAt?: Date;
+  loginOtpCode?: string;
+  loginOtpExpiresAt?: Date;
   resetToken?: string;
   resetTokenExpiresAt?: Date;
   displayName?: string;
@@ -21,6 +23,8 @@ const userSchema = new Schema<UserDocument>(
     isEmailVerified: { type: Boolean, default: false },
     otpCode: { type: String },
     otpExpiresAt: { type: Date },
+    loginOtpCode: { type: String },
+    loginOtpExpiresAt: { type: Date },
     resetToken: { type: String },
     resetTokenExpiresAt: { type: Date },
     displayName: { type: String, trim: true },

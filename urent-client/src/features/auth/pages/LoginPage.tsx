@@ -61,6 +61,23 @@ export function LoginPage() {
         return;
       }
 
+      if (result.requiresTwoFactor) {
+        showToast({
+          title: t.loginTwoFactorToastTitle,
+          description: result.message,
+          variant: "info",
+        });
+        navigate(APP_ROUTES.authOtp, {
+          replace: true,
+          state: {
+            email: form.email.trim(),
+            purpose: "login",
+            from: redirectTarget,
+          },
+        });
+        return;
+      }
+
       setErrorMessage(result.message || t.loginErrorFallback);
     } catch (error: unknown) {
       setErrorMessage(normalizeApiError(error).message);

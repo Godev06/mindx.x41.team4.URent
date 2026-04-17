@@ -4,7 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "./features/settings/context/ThemeContext";
 import { ToastProvider } from "./features/shared/components/ToastProvider";
 import { AuthProvider } from "./features/auth/context/AuthContext";
-import { LanguageProvider } from "./features/shared/context/LanguageContext";
+import { LanguageProvider } from "./features/shared/context/LanguageContext.ts";
 import "./index.css";
 import App from "./App.tsx";
 
