@@ -14,29 +14,18 @@ export function InventoryRow({ item, onDelete, onEdit }: InventoryRowProps) {
     item.status === "In Stock"
       ? "green"
       : item.status === "Low Stock"
-      ? "yellow"
-      : "gray";
+        ? "yellow"
+        : "gray";
 
   const statusClass =
     statusVariant === "green"
       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
       : statusVariant === "yellow"
-      ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-      : "border-slate-600/50 bg-slate-700/30 text-slate-300";
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+        : "border-slate-600/50 bg-slate-700/30 text-slate-300";
 
   return (
     <div className="group flex items-center gap-4 px-4 py-3 rounded-xl border border-transparent dark:border-slate-700/50 transition-all hover:bg-slate-800/60 hover:border-slate-600">
-
-      {/* IMAGE */}
-      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-800 ring-1 ring-slate-700">
-        <img
-          src={item.image || "https://via.placeholder.com/150"}
-          alt={item.name}
-          className="h-full w-full object-cover"
-        />
-      </div>
-
-      {/* INFO */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           <h4 className="text-sm font-semibold text-white truncate">
@@ -52,14 +41,12 @@ export function InventoryRow({ item, onDelete, onEdit }: InventoryRowProps) {
 
         <p className="text-xs text-slate-400 mt-0.5">
           {item.category} • {lang === "vi" ? "Số lượng" : "Quantity"}:{" "}
-          <span className="text-slate-200 font-medium">
-            {item.quantity}
-          </span>
+          <span className="text-slate-200 font-medium">{item.quantity}</span>
         </p>
       </div>
 
-      {/* 🔥 PRICE FIX */}
-      <div className="text-right">
+      {/* PRICE */}
+      <div className="text-right min-w-[80px]">
         <div className="text-sm font-semibold text-white whitespace-nowrap">
           ${item.price}
           <span className="text-xs text-slate-400 font-normal ml-1">
@@ -68,10 +55,9 @@ export function InventoryRow({ item, onDelete, onEdit }: InventoryRowProps) {
         </div>
       </div>
 
-      {/* ACTION */}
       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition">
         <button
-          onClick={onEdit}
+          onClick={() => onEdit?.()}
           className="text-xs px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
         >
           {lang === "vi" ? "Sửa" : "Edit"}
