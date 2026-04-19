@@ -1,10 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '../utils/jwt';
+import { sendError } from '../utils/api-response';
 
 export const authGuard = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return sendError(res, { code: 'UNAUTHORIZED', message: 'Unauthorized' }, 401);
   }
 
   try {
@@ -12,6 +13,6 @@ export const authGuard = (req: Request, res: Response, next: NextFunction) => {
     req.user = verifyToken(token);
     return next();
   } catch {
-    return res.status(401).json({ message: 'Unauthorized' });
+    return sendError(res, { code: 'UNAUTHORIZED', message: 'Unauthorized' }, 401);
   }
 };

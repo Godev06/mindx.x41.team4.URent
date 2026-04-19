@@ -1,17 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Package, X, Send } from "lucide-react";
-import { PRODUCTS } from "../../shared/data";
+import { messageService } from "../services/messageService";
+import type { ApiProduct } from "../types";
 
 interface ProductPickerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectProduct: (product: {
-    id: number;
-    name: string;
-    price: number;
-    image: string;
-    category: string;
-  }) => void;
+  onSelectProduct: (product: ApiProduct) => void;
 }
 
 export function ProductPicker({
@@ -19,7 +14,56 @@ export function ProductPicker({
   onClose,
   onSelectProduct,
 }: ProductPickerProps) {
-  const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null,
+  );
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
+
+    messageService
+      .getProducts({ limit: 50, q: searchTerm || undefined })
+      .then((response) => {
+        if (!cancelled) {
+          setProducts(response.data);
+          setSelectedProductId((currentValue) =>
+            response.data.some((product) => product.id === currentValue)
+              ? currentValue
+              : null,
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setProducts([]);
+          setError("Không thể tải danh sách sản phẩm.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, searchTerm]);
+
+  const selectedProduct = useMemo(
+    () => products.find((product) => product.id === selectedProductId) ?? null,
+    [products, selectedProductId],
+  );
 
   if (!isOpen) return null;
 
@@ -39,71 +83,85 @@ export function ProductPicker({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(event) => setSearchTerm(event.target.value)}
+          placeholder="Tìm sản phẩm..."
+          className="mb-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-500"
+        />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {PRODUCTS.map((product) => (
-            <button
-              key={product.id}
-              onClick={() => setSelectedProduct(product.id)}
-              className={`p-3 rounded-lg border-2 transition text-left ${
-                selectedProduct === product.id
-                  ? "border-teal-600 bg-teal-50"
-                  : "border-slate-200 hover:border-teal-300 hover:bg-slate-50"
-              }`}
-            >
-              <div className="flex gap-2">
-                <div className="text-2xl">{product.image}</div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 text-sm truncate">
-                    {product.name}
-                  </p>
-                  <p className="text-xs text-slate-500">{product.category}</p>
-                  <p className="text-sm font-semibold text-teal-600 mt-1">
-                    ${product.price}/ngày
-                  </p>
-                  {product.rating && (
-                    <p className="text-xs text-amber-600">
-                      ⭐ {product.rating} ({product.reviews} reviews)
-                    </p>
+          {isLoading ? (
+            <div className="col-span-full py-8 text-center text-sm text-slate-500">
+              Đang tải sản phẩm...
+            </div>
+          ) : error ? (
+            <div className="col-span-full rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-center text-sm text-rose-700">
+              {error}
+            </div>
+          ) : products.length === 0 ? (
+            <div className="col-span-full py-8 text-center text-sm text-slate-500">
+              Không có sản phẩm phù hợp
+            </div>
+          ) : (
+            products.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => setSelectedProductId(product.id)}
+                className={`p-3 rounded-lg border-2 transition text-left ${
+                  selectedProductId === product.id
+                    ? "border-teal-600 bg-teal-50"
+                    : "border-slate-200 hover:border-teal-300 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex gap-2">
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="h-12 w-12 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="text-2xl">{product.image}</div>
                   )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 text-sm truncate">
+                      {product.name}
+                    </p>
+                    <p className="text-xs text-slate-500">{product.category}</p>
+                    <p className="text-sm font-semibold text-teal-600 mt-1">
+                      ${product.price}/day
+                    </p>
+                    {product.rating && (
+                      <p className="text-xs text-amber-600">
+                        ⭐ {product.rating} ({product.reviews} reviews)
+                      </p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
       <div className="border-t border-slate-200 p-4">
         {selectedProduct ? (
           <div>
-            {(() => {
-              const product = PRODUCTS.find((p) => p.id === selectedProduct);
-              return product ? (
-                <div>
-                  <p className="text-sm text-slate-600 mb-2">
-                    Sản phẩm đã chọn:
-                  </p>
-                  <p className="text-sm font-medium text-slate-900 mb-3">
-                    {product.name} - ${product.price}/ngày
-                  </p>
-                  <button
-                    onClick={() => {
-                      onSelectProduct({
-                        id: product.id,
-                        name: product.name,
-                        price: product.price,
-                        image: product.image,
-                        category: product.category,
-                      });
-                      onClose();
-                    }}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-3 text-white hover:bg-teal-700 transition"
-                  >
-                    <Send size={16} />
-                    Gửi sản phẩm
-                  </button>
-                </div>
-              ) : null;
-            })()}
+            <p className="text-sm text-slate-600 mb-2">Sản phẩm đã chọn:</p>
+            <p className="text-sm font-medium text-slate-900 mb-3">
+              {selectedProduct.name} - ${selectedProduct.price}/ngày
+            </p>
+            <button
+              onClick={() => {
+                onSelectProduct(selectedProduct);
+                onClose();
+              }}
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-teal-600 px-4 py-3 text-white hover:bg-teal-700 transition"
+            >
+              <Send size={16} />
+              Gửi sản phẩm
+            </button>
           </div>
         ) : (
           <p className="text-center text-slate-500 py-4">

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ZodError, ZodType } from 'zod';
+import { sendError } from '../utils/api-response';
 
 export const validateBody = <T>(schema: ZodType<T>) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -8,16 +9,21 @@ export const validateBody = <T>(schema: ZodType<T>) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Validation failed',
-          errors: error.issues.map((issue) => ({
-            field: issue.path.join('.'),
-            message: issue.message
-          }))
-        });
+        return sendError(
+          res,
+          {
+            code: 'VALIDATION_ERROR',
+            message: 'Validation failed',
+            details: error.issues.map((issue) => ({
+              field: issue.path.join('.'),
+              message: issue.message
+            }))
+          },
+          400
+        );
       }
 
-      return res.status(400).json({ message: 'Invalid payload' });
+      return sendError(res, { code: 'VALIDATION_ERROR', message: 'Invalid payload' }, 400);
     }
   };
 };

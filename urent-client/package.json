@@ -7,8 +7,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "vite",
-    "dev:host": "vite --host",
+    "dev": "vite --port 5173 --strictPort",
+    "dev:auto": "vite",
+    "dev:strict": "vite --port 5173 --strictPort",
+    "dev:host": "vite --host --port 5173 --strictPort",
     "typecheck": "tsc -b --pretty false",
     "build": "tsc -b && vite build",
     "build:vercel": "npm run build",
@@ -23,7 +25,8 @@
     "lucide-react": "^1.7.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-router-dom": "^7.14.0"
+    "react-router-dom": "^7.14.0",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

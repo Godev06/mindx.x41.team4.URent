@@ -55,6 +55,25 @@ npm install
 npm run dev
 ```
 
+### Chay on dinh mot lenh (khuyen nghi)
+
+Dung mot terminal duy nhat cho frontend, sau do chay:
+
+```bash
+npm run dev:strict
+```
+
+Lenh nay khoa cung port `5173`, tranh tinh trang nhay port lien tuc khi co nhieu Vite process cu.
+
+Neu gap loi port dang duoc su dung, dung PowerShell de don process cu roi chay lai:
+
+```powershell
+Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue |
+  Select-Object -ExpandProperty OwningProcess -Unique |
+  ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
+npm run dev:strict
+```
+
 ## Auth architecture
 
 - Axios client chung co timeout, request interceptor gan `Authorization: Bearer <token>` tu `localStorage` key `auth_token`.

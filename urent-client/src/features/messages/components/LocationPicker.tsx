@@ -109,7 +109,7 @@ export function LocationPicker({
                     </div>
                     <ChevronRight
                       size={16}
-                      className="text-slate-400 flex-shrink-0"
+                      className="shrink-0 text-slate-400"
                     />
                   </div>
                 </button>

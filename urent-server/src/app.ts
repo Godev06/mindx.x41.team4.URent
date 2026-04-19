@@ -4,7 +4,9 @@ import rateLimit from 'express-rate-limit';
 import { env } from './config/env';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { authRouter } from './routes/auth.route';
+import { messageRouter } from './routes/message.route';
 import { profileRouter } from './routes/profile.route';
+import { productRouter } from './routes/product.route';
 import { settingsRouter } from './routes/settings.route';
 
 export const app = express();
@@ -28,4 +30,6 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRouter);
 app.use('/api/profile', profileRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/v1', productRouter);
+app.use('/api/v1', messageRouter);
 app.use(errorMiddleware);
