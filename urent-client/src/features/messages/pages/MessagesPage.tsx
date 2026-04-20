@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AtSign, MessageSquare, Search, UserPlus } from "lucide-react";
 import { normalizeApiError } from "../../../lib/api/apiError";
@@ -113,34 +113,79 @@ export function MessagesPage() {
   const [isResolvingPeer, setIsResolvingPeer] = useState(false);
   const [resolvePeerError, setResolvePeerError] = useState<string | null>(null);
   const [supportsPeerLookup, setSupportsPeerLookup] = useState(true);
+  const joinedConversationIdsRef = useRef<Set<string>>(new Set());
 
-  // Join/leave socket room when conversation changes
+  // Keep selected conversation state in sync with sidebar badge state.
   useEffect(() => {
-    if (!conversationId || !socket) return;
-
-    const joinCurrentConversation = () => {
-      joinConversation(conversationId, () => {
-        setRealtimeError(t.realtimeError);
-      });
-    };
-
+    if (!conversationId) return;
     setRealtimeError(null);
-    joinCurrentConversation();
-    socket.on("connect", joinCurrentConversation);
     resetUnread(conversationId);
+  }, [conversationId, resetUnread]);
 
-    return () => {
-      socket.off("connect", joinCurrentConversation);
-      leaveConversation(conversationId);
-    };
+  // Subscribe socket rooms for all conversations so chat list receives realtime updates.
+  useEffect(() => {
+    if (!socket) return;
+
+    const joinedIds = joinedConversationIdsRef.current;
+    const desiredIds = new Set(conversations.map((conversation) => conversation.id));
+
+    desiredIds.forEach((id) => {
+      if (joinedIds.has(id)) return;
+
+      joinConversation(id, () => {
+        if (id === conversationId) {
+          setRealtimeError(t.realtimeError);
+        }
+      });
+      joinedIds.add(id);
+    });
+
+    Array.from(joinedIds).forEach((id) => {
+      if (desiredIds.has(id)) return;
+      leaveConversation(id);
+      joinedIds.delete(id);
+    });
   }, [
+    socket,
+    conversations,
     conversationId,
     joinConversation,
     leaveConversation,
-    resetUnread,
-    socket,
     t.realtimeError,
   ]);
+
+  // Rejoin all tracked conversation rooms when socket reconnects.
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReconnect = () => {
+      joinedConversationIdsRef.current.forEach((id) => {
+        joinConversation(id, () => {
+          if (id === conversationId) {
+            setRealtimeError(t.realtimeError);
+          }
+        });
+      });
+    };
+
+    socket.on("connect", handleReconnect);
+
+    return () => {
+      socket.off("connect", handleReconnect);
+    };
+  }, [socket, joinConversation, conversationId, t.realtimeError]);
+
+  // Leave all joined rooms when socket instance is disposed.
+  useEffect(() => {
+    if (!socket) return;
+
+    return () => {
+      joinedConversationIdsRef.current.forEach((id) => {
+        leaveConversation(id);
+      });
+      joinedConversationIdsRef.current.clear();
+    };
+  }, [socket, leaveConversation]);
 
   // Listen to socket events
   useEffect(() => {
