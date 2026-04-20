@@ -127,7 +127,9 @@ export function MessagesPage() {
     if (!socket) return;
 
     const joinedIds = joinedConversationIdsRef.current;
-    const desiredIds = new Set(conversations.map((conversation) => conversation.id));
+    const desiredIds = new Set(
+      conversations.map((conversation) => conversation.id),
+    );
 
     desiredIds.forEach((id) => {
       if (joinedIds.has(id)) return;
