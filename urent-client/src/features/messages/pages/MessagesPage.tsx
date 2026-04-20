@@ -133,7 +133,14 @@ export function MessagesPage() {
       socket.off("connect", joinCurrentConversation);
       leaveConversation(conversationId);
     };
-  }, [conversationId, joinConversation, leaveConversation, resetUnread, socket, t.realtimeError]);
+  }, [
+    conversationId,
+    joinConversation,
+    leaveConversation,
+    resetUnread,
+    socket,
+    t.realtimeError,
+  ]);
 
   // Listen to socket events
   useEffect(() => {
