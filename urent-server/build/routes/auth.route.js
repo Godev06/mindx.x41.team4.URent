@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.authRouter = void 0;
+const express_1 = require("express");
+const auth_controller_1 = require("../controllers/auth.controller");
+const auth_middleware_1 = require("../middlewares/auth.middleware");
+const validate_middleware_1 = require("../middlewares/validate.middleware");
+const auth_validator_1 = require("../validators/auth.validator");
+exports.authRouter = (0, express_1.Router)();
+exports.authRouter.post('/register', (0, validate_middleware_1.validateBody)(auth_validator_1.registerSchema), auth_controller_1.register);
+exports.authRouter.post('/register/verify-otp', (0, validate_middleware_1.validateBody)(auth_validator_1.otpSchema), auth_controller_1.verifyRegisterOtp);
+exports.authRouter.post('/login', (0, validate_middleware_1.validateBody)(auth_validator_1.loginSchema), auth_controller_1.login);
+exports.authRouter.post('/forgot-password', (0, validate_middleware_1.validateBody)(auth_validator_1.forgotPasswordSchema), auth_controller_1.forgotPassword);
+exports.authRouter.post('/reset-password', (0, validate_middleware_1.validateBody)(auth_validator_1.resetPasswordSchema), auth_controller_1.resetPassword);
+exports.authRouter.get('/me', auth_middleware_1.authGuard, auth_controller_1.getMe);
