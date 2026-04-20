@@ -102,7 +102,7 @@ export function MessagesPage() {
     error: searchError,
   } = useMessageSearch(conversationId, searchTerm);
 
-  const { socketRef, joinConversation, leaveConversation } = useSocket();
+  const { socket, joinConversation, leaveConversation } = useSocket();
   const [isCreatingByEmail, setIsCreatingByEmail] = useState(false);
   const [createByEmailError, setCreateByEmailError] = useState<string | null>(
     null,
@@ -116,21 +116,27 @@ export function MessagesPage() {
 
   // Join/leave socket room when conversation changes
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !socket) return;
+
+    const joinCurrentConversation = () => {
+      joinConversation(conversationId, () => {
+        setRealtimeError(t.realtimeError);
+      });
+    };
+
     setRealtimeError(null);
-    joinConversation(conversationId, (code) => {
-      setRealtimeError(code === "UNKNOWN" ? t.realtimeError : t.realtimeError);
-    });
+    joinCurrentConversation();
+    socket.on("connect", joinCurrentConversation);
     resetUnread(conversationId);
+
     return () => {
+      socket.off("connect", joinCurrentConversation);
       leaveConversation(conversationId);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId]);
+  }, [conversationId, joinConversation, leaveConversation, resetUnread, socket, t.realtimeError]);
 
   // Listen to socket events
   useEffect(() => {
-    const socket = socketRef.current;
     if (!socket) return;
 
     const handleMessageCreated = ({
@@ -177,12 +183,14 @@ export function MessagesPage() {
       socket.off("conversation.message.created", handleMessageCreated);
       socket.off("conversation.read.updated", handleReadUpdated);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    socketRef.current,
     conversationId,
     markConversationAsRead,
     resetUnread,
+    socket,
+    incrementUnread,
+    prependMessage,
+    updateLastMessage,
     user?.id,
   ]);
 
