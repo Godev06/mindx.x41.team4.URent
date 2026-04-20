@@ -28,6 +28,7 @@ export function ChatListItem({
   const [draftMessage, setDraftMessage] = useState<string>(() => {
     return localStorage.getItem(`message_draft_${conversation.id}`) || "";
   });
+  const [, setNowTick] = useState(() => Date.now());
 
   const otherParticipant = conversation.participants[0];
   const baseDisplayName =
@@ -79,6 +80,16 @@ export function ChatListItem({
       );
     };
   }, [conversation.id]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setNowTick(Date.now());
+    }, 60000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const handleClick = () => {
     onSelect(conversation.id);
