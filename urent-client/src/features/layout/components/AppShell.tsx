@@ -5,6 +5,7 @@ import { AppFooter } from "./AppFooter";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { PageLoader } from "../../shared/components/PageLoader";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { APP_ROUTES } from "../../auth/constants";
 
 export function AppShell() {
   const location = useLocation();
@@ -12,6 +13,7 @@ export function AppShell() {
   const { t, isLanguageTransitioning } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const firstUpdate = useRef(true);
+  const shouldShowFooter = location.pathname === APP_ROUTES.home;
 
   useEffect(() => {
     if (firstUpdate.current) {
@@ -66,7 +68,7 @@ export function AppShell() {
             <Outlet />
           </div>
         </div>
-        <AppFooter />
+        {shouldShowFooter ? <AppFooter /> : null}
       </main>
       <MobileBottomNav />
     </div>
