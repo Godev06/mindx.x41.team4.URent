@@ -207,7 +207,7 @@ export function AppHeader() {
             type="button"
             onClick={() => navigate(APP_ROUTES.home)}
             aria-label={t.homeAria}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-900/30"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-teal-500 to-cyan-300 shadow-lg shadow-teal-900/30"
           >
             <img
               src="/urent.png"
@@ -362,7 +362,7 @@ export function AppHeader() {
 
             <button
               type="button"
-              className={`hidden rounded-xl p-2 transition lg:inline-flex ${
+              className={`rounded-xl p-2 transition ${
                 isSettingsPage
                   ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"

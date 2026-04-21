@@ -150,14 +150,15 @@ export function SettingsPage() {
   return (
     <div className="space-y-5">
       <section
-        className={`${shellClass} ${shellTone} relative overflow-hidden px-4 py-5 sm:px-6 sm:py-6`}
+        className={`relative hidden overflow-hidden px-5 py-6 sm:block sm:px-6 sm:py-6 ${shellClass} ${shellTone}`}
       >
-        <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-teal-500/12 blur-3xl" />
-        <div className="absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-teal-400/40 to-transparent" />
+        <div className="absolute -right-14 -top-14 h-36 w-36 rounded-full bg-teal-500/10 blur-3xl" />
+        <div className="absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-sky-500/10 blur-3xl" />
 
-        <div className="relative flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-700 dark:text-teal-300">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-white/70 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-teal-700 shadow-sm ring-1 ring-white/60 backdrop-blur-sm dark:bg-teal-500/10 dark:text-teal-300 dark:ring-white/10">
               <ShieldCheck size={14} />
               Settings Hub
             </div>
@@ -166,41 +167,43 @@ export function SettingsPage() {
             >
               {t.settingsPageTitle}
             </h1>
-            <p className={`mt-2 max-w-xl text-sm leading-6 ${mutedText}`}>
+            <p
+              className={`mt-2 max-w-xl text-sm leading-6 sm:text-[15px] ${mutedText}`}
+            >
               {t.settingsPageDesc}
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3 xl:min-w-md">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/75 px-4 py-3 ring-1 ring-slate-900/5 dark:border-slate-700/70 dark:bg-slate-900/55 dark:ring-white/8">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 backdrop-blur-sm dark:border-slate-700/70 dark:bg-slate-900/55 dark:ring-white/8">
               <p
                 className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${mutedText}`}
               >
                 {t.settingsAppearanceMode}
               </p>
-              <p className={`mt-2 text-sm font-semibold ${strongText}`}>
+              <p className={`mt-2 text-base font-semibold ${strongText}`}>
                 {theme === "dark" ? t.settingsDark : t.settingsLight}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200/70 bg-white/75 px-4 py-3 ring-1 ring-slate-900/5 dark:border-slate-700/70 dark:bg-slate-900/55 dark:ring-white/8">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 backdrop-blur-sm dark:border-slate-700/70 dark:bg-slate-900/55 dark:ring-white/8">
               <p
                 className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${mutedText}`}
               >
                 {t.settingsLanguage}
               </p>
               <p
-                className={`mt-2 text-sm font-semibold uppercase ${strongText}`}
+                className={`mt-2 text-base font-semibold uppercase ${strongText}`}
               >
                 {lang}
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-200/70 bg-white/75 px-4 py-3 ring-1 ring-slate-900/5 dark:border-slate-700/70 dark:bg-slate-900/55 dark:ring-white/8">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3.5 shadow-sm ring-1 ring-slate-900/5 backdrop-blur-sm dark:border-slate-700/70 dark:bg-slate-900/55 dark:ring-white/8">
               <p
                 className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${mutedText}`}
               >
                 {t.settingsEmailNotifications}
               </p>
-              <p className={`mt-2 text-sm font-semibold ${strongText}`}>
+              <p className={`mt-2 text-base font-semibold ${strongText}`}>
                 {emailNotifications ? "ON" : "OFF"}
               </p>
             </div>
