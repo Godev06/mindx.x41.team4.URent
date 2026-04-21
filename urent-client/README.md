@@ -55,6 +55,24 @@ npm install
 npm run dev
 ```
 
+## Deploy Render (Static Site)
+
+Neu deploy bang Render, can rewrite tat ca URL ve `index.html` vi app dang dung SPA routing.
+
+Repository da duoc bo sung file `render.yaml` voi:
+
+- Build command: `npm ci && npm run build`
+- Publish directory: `dist`
+- Rewrite rule: `/* -> /index.html`
+
+Sau khi tao service tren Render, dat Environment Variable:
+
+```env
+VITE_API_BASE_URL=https://<backend-domain-cua-ban>
+```
+
+Neu khong set bien nay, frontend co the fallback ve `http://localhost:5003` va gay loi URL khi deploy production.
+
 ### Chay on dinh mot lenh (khuyen nghi)
 
 Dung mot terminal duy nhat cho frontend, sau do chay:
