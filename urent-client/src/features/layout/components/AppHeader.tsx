@@ -14,7 +14,12 @@ import { useAuth } from "../../auth/hooks/useAuth";
 import { SidebarItem } from "../../shared/components/SidebarItem";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { getAvatarStyle } from "../../shared/utils/avatar";
-import { MAIN_NAV_ITEMS } from "../constants/navItems";
+import {
+  getNavLabel,
+  MAIN_NAV_ITEMS,
+  NAV_PATHS,
+  supportsHeaderSearch,
+} from "../constants/navItems";
 
 interface ProfileMenuItem {
   label: string;
@@ -125,13 +130,6 @@ export function AppHeader() {
     setIsProfileOpen(false);
   }, [pathname]);
 
-  const navLabelMap: Record<string, string> = {
-    "/": t.home,
-    "/orders": t.orders,
-    "/inventory": t.inventory,
-    "/messages": t.messages,
-  };
-
   const profileMenuItems: ProfileMenuItem[] = [
     {
       label: t.profile,
@@ -145,7 +143,7 @@ export function AppHeader() {
       label: t.settingsAria,
       icon: Settings,
       onClick: () => {
-        navigate("/settings");
+        navigate(NAV_PATHS.settings);
         setIsProfileOpen(false);
       },
     },
@@ -153,7 +151,7 @@ export function AppHeader() {
       label: t.myOrders,
       icon: ShoppingCart,
       onClick: () => {
-        navigate("/orders");
+        navigate(NAV_PATHS.orders);
         setIsProfileOpen(false);
       },
     },
@@ -170,17 +168,15 @@ export function AppHeader() {
 
   const displayName = user?.displayName ?? user?.email ?? t.userFallback;
   const { initials, colorClass } = getAvatarStyle(displayName);
-  const isSettingsPage = pathname.startsWith("/settings");
-  const isNotificationsPage = pathname.startsWith("/notifications");
-  const supportsSearch = ["/", "/orders", "/inventory"].some((p) =>
-    p === "/" ? pathname === "/" : pathname.startsWith(p),
-  );
+  const isSettingsPage = pathname.startsWith(NAV_PATHS.settings);
+  const isNotificationsPage = pathname.startsWith(NAV_PATHS.notifications);
+  const supportsSearch = supportsHeaderSearch(pathname);
   const unreadCount = t.notifItems.length;
   const handleNotificationClick = () => {
     if (window.matchMedia("(max-width: 1023px)").matches) {
       setIsNotifOpen(false);
       setIsProfileOpen(false);
-      navigate("/notifications");
+      navigate(NAV_PATHS.notifications);
       return;
     }
 
@@ -254,16 +250,21 @@ export function AppHeader() {
                 <button
                   key={item.path}
                   type="button"
-                  onClick={() => navigate(item.path)}
+                  onClick={() => {
+                    if (pathname !== item.path) {
+                      navigate(item.path);
+                    }
+                  }}
                   className={`flex items-center gap-2 rounded-full px-3.5 py-2 transition-all duration-200 lg:px-4.5 ${
                     isActive
                       ? "bg-teal-600 font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900"
                       : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
                   }`}
+                  aria-current={isActive ? "page" : undefined}
                 >
                   <Icon size={18} strokeWidth={2} />
                   <span className="hidden text-sm xl:block">
-                    {navLabelMap[item.path] ?? item.label}
+                    {getNavLabel(item.path, lang) ?? item.label}
                   </span>
                 </button>
               );
@@ -350,7 +351,7 @@ export function AppHeader() {
                       className="flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
                       onClick={() => {
                         setIsNotifOpen(false);
-                        navigate("/notifications");
+                        navigate(NAV_PATHS.notifications);
                       }}
                     >
                       {t.viewAll}
@@ -368,7 +369,7 @@ export function AppHeader() {
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
               }`}
               aria-label={t.settingsAria}
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate(NAV_PATHS.settings)}
             >
               <Settings size={20} strokeWidth={2} />
             </button>
@@ -466,21 +467,6 @@ export function MobileBottomNav() {
   const { pathname } = useLocation();
   const { lang } = useI18n();
 
-  const navLabelMap: Record<string, string> =
-    lang === "vi"
-      ? {
-          "/": "Trang chủ",
-          "/orders": "Đơn hàng",
-          "/inventory": "Kho",
-          "/messages": "Tin nhắn",
-        }
-      : {
-          "/": "Home",
-          "/orders": "Orders",
-          "/inventory": "Inventory",
-          "/messages": "Messages",
-        };
-
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(env(safe-area-inset-bottom)+0.625rem)] lg:hidden">
       <div className="mx-auto max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_-8px_32px_-18px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1220]/92 dark:shadow-[0_-12px_36px_-22px_rgba(2,8,23,0.95)]">
@@ -493,7 +479,11 @@ export function MobileBottomNav() {
               <button
                 key={item.path}
                 type="button"
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  if (pathname !== item.path) {
+                    navigate(item.path);
+                  }
+                }}
                 className={`flex min-h-15 flex-col items-center justify-center gap-1 rounded-[1.1rem] px-1.5 py-2 text-center transition-all duration-200 ${
                   isActive
                     ? "bg-teal-600 text-white shadow-lg shadow-teal-900/20 dark:bg-white dark:text-slate-900"
@@ -503,7 +493,7 @@ export function MobileBottomNav() {
               >
                 <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
                 <span className="text-[11px] font-semibold leading-none tracking-tight">
-                  {navLabelMap[item.path] ?? item.label}
+                  {getNavLabel(item.path, lang) ?? item.label}
                 </span>
               </button>
             );
@@ -549,13 +539,6 @@ export function AppSidebar() {
           profileMenuAria: "Profile menu",
         };
 
-  const navLabelMap: Record<string, string> = {
-    "/": t.home,
-    "/orders": t.orders,
-    "/inventory": t.inventory,
-    "/messages": t.messages,
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -583,7 +566,7 @@ export function AppSidebar() {
       label: t.settings,
       icon: Settings,
       onClick: () => {
-        navigate("/settings");
+        navigate(NAV_PATHS.settings);
         setIsProfileOpen(false);
       },
     },
@@ -591,7 +574,7 @@ export function AppSidebar() {
       label: t.myOrders,
       icon: ShoppingCart,
       onClick: () => {
-        navigate("/orders");
+        navigate(NAV_PATHS.orders);
         setIsProfileOpen(false);
       },
     },
@@ -625,9 +608,13 @@ export function AppSidebar() {
           <SidebarItem
             key={item.path}
             icon={item.icon}
-            label={navLabelMap[item.path] ?? item.label}
+            label={getNavLabel(item.path, lang) ?? item.label}
             active={item.isActive(pathname)}
-            onClick={() => navigate(item.path)}
+            onClick={() => {
+              if (pathname !== item.path) {
+                navigate(item.path);
+              }
+            }}
           />
         ))}
       </nav>

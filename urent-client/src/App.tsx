@@ -23,6 +23,7 @@ import { RegisterPage } from "./features/auth/pages/RegisterPage";
 import { ResetPasswordPage } from "./features/auth/pages/ResetPasswordPage";
 import { VerifyOtpPage } from "./features/auth/pages/VerifyOtpPage";
 import { APP_ROUTES } from "./features/auth/constants";
+import { NAV_PATHS } from "./features/layout/constants/navItems";
 
 function ProductRoute() {
   const { id } = useParams();
@@ -30,7 +31,12 @@ function ProductRoute() {
   const parsedId = Number(id);
   const safeId = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 1;
 
-  return <ProductDetailPage productId={safeId} onBack={() => navigate("/")} />;
+  return (
+    <ProductDetailPage
+      productId={safeId}
+      onBack={() => navigate(APP_ROUTES.home)}
+    />
+  );
 }
 
 export default function App() {
@@ -61,13 +67,22 @@ export default function App() {
             path={APP_ROUTES.home}
             element={<HomePage onProductClick={handleProductClick} />}
           />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
-          <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/messages" element={<MessagesPage />} />
-          <Route path="/messages/:id" element={<MessagesPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
+          <Route path={NAV_PATHS.orders} element={<OrdersPage />} />
+          <Route
+            path={`${NAV_PATHS.orders}/:orderId`}
+            element={<OrderDetailPage />}
+          />
+          <Route path={NAV_PATHS.inventory} element={<InventoryPage />} />
+          <Route path={NAV_PATHS.messages} element={<MessagesPage />} />
+          <Route
+            path={`${NAV_PATHS.messages}/:id`}
+            element={<MessagesPage />}
+          />
+          <Route
+            path={NAV_PATHS.notifications}
+            element={<NotificationsPage />}
+          />
+          <Route path={NAV_PATHS.settings} element={<SettingsPage />} />
           <Route path={APP_ROUTES.profile} element={<ProfilePage />} />
           <Route path="/product/:id" element={<ProductRoute />} />
         </Route>
