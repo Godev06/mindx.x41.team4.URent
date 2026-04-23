@@ -1,5 +1,5 @@
-import { Response } from 'express';
-import { ApiErrorPayload } from './app-error';
+import { type Response } from 'express';
+import { type ApiErrorPayload } from './app-error';
 
 export interface ApiMeta {
   cursor?: string | null;

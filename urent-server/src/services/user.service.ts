@@ -1,8 +1,8 @@
 import { env } from '../config/env';
-import { UserDocument, UserModel } from '../models/user.model';
+import { type UserDocument, UserModel } from '../models/user.model';
 import { hashPassword } from '../utils/hash';
 import { generateOtp } from '../utils/otp';
-import { OtpPurpose, sendOtpEmail } from './email.service';
+import { type OtpPurpose, sendOtpEmail } from './email.service';
 
 const otpExpiry = () => new Date(Date.now() + env.otpExpiresMinutes * 60 * 1000);
 const resetExpiry = () => new Date(Date.now() + env.resetTokenExpiresMinutes * 60 * 1000);

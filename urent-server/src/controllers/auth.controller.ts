@@ -1,10 +1,10 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import { SettingsModel } from '../models/settings.model';
 import { UserModel } from '../models/user.model';
 import { comparePassword, hashPassword } from '../utils/hash';
 import { signToken } from '../utils/jwt';
 import { createUserWithOtp, issueLoginOtp, issueResetToken, verifyOtp, verifyResetOtp } from '../services/user.service';
-import { OtpPurpose } from '../services/email.service';
+import { type OtpPurpose } from '../services/email.service';
 import { createActivityOnly } from '../services/activity-notification.service';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();

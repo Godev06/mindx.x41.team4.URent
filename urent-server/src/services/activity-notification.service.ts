@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { ActivityLogDocument, ActivityLogModel } from '../models/activity-log.model';
-import { NotificationDocument, NotificationModel } from '../models/notification.model';
+import { type ActivityLogDocument, ActivityLogModel } from '../models/activity-log.model';
+import { type NotificationDocument, NotificationModel } from '../models/notification.model';
 
 interface CreateLinkedActivityNotificationInput {
   userId?: string;

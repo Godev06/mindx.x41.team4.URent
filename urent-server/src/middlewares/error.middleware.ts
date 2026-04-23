@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { type NextFunction, type Request, type Response } from 'express';
 import { ZodError } from 'zod';
 import { sendError } from '../utils/api-response';
 import { isAppError } from '../utils/app-error';

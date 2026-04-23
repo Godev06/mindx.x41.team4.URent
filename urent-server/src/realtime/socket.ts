@@ -1,4 +1,4 @@
-import http from 'http';
+import type http from 'http';
 import { Server } from 'socket.io';
 import { env } from '../config/env';
 import { getConversationAccessState } from '../services/message.service';
@@ -91,7 +91,7 @@ export const initRealtime = (server: http.Server) => {
         return;
       }
 
-      socket.join(roomForConversation(conversationId));
+      await socket.join(roomForConversation(conversationId));
       ack?.({ success: true, data: { conversationId } });
     });
 
@@ -103,7 +103,7 @@ export const initRealtime = (server: http.Server) => {
         return;
       }
 
-      socket.leave(roomForConversation(conversationId));
+      void socket.leave(roomForConversation(conversationId));
       ack?.({ success: true, data: { conversationId } });
     });
   });

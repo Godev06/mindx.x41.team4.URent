@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import { sendSuccess } from '../utils/api-response';
 import { listProductsQuerySchema } from '../validators/product.validator';
 import { listProducts } from '../services/product.service';
