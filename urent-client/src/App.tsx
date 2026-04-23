@@ -21,7 +21,8 @@ import { ForgotPasswordPage } from "./features/auth/pages/ForgotPasswordPage";
 import { LoginPage } from "./features/auth/pages/LoginPage";
 import { RegisterPage } from "./features/auth/pages/RegisterPage";
 import { ResetPasswordPage } from "./features/auth/pages/ResetPasswordPage";
-import { VerifyOtpPage } from "./features/auth/pages/VerifyOtpPage";
+import { VerifyLoginOtpPage } from "./features/auth/pages/VerifyLoginOtpPage";
+import { VerifyRegisterOtpPage } from "./features/auth/pages/VerifyRegisterOtpPage";
 import { APP_ROUTES } from "./features/auth/constants";
 
 function ProductRoute() {
@@ -44,7 +45,14 @@ export default function App() {
       <Route element={<PublicOnlyRoute />}>
         <Route path={APP_ROUTES.login} element={<LoginPage />} />
         <Route path={APP_ROUTES.register} element={<RegisterPage />} />
-        <Route path={APP_ROUTES.authOtp} element={<VerifyOtpPage />} />
+        <Route
+          path={APP_ROUTES.loginVerifyOtp}
+          element={<VerifyLoginOtpPage />}
+        />
+        <Route
+          path={APP_ROUTES.registerVerifyOtp}
+          element={<VerifyRegisterOtpPage />}
+        />
         <Route
           path={APP_ROUTES.forgotPassword}
           element={<ForgotPasswordPage />}

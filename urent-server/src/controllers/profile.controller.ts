@@ -1,7 +1,7 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import { UserModel } from '../models/user.model';
 import { deleteImage, uploadImage } from '../services/cloudinary.service';
-import { UpdateProfileInput } from '../validators/profile.validator';
+import { type UpdateProfileInput } from '../validators/profile.validator';
 import { createActivityOnly } from '../services/activity-notification.service';
 
 // Fields excluded from all profile responses

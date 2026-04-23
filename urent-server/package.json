@@ -9,7 +9,11 @@
     "dev": "tsx watch src/server.ts",
     "dev:once": "tsx src/server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "check": "npm run typecheck",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "check": "npm run typecheck && npm run lint && npm run format:check",
     "build": "tsc",
     "build:vercel": "npm run typecheck && npm run build",
     "vercel-build": "npm run build:vercel",
@@ -37,7 +41,6 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@vercel/node": "^5.3.25",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -46,6 +49,12 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^25.5.2",
     "@types/nodemailer": "^8.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.0",
+    "@typescript-eslint/parser": "^8.59.0",
+    "@vercel/node": "^5.3.25",
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.3",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   }

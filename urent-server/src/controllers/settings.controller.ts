@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import { createActivityOnly } from '../services/activity-notification.service';
 import { SettingsModel } from '../models/settings.model';
 

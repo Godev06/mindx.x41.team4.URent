@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { ConversationModel } from '../models/conversation.model';
 import { ConversationParticipantModel } from '../models/conversation-participant.model';
-import { MessageModel, MessageLocationMetadata, MessageProductMetadata } from '../models/message.model';
+import { MessageModel, type MessageLocationMetadata, type MessageProductMetadata } from '../models/message.model';
 import { ProductModel } from '../models/product.model';
 import { UserModel } from '../models/user.model';
 import { AppError } from '../utils/app-error';
@@ -414,7 +414,7 @@ export const sendConversationMessage = async (
   await ensureConversationAccess(conversationId, userId);
 
   let metadata: MessageProductMetadata | MessageLocationMetadata | Record<string, unknown> | undefined;
-  let content = payload.content?.trim() || undefined;
+  const content = payload.content?.trim() || undefined;
 
   if (payload.messageType === 'TEXT') {
     if (!content) {
