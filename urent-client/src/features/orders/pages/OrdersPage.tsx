@@ -1,6 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { ORDERS } from "../../shared/data";
+import { ORDERS } from "../../dataset/orders";
+import { PRODUCTS } from "../../dataset/products";
 import { OrderCard } from "../components/OrderCard";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
@@ -113,28 +114,32 @@ export function OrdersPage() {
       </div>
 
       <section className="space-y-4">
-        {ORDERS.map((order) => (
-          <div key={order.id} className="space-y-2">
-            <OrderCard
-              order={order}
-              onClick={() =>
-                navigate(`/orders/${encodeURIComponent(order.id)}`)
-              }
-            />
-            <div className="flex justify-end">
-              <button
-                type="button"
+        {ORDERS.map((order) => {
+          const product = PRODUCTS.find((p) => p.name === order.productName);
+          return (
+            <div key={order.id} className="space-y-2">
+              <OrderCard
+                order={order}
+                imageUrl={product?.imageUrl}
                 onClick={() =>
                   navigate(`/orders/${encodeURIComponent(order.id)}`)
                 }
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500"
-              >
-                {t.viewDetail}
-                <ChevronRight size={14} />
-              </button>
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/orders/${encodeURIComponent(order.id)}`)
+                  }
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500"
+                >
+                  {t.viewDetail}
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </section>
     </div>
   );

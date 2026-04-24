@@ -4,10 +4,11 @@ import { useI18n } from "../../shared/context/LanguageContext";
 
 interface OrderCardProps {
   order: Order;
+  imageUrl?: string;
   onClick?: () => void;
 }
 
-export function OrderCard({ order, onClick }: OrderCardProps) {
+export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
   const { lang } = useI18n();
   const statusVariant =
     order.status === "delivered"
@@ -32,7 +33,15 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
       className={`flex gap-5 rounded-2xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-800 p-5 shadow-sm ring-1 ring-slate-900/4 dark:ring-white/4 transition-shadow hover:shadow-md ${onClick ? "cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-600" : ""}`}
     >
       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-linear-to-br from-slate-100 dark:from-slate-700 to-slate-50 dark:to-slate-600 ring-1 ring-slate-200/80 dark:ring-slate-600/80">
-        <span className="text-4xl">{order.image}</span>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={order.productName}
+            className="object-cover w-full h-full"
+          />
+        ) : (
+          <span className="text-4xl">{order.image}</span>
+        )}
       </div>
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-start justify-between gap-2">
