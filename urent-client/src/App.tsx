@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import { HomePage } from "./features/home/pages/HomePage";
 import { ProductListingPage } from "./features/home/pages/ProductListingPage";
-import { InventoryPage } from "./features/inventory/pages/InventoryPage";
+import InventoryPage from "./features/inventory/pages/InventoryPage";
 import { OrderDetailPage } from "./features/orders/pages/OrderDetailPage";
 import { OrdersPage } from "./features/orders/pages/OrdersPage";
 import { MessagesPage } from "./features/messages/pages/MessagesPage";
@@ -15,6 +15,7 @@ import { NotificationsPage } from "./features/notifications/pages/NotificationsP
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
 import { ProfilePage } from "./features/profile/pages/ProfilePage";
 import { ProductDetailPage } from "./features/product/pages/ProductDetailPage";
+import CreateProductPage from "./features/product/pages/CreateProductPage";
 import { AppShell } from "./features/layout/components/AppShell";
 import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
 import { PublicOnlyRoute } from "./features/auth/components/PublicOnlyRoute";
@@ -74,6 +75,7 @@ export default function App() {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/products/create" element={<CreateProductPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/messages/:id" element={<MessagesPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />

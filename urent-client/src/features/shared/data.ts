@@ -1,15 +1,5 @@
 import _ from "lodash";
-import type {
-  Chat,
-  Product,
-  Order,
-  Notification,
-  InventoryItem,
-  ActivityLog,
-  UserProfile,
-  Message,
-} from "./types";
-
+import type { Product, Order, Chat, Message, Notification, InventoryItem, ActivityLog, UserProfile } from "./types";
 export const PRODUCTS: Product[] = [
   {
     id: 1,
@@ -18,19 +8,12 @@ export const PRODUCTS: Product[] = [
     price: 45,
     status: "Available",
     image: "📷",
-    imageUrl:
-      "https://images.pexels.com/photos/65538/pexels-photo-65538.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrl: "https://images.pexels.com/photos/65538/pexels-photo-65538.jpeg?auto=compress&cs=tinysrgb&w=800",
     rating: 4.9,
     reviews: 124,
-    owner: { name: "Alex Chen", avatar: "👨‍💻", rating: 5.0, trips: 48 },
-    description:
-      "Sony Alpha a7 IV la may anh hybrid toi uu, ket hop hoan hao giua chat luong hinh anh tinh 33MP va kha nang quay video 4K 60p chuyen nghiep. Phu hop cho ca chup anh su kien va quay vlog.",
-    specs: [
-      "Cam bien Full-frame Exmor R 33MP",
-      "Lay net theo mat thoi gian thuc",
-      "Chong rung 5 truc",
-      "ISO 50 - 204,800",
-    ],
+    owner: { name: "Alex Chen", avatar: "https://randomuser.me/api/portraits/men/32.jpg", rating: 5.0, trips: 48 },
+    description: "Sony Alpha a7 IV là máy ảnh hybrid tối ưu, kết hợp hoàn hảo giữa chất lượng hình ảnh tĩnh 33MP và khả năng quay video 4K 60p chuyên nghiệp.",
+    specs: ["Full-frame Exmor R 33MP", "Lấy nét theo mắt", "Chống rung 5 trục", "ISO 50 - 204,800"],
   },
   {
     id: 2,
@@ -39,24 +22,26 @@ export const PRODUCTS: Product[] = [
     price: 65,
     status: "Active",
     image: "💻",
-    imageUrl:
-      "https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800",
+    imageUrl: "https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=800",
     rating: 4.8,
     reviews: 89,
-    owner: { name: "Sarah Miller", avatar: "👩‍💼", rating: 4.9, trips: 32 },
+    owner: { name: "Sarah Miller", avatar: "https://randomuser.me/api/portraits/women/44.jpg", rating: 4.9, trips: 32 },
+    description: "MacBook Pro M2 mạnh mẽ, màn hình 14 inch, pin lâu, phù hợp cho công việc sáng tạo.",
+    specs: ["Apple M2", "14 inch Retina", "16GB RAM", "SSD 512GB"],
   },
   {
     id: 3,
     name: "Canon EOS R5",
     category: "Camera",
     price: 120,
-    status: "Completed",
+    status: "Available",
     image: "📸",
-    imageUrl:
-      "https://images.pexels.com/photos/51383/photo-camera-subject-photographer-51383.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrl: "https://images.pexels.com/photos/51383/photo-camera-subject-photographer-51383.jpeg?auto=compress&cs=tinysrgb&w=800",
     rating: 4.7,
     reviews: 156,
-    owner: { name: "Marcus Chen", avatar: "👨‍🔧", rating: 5.0, trips: 61 },
+    owner: { name: "Marcus Chen", avatar: "https://randomuser.me/api/portraits/men/45.jpg", rating: 5.0, trips: 61 },
+    description: "Canon EOS R5 - máy ảnh flagship cho nhiếp ảnh gia chuyên nghiệp.",
+    specs: ["CMOS 45MP", "8K Video", "IBIS", "Dual Pixel AF"],
   },
   {
     id: 4,
@@ -65,11 +50,12 @@ export const PRODUCTS: Product[] = [
     price: 15,
     status: "Available",
     image: "⛺",
-    imageUrl:
-      "https://images.pexels.com/photos/618848/pexels-photo-618848.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrl: "https://images.pexels.com/photos/618848/pexels-photo-618848.jpeg?auto=compress&cs=tinysrgb&w=800",
     rating: 4.6,
     reviews: 45,
-    owner: { name: "Elena Rodriguez", avatar: "👩‍🎨", rating: 4.8, trips: 28 },
+    owner: { name: "Elena Rodriguez", avatar: "https://randomuser.me/api/portraits/women/68.jpg", rating: 4.8, trips: 28 },
+    description: "Lều 4 người, chống nước, dễ dựng, phù hợp cho dã ngoại.",
+    specs: ["Chống nước", "Dễ dựng", "4 người"],
   },
   {
     id: 5,
@@ -78,11 +64,12 @@ export const PRODUCTS: Product[] = [
     price: 5,
     status: "Available",
     image: "📚",
-    imageUrl:
-      "https://images.pexels.com/photos/46274/pexels-photo-46274.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrl: "https://images.pexels.com/photos/46274/pexels-photo-46274.jpeg?auto=compress&cs=tinysrgb&w=800",
     rating: 4.9,
     reviews: 234,
-    owner: { name: "James Wilson", avatar: "👨‍📚", rating: 5.0, trips: 15 },
+    owner: { name: "James Wilson", avatar: "https://randomuser.me/api/portraits/men/12.jpg", rating: 5.0, trips: 15 },
+    description: "Bộ sách Tolkien đầy đủ, bìa cứng, dành cho fan fantasy.",
+    specs: ["The Hobbit", "LOTR", "Silmarillion"],
   },
   {
     id: 6,
@@ -91,51 +78,31 @@ export const PRODUCTS: Product[] = [
     price: 85,
     status: "Available",
     image: "🚁",
-    imageUrl:
-      "https://images.pexels.com/photos/3952637/pexels-photo-3952637.jpeg?auto=compress&cs=tinysrgb&w=800",
+    imageUrl: "https://images.pexels.com/photos/3952637/pexels-photo-3952637.jpeg?auto=compress&cs=tinysrgb&w=800",
     rating: 4.8,
     reviews: 167,
-    owner: { name: "David Lee", avatar: "👨‍💼", rating: 4.9, trips: 42 },
+    owner: { name: "David Lee", avatar: "https://randomuser.me/api/portraits/men/77.jpg", rating: 4.9, trips: 42 },
+    description: "Flycam DJI Air 3, quay 4K, pin lâu, điều khiển thông minh.",
+    specs: ["4K Video", "Pin 34 phút", "GPS"],
   },
-  {
-    id: 4,
-    name: "4-Person Tent",
-    category: "Outdoor",
-    price: 15,
-    status: "Available",
-    image: "⛺",
-    imageUrl:
-      "https://images.pexels.com/photos/618848/pexels-photo-618848.jpeg?auto=compress&cs=tinysrgb&w=800",
-    rating: 4.6,
-    reviews: 45,
-    owner: { name: "Elena Rodriguez", avatar: "👩‍🎨", rating: 4.8, trips: 28 },
-  },
-  {
-    id: 5,
-    name: "Tolkien Box Set",
-    category: "Books",
-    price: 5,
-    status: "Available",
-    image: "📚",
-    imageUrl:
-      "https://images.pexels.com/photos/46274/pexels-photo-46274.jpeg?auto=compress&cs=tinysrgb&w=800",
-    rating: 4.9,
-    reviews: 234,
-    owner: { name: "James Wilson", avatar: "👨‍📚", rating: 5.0, trips: 15 },
-  },
-  {
-    id: 6,
-    name: "DJI Air 3 Drone",
-    category: "Electronics",
-    price: 85,
-    status: "Available",
-    image: "🚁",
-    imageUrl:
-      "https://images.pexels.com/photos/3952637/pexels-photo-3952637.jpeg?auto=compress&cs=tinysrgb&w=800",
-    rating: 4.8,
-    reviews: 167,
-    owner: { name: "David Lee", avatar: "👨‍💼", rating: 4.9, trips: 42 },
-  },
+  // Thêm nhiều sản phẩm mẫu
+  ...Array.from({ length: 10 }, (_, i) => {
+    const statusList = ["Available", "Active", "Completed"] as const;
+    return {
+      id: 7 + i,
+      name: `Sample Product ${i + 1}`,
+      category: ["Camera", "Laptop", "Books", "Outdoor", "Electronics"][i % 5],
+      price: 10 + i * 5,
+      status: statusList[i % 3],
+      image: "🛒",
+      imageUrl: `https://picsum.photos/seed/sample${i + 1}/400/400`,
+      rating: 4.5 + (i % 5) * 0.1,
+      reviews: 10 + i * 7,
+      owner: { name: `User ${i + 1}`, avatar: `https://randomuser.me/api/portraits/men/${20 + i}.jpg`, rating: 4.5 + (i % 5) * 0.1, trips: 5 + i },
+      description: `Mô tả sản phẩm mẫu ${i + 1}`,
+      specs: ["Spec 1", "Spec 2"],
+    };
+  }),
 ];
 
 export const CHATS: Chat[] = [
@@ -384,6 +351,21 @@ export const ORDERS: Order[] = [
     status: "delivered",
     image: "📸",
   },
+  // Thêm nhiều đơn hàng mẫu, khớp với PRODUCTS
+  ...Array.from({ length: 10 }, (_, i) => {
+    const statusList = ["pending", "confirmed", "shipped", "delivered"] as const;
+    return {
+      id: `#A20${i}`,
+      productId: 7 + i,
+      productName: `Sample Product ${i + 1}`,
+      customerName: `Customer ${i + 1}`,
+      startDate: `2024-04-${10 + i}`,
+      endDate: `2024-04-${12 + i}`,
+      totalPrice: 100 + i * 10,
+      status: statusList[i % 4],
+      image: "🛒",
+    };
+  }),
 ];
 
 export const NOTIFICATIONS: Notification[] = [
@@ -434,54 +416,48 @@ export const INVENTORY_ITEMS: InventoryItem[] = [
     id: 1,
     name: "Sony Alpha a7 IV",
     category: "Camera",
-    quantity: 5,
     price: 45,
-    status: "In Stock",
+    statusQuantities: { available: 5, rented: 0, overdue: 0 },
     lastUpdated: "2024-04-09",
   },
   {
     id: 2,
     name: 'MacBook Pro M2 - 14"',
     category: "Laptop",
-    quantity: 2,
     price: 65,
-    status: "Low Stock",
+    statusQuantities: { available: 1, rented: 1, overdue: 0 },
     lastUpdated: "2024-04-08",
   },
   {
     id: 3,
     name: "Canon EOS R5",
     category: "Camera",
-    quantity: 0,
     price: 120,
-    status: "Out of Stock",
+    statusQuantities: { available: 0, rented: 0, overdue: 0 },
     lastUpdated: "2024-04-07",
   },
   {
     id: 4,
     name: "4-Person Tent",
     category: "Outdoor",
-    quantity: 12,
     price: 15,
-    status: "In Stock",
+    statusQuantities: { available: 10, rented: 2, overdue: 0 },
     lastUpdated: "2024-04-09",
   },
   {
     id: 5,
     name: "Tolkien Box Set",
     category: "Books",
-    quantity: 8,
     price: 5,
-    status: "In Stock",
+    statusQuantities: { available: 8, rented: 0, overdue: 0 },
     lastUpdated: "2024-04-09",
   },
   {
     id: 6,
     name: "DJI Air 3 Drone",
     category: "Electronics",
-    quantity: 3,
     price: 85,
-    status: "Low Stock",
+    statusQuantities: { available: 1, rented: 1, overdue: 1 },
     lastUpdated: "2024-04-08",
   },
 ];

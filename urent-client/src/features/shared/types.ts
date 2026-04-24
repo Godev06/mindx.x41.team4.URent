@@ -70,10 +70,16 @@ export interface InventoryItem {
   id: number;
   name: string;
   category: string;
-  quantity: number;
   price: number;
-  status: "In Stock" | "Low Stock" | "Out of Stock";
+  statusQuantities: {
+    available: number;
+    rented: number;
+    overdue: number;
+  };
+  condition?: string;
   lastUpdated: string;
+  specs?: string[];
+  imageUrl?: string;
 }
 
 export interface ActivityLog {

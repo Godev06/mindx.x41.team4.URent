@@ -1,52 +1,108 @@
 import type { InventoryItem } from "../../shared/types";
+import { Edit, Archive, Trash2, CheckCircle2, Clock, AlertCircle, Package } from "lucide-react";
 import { useI18n } from "../../shared/context/LanguageContext";
 
 interface InventoryRowProps {
   item: InventoryItem;
+  onDelete: (id: number) => void;
+  onArchive: (id: number) => void;
 }
 
-export function InventoryRow({ item }: InventoryRowProps) {
+export function InventoryRow({ item, onDelete, onArchive }: InventoryRowProps) {
   const { lang } = useI18n();
-  const statusVariant =
-    item.status === "In Stock"
-      ? "green"
-      : item.status === "Low Stock"
-        ? "yellow"
-        : "gray";
-  const statusClass =
-    statusVariant === "green"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-      : statusVariant === "yellow"
-        ? "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
-        : "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-600/50 dark:bg-slate-700/30 dark:text-slate-300";
 
   return (
-    <div className="group flex items-center gap-4 rounded-xl border border-transparent dark:border-slate-700/50 px-3 py-3 transition-colors hover:border-slate-200 hover:bg-slate-50/80 dark:hover:border-slate-600 dark:hover:bg-slate-700/50">
-      <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-slate-100 dark:from-slate-600 to-slate-50 dark:to-slate-700 ring-1 ring-slate-200/80 dark:ring-slate-600/80 text-xl">
-        📦
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+    <div className="group flex flex-col sm:flex-row sm:items-center justify-between p-6 transition-all hover:bg-slate-50 dark:hover:bg-slate-700/30 rounded-2xl">
+      <div className="flex items-center gap-5">
+        {/* Product Image */}
+        <div className="h-16 w-16 overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900/50 flex-shrink-0 border border-slate-100 dark:border-slate-700">
+          {item.imageUrl ? (
+            <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-slate-300">
+              <Package size={24} />
+            </div>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="flex flex-col gap-1">
+          <h4 className="text-base font-bold text-slate-800 dark:text-white leading-tight group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
             {item.name}
           </h4>
-          <span
-            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-tight ${statusClass}`}
-          >
-            {item.status}
-          </span>
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            <span>{item.category}</span>
+            <span className="h-1 w-1 rounded-full bg-slate-200 dark:bg-slate-700" />
+            <span>{item.condition}</span>
+          </div>
+          {item.specs && item.specs.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {item.specs.slice(0, 2).map((spec, i) => (
+                <span key={i} className="rounded-md bg-slate-100/50 px-2 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-slate-900/50 dark:text-slate-400 border border-slate-100 dark:border-slate-800">
+                  {spec}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
-        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-          {item.category} • {lang === "vi" ? "Số lượng" : "Quantity"}:{" "}
-          {item.quantity}
-        </p>
       </div>
-      <span className="shrink-0 text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-200">
-        ${item.price}
-        <span className="font-normal text-slate-400 dark:text-slate-500">
-          {lang === "vi" ? " / ngày" : " / day"}
-        </span>
-      </span>
+
+      {/* Status Breakdown (Updated for US) */}
+      <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-6">
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 size={14} strokeWidth={2.5} />
+            <span className="text-xs font-black tabular-nums">{item.statusQuantities.available}</span>
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{lang === 'vi' ? 'Rảnh' : 'Free'}</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center gap-1.5 text-amber-500">
+            <Clock size={14} strokeWidth={2.5} />
+            <span className="text-xs font-black tabular-nums">{item.statusQuantities.rented}</span>
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{lang === 'vi' ? 'Thuê' : 'Rent'}</span>
+        </div>
+
+        <div className="flex flex-col items-center gap-1.5">
+          <div className="flex items-center gap-1.5 text-rose-500">
+            <AlertCircle size={14} strokeWidth={2.5} />
+            <span className="text-xs font-black tabular-nums">{item.statusQuantities.overdue}</span>
+          </div>
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{lang === 'vi' ? 'Trễ' : 'Over'}</span>
+        </div>
+
+        <div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-700 hidden sm:block mx-2" />
+
+        <div className="flex flex-col items-end">
+            <span className="text-sm font-black text-slate-800 dark:text-white tabular-nums">
+                {item.price.toLocaleString()}
+            </span>
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                VND / {lang === "vi" ? "Ngày" : "Day"}
+            </span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 ml-4">
+          <button className="rounded-xl p-2.5 text-slate-400 hover:bg-white hover:text-teal-600 dark:hover:bg-slate-700 shadow-sm transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600">
+            <Edit size={16} />
+          </button>
+          <button 
+            onClick={() => onArchive(item.id)}
+            className="rounded-xl p-2.5 text-slate-400 hover:bg-white hover:text-amber-600 dark:hover:bg-slate-700 shadow-sm transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600"
+          >
+            <Archive size={16} />
+          </button>
+          <button 
+            onClick={() => onDelete(item.id)}
+            className="rounded-xl p-2.5 text-slate-400 hover:bg-white hover:text-rose-600 dark:hover:bg-slate-700 shadow-sm transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
