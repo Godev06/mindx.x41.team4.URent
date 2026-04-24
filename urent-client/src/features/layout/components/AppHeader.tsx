@@ -172,8 +172,8 @@ export function AppHeader() {
   const { initials, colorClass } = getAvatarStyle(displayName);
   const isSettingsPage = pathname.startsWith("/settings");
   const isNotificationsPage = pathname.startsWith("/notifications");
-  const supportsSearch = ["/", "/orders", "/inventory"].some((p) =>
-    p === "/" ? pathname === "/" : pathname.startsWith(p),
+  const supportsSearch = ["/", "/orders", "/inventory", "/products"].some(
+    (p) => (p === "/" ? pathname === "/" : pathname.startsWith(p)),
   );
   const unreadCount = t.notifItems.length;
   const handleNotificationClick = () => {
@@ -189,7 +189,7 @@ export function AppHeader() {
   const isMobilePanelOpen = isNotifOpen || isProfileOpen;
 
   return (
-    <nav className="sticky top-0 z-50 rounded-3xl border border-slate-200 bg-white/95 px-4 py-3 shadow-[0_4px_24px_-8px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-5 lg:px-6 dark:border-white/8 dark:bg-[#0b1220]/88 dark:shadow-[0_18px_50px_-24px_rgba(2,8,23,0.85)]">
+    <nav className="sticky top-0 z-50 rounded-3xl border border-white/65 bg-white/85 px-4 py-3 shadow-[0_14px_44px_-20px_rgba(15,23,42,0.34)] ring-1 ring-white/70 backdrop-blur-2xl sm:px-5 lg:px-6 dark:border-white/14 dark:bg-[#0b1220]/78 dark:shadow-[0_22px_58px_-26px_rgba(2,8,23,0.9)] dark:ring-white/10">
       {isMobilePanelOpen ? (
         <button
           type="button"
@@ -201,8 +201,8 @@ export function AppHeader() {
           }}
         />
       ) : null}
-      <div className="flex w-full flex-wrap items-center gap-3 sm:gap-4 lg:flex-nowrap lg:gap-7">
-        <div className="flex min-w-0 shrink items-center gap-3">
+      <div className="flex w-full flex-wrap items-center gap-2 sm:gap-3 md:gap-4 lg:flex-nowrap lg:gap-6 xl:gap-8">
+        <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={() => navigate(APP_ROUTES.home)}
@@ -220,10 +220,10 @@ export function AppHeader() {
             onClick={() => navigate(APP_ROUTES.home)}
             className="min-w-0 text-left"
           >
-            <h1 className="truncate bg-linear-to-r from-slate-800 to-slate-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg dark:from-white dark:to-slate-300">
+            <h1 className="truncate bg-linear-to-r from-slate-800 to-slate-600 bg-clip-text text-base leading-tight font-bold text-transparent sm:text-lg md:text-xl dark:from-white dark:to-slate-300">
               U-Rent
             </h1>
-            <p className="hidden text-[10px] font-semibold tracking-widest text-slate-400 uppercase sm:block dark:text-slate-500">
+            <p className="hidden text-[9px] sm:text-[10px] font-semibold tracking-widest text-slate-400 uppercase sm:block dark:text-slate-500">
               Workspace
             </p>
           </button>
@@ -442,7 +442,7 @@ export function AppHeader() {
       </div>
 
       {supportsSearch && (
-        <div className="mt-3 lg:hidden">
+        <div className="mt-2 sm:mt-3 lg:hidden">
           <div className="relative">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors dark:text-slate-500"
@@ -452,7 +452,7 @@ export function AppHeader() {
             <input
               type="search"
               placeholder={t.searchPlaceholder}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-10 text-[15px] text-slate-800 placeholder:text-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400/40"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 sm:py-3 pr-4 pl-10 text-sm sm:text-[15px] text-slate-800 placeholder:text-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400/40"
             />
           </div>
         </div>
@@ -482,8 +482,8 @@ export function MobileBottomNav() {
         };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(env(safe-area-inset-bottom)+0.625rem)] lg:hidden">
-      <div className="mx-auto max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_-8px_32px_-18px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1220]/92 dark:shadow-[0_-12px_36px_-22px_rgba(2,8,23,0.95)]">
+    <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] lg:hidden">
+      <div className="mx-auto max-w-md rounded-3xl border border-slate-200/80 bg-white/95 p-1 sm:p-1.5 shadow-[0_-8px_32px_-18px_rgba(15,23,42,0.4)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0b1220]/92 dark:shadow-[0_-12px_36px_-22px_rgba(2,8,23,0.95)]">
         <div className="grid grid-cols-4 gap-1">
           {MAIN_NAV_ITEMS.map((item) => {
             const Icon = item.icon;
@@ -494,7 +494,7 @@ export function MobileBottomNav() {
                 key={item.path}
                 type="button"
                 onClick={() => navigate(item.path)}
-                className={`flex min-h-15 flex-col items-center justify-center gap-1 rounded-[1.1rem] px-1.5 py-2 text-center transition-all duration-200 ${
+                className={`flex min-h-14 sm:min-h-16 flex-col items-center justify-center gap-0.5 sm:gap-1 rounded-[1rem] px-1 sm:px-1.5 py-1.5 sm:py-2 text-center transition-all duration-200 ${
                   isActive
                     ? "bg-teal-600 text-white shadow-lg shadow-teal-900/20 dark:bg-white dark:text-slate-900"
                     : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"

@@ -1,3 +1,4 @@
+import _ from "lodash";
 import type {
   Chat,
   Product,
@@ -56,6 +57,45 @@ export const PRODUCTS: Product[] = [
     rating: 4.7,
     reviews: 156,
     owner: { name: "Marcus Chen", avatar: "👨‍🔧", rating: 5.0, trips: 61 },
+  },
+  {
+    id: 4,
+    name: "4-Person Tent",
+    category: "Outdoor",
+    price: 15,
+    status: "Available",
+    image: "⛺",
+    imageUrl:
+      "https://images.pexels.com/photos/618848/pexels-photo-618848.jpeg?auto=compress&cs=tinysrgb&w=800",
+    rating: 4.6,
+    reviews: 45,
+    owner: { name: "Elena Rodriguez", avatar: "👩‍🎨", rating: 4.8, trips: 28 },
+  },
+  {
+    id: 5,
+    name: "Tolkien Box Set",
+    category: "Books",
+    price: 5,
+    status: "Available",
+    image: "📚",
+    imageUrl:
+      "https://images.pexels.com/photos/46274/pexels-photo-46274.jpeg?auto=compress&cs=tinysrgb&w=800",
+    rating: 4.9,
+    reviews: 234,
+    owner: { name: "James Wilson", avatar: "👨‍📚", rating: 5.0, trips: 15 },
+  },
+  {
+    id: 6,
+    name: "DJI Air 3 Drone",
+    category: "Electronics",
+    price: 85,
+    status: "Available",
+    image: "🚁",
+    imageUrl:
+      "https://images.pexels.com/photos/3952637/pexels-photo-3952637.jpeg?auto=compress&cs=tinysrgb&w=800",
+    rating: 4.8,
+    reviews: 167,
+    owner: { name: "David Lee", avatar: "👨‍💼", rating: 4.9, trips: 42 },
   },
   {
     id: 4,

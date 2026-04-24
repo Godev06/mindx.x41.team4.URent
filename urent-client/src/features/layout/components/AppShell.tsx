@@ -32,6 +32,7 @@ export function AppShell() {
     };
   }, [location.pathname]);
 
+  const hideFooter = location.pathname === "/products";
   return (
     <div className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-teal-100 selection:text-teal-900">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-linear-to-b from-teal-100/60 via-white/40 to-transparent dark:from-teal-500/10 dark:via-slate-900/20 dark:to-transparent" />
@@ -54,19 +55,19 @@ export function AppShell() {
           hideLabel
         />
       </div>
-      <main className="relative flex min-h-screen flex-col pb-24 lg:pb-0">
-        <div className="sticky top-0 z-30 px-3 py-3 sm:px-4 sm:py-4 lg:py-5">
-          <div className="mx-auto w-full max-w-7xl">
+      <main className="relative flex min-h-screen flex-col pb-20 sm:pb-24 lg:pb-0">
+        <div className="sticky top-0 z-10 py-2 sm:py-3 md:py-4 lg:py-5">
+          <div className="mx-auto w-[95%]">
             <AppHeader />
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-7xl flex-1 px-3 sm:px-4">
-          <div className="pb-6 sm:pb-8">
+        <div className="mx-auto w-[95%] flex-1">
+          <div className="sm:pb-5 md:pb-6 lg:pb-8">
             <Outlet />
           </div>
         </div>
-        <AppFooter />
+        {!hideFooter && <AppFooter />}
       </main>
       <MobileBottomNav />
     </div>
