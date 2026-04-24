@@ -59,7 +59,7 @@ export function AuthLayout({
           : "bg-slate-100 text-slate-700"
       }`}
     >
-      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl items-center sm:min-h-[calc(100vh-4rem)]">
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-[90%] items-center sm:min-h-[calc(100vh-4rem)]">
         <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:items-center lg:gap-8">
           <section className="space-y-5 lg:col-span-6">
             <div className="space-y-3">

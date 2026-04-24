@@ -6,6 +6,7 @@ import {
   useParams,
 } from "react-router-dom";
 import { HomePage } from "./features/home/pages/HomePage";
+import { ProductListingPage } from "./features/home/pages/ProductListingPage";
 import { InventoryPage } from "./features/inventory/pages/InventoryPage";
 import { OrderDetailPage } from "./features/orders/pages/OrderDetailPage";
 import { OrdersPage } from "./features/orders/pages/OrdersPage";
@@ -60,6 +61,15 @@ export default function App() {
           <Route
             path={APP_ROUTES.home}
             element={<HomePage onProductClick={handleProductClick} />}
+          />
+          <Route
+            path="/products"
+            element={
+              <ProductListingPage
+                onProductClick={handleProductClick}
+                onBack={() => navigate("/")}
+              />
+            }
           />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />

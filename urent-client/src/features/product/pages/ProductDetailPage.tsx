@@ -59,11 +59,11 @@ export function ProductDetailPage({
         };
 
   return (
-    <div className="pb-10 sm:pb-12">
+    <div className="pb-8 sm:pb-10 md:pb-12">
       <button
         type="button"
         onClick={onBack}
-        className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:mb-8"
+        className="mb-5 sm:mb-6 md:mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:mb-8"
       >
         <ArrowLeft size={18} strokeWidth={2} />
         {t.back}
@@ -71,8 +71,8 @@ export function ProductDetailPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
         <div className="space-y-6 lg:col-span-8">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-900/4">
+          <div className="grid grid-cols-1 gap-4 sm:gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-sm ring-1 ring-slate-900/4">
               <p className="text-xs font-medium text-slate-500">
                 {t.assurance}
               </p>
@@ -95,10 +95,10 @@ export function ProductDetailPage({
           </div>
 
           <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-900/4 sm:p-8">
-            <h1 className="text-balance text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-balance text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
               {product.name}
             </h1>
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+            <div className="mt-4 md:mt-6 flex flex-wrap items-center gap-3 md:gap-4 text-sm">
               <div className="inline-flex items-center gap-1.5 font-semibold text-orange-500">
                 <Star
                   size={17}
