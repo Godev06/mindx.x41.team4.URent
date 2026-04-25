@@ -82,7 +82,7 @@ export const verifyResetOtp = async (email: string, otp: string) => {
   return isValidResetOtp ? user : null;
 };
 
-export const createUserWithOtp = async (email: string, password: string) => {
+export const createUserWithOtp = async (email: string, password: string, username?: string, displayName?: string) => {
   const normalizedEmail = email.trim().toLowerCase();
   const existing = await UserModel.findOne({ email: normalizedEmail });
   if (existing) {
@@ -100,6 +100,8 @@ export const createUserWithOtp = async (email: string, password: string) => {
   const user = await UserModel.create({
     email: normalizedEmail,
     password: await hashPassword(password),
+    username,
+    displayName,
     otpCode: otp,
     otpExpiresAt: otpExpiry()
   });

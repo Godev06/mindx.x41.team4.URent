@@ -9,7 +9,7 @@ import {
   Clock,
   CheckCircle2,
   Filter,
-  Plus
+  Plus,
 } from "lucide-react";
 import type { InventoryItem } from "../../shared/types";
 
@@ -23,8 +23,9 @@ const mockInventory: InventoryItem[] = [
     statusQuantities: { available: 5, rented: 2, overdue: 1 },
     condition: "99%",
     lastUpdated: "2 mins ago",
-    specs: ["61.0 MP", "4K Video"],
-    imageUrl: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80"
+    description: ["61.0 MP", "4K Video"],
+    imageUrl:
+      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80",
   },
   {
     id: 2,
@@ -34,8 +35,9 @@ const mockInventory: InventoryItem[] = [
     statusQuantities: { available: 2, rented: 3, overdue: 0 },
     condition: "New",
     lastUpdated: "1 hour ago",
-    specs: ["4/3 CMOS", "43 min flight"],
-    imageUrl: "https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=800&q=80"
+    description: ["4/3 CMOS", "43 min flight"],
+    imageUrl:
+      "https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=800&q=80",
   },
   {
     id: 3,
@@ -45,25 +47,37 @@ const mockInventory: InventoryItem[] = [
     statusQuantities: { available: 1, rented: 0, overdue: 2 },
     condition: "95%",
     lastUpdated: "5 hours ago",
-    specs: ["32GB RAM", "1TB SSD"],
-    imageUrl: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80"
+    description: ["32GB RAM", "1TB SSD"],
+    imageUrl:
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80",
   },
 ];
 
 export default function InventoryPage() {
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const [items, setItems] = useState<InventoryItem[]>(mockInventory);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterStatus, setFilterStatus] = useState<"all" | "Available" | "Rented" | "Overdue">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "Available" | "Rented" | "Overdue"
+  >("all");
 
   const stats = useMemo(() => {
-    const available = items.reduce((sum, i) => sum + i.statusQuantities.available, 0);
+    const available = items.reduce(
+      (sum, i) => sum + i.statusQuantities.available,
+      0,
+    );
     const rented = items.reduce((sum, i) => sum + i.statusQuantities.rented, 0);
-    const overdue = items.reduce((sum, i) => sum + i.statusQuantities.overdue, 0);
+    const overdue = items.reduce(
+      (sum, i) => sum + i.statusQuantities.overdue,
+      0,
+    );
     const totalItems = items.length;
     const totalValue = items.reduce((sum, item) => {
-      const totalQty = item.statusQuantities.available + item.statusQuantities.rented + item.statusQuantities.overdue;
-      return sum + (item.price * totalQty);
+      const totalQty =
+        item.statusQuantities.available +
+        item.statusQuantities.rented +
+        item.statusQuantities.overdue;
+      return sum + item.price * totalQty;
     }, 0);
 
     return { available, rented, overdue, totalValue, total: totalItems };
@@ -71,44 +85,14 @@ export default function InventoryPage() {
 
   const filteredItems = useMemo(() => {
     if (filterStatus === "all") return items;
-    if (filterStatus === "Available") return items.filter(i => i.statusQuantities.available > 0);
-    if (filterStatus === "Rented") return items.filter(i => i.statusQuantities.rented > 0);
-    if (filterStatus === "Overdue") return items.filter(i => i.statusQuantities.overdue > 0);
+    if (filterStatus === "Available")
+      return items.filter((i) => i.statusQuantities.available > 0);
+    if (filterStatus === "Rented")
+      return items.filter((i) => i.statusQuantities.rented > 0);
+    if (filterStatus === "Overdue")
+      return items.filter((i) => i.statusQuantities.overdue > 0);
     return items;
   }, [items, filterStatus]);
-
-  const t =
-    lang === "vi"
-      ? {
-        title: "Quản lý Kho hàng",
-        desc: "Theo dõi trạng thái vận hành và quản lý luân chuyển đồ đạc.",
-        totalProducts: "Tổng món đồ",
-        available: "Đang rảnh",
-        rented: "Đang cho thuê",
-        overdue: "Quá hạn",
-        totalValue: "Giá trị kho",
-        listTitle: "Danh mục hàng hóa",
-        listDesc: "Cập nhật và hiệu chỉnh thông tin vật phẩm.",
-        addProduct: "Thêm hàng mới",
-        all: "Tất cả",
-        archiveSuccess: "Sản phẩm đã được lưu trữ.",
-        deleteSuccess: "Sản phẩm đã được xóa.",
-      }
-      : {
-        title: "Inventory Management",
-        desc: "Track operating status and manage item turnover efficiently.",
-        totalProducts: "Total Items",
-        available: "Available",
-        rented: "Rented",
-        overdue: "Overdue",
-        totalValue: "Inventory Value",
-        listTitle: "Product Catalog",
-        listDesc: "Update and refine product information.",
-        addProduct: "Add New Item",
-        all: "All",
-        archiveSuccess: "Item archived successfully.",
-        deleteSuccess: "Item deleted successfully.",
-      };
 
   const handleAddProduct = (product: any) => {
     const newItem: InventoryItem = {
@@ -119,7 +103,7 @@ export default function InventoryPage() {
       statusQuantities: product.statusQuantities,
       condition: product.condition,
       lastUpdated: "Just now",
-      specs: product.specs,
+      description: product.description,
       imageUrl: product.imageUrl,
     };
     setItems([newItem, ...items]);
@@ -138,10 +122,11 @@ export default function InventoryPage() {
       <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
-            {t.title}<span className="text-teal-500">.</span>
+            {t.inventoryTitle}
+            <span className="text-teal-500">.</span>
           </h1>
           <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-            {t.desc}
+            {t.inventoryDesc}
           </p>
         </div>
         <button
@@ -149,7 +134,7 @@ export default function InventoryPage() {
           className="group flex items-center gap-2 rounded-2xl bg-slate-900 dark:bg-teal-600 px-8 py-4 text-xs font-black uppercase tracking-widest text-white shadow-xl transition-all hover:scale-[1.03] active:scale-95 shadow-slate-200 dark:shadow-teal-900/20"
         >
           <Plus size={18} />
-          {t.addProduct}
+          {t.inventoryAddProduct}
         </button>
       </header>
 
@@ -157,33 +142,39 @@ export default function InventoryPage() {
       <section className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-5 mb-12">
         <StatCard
           icon={<Package className="text-teal-500" />}
-          label={t.totalProducts}
+          label={t.inventoryTotalProducts}
           value={stats.total}
         />
         <StatCard
           icon={<CheckCircle2 className="text-emerald-500" />}
-          label={t.available}
+          label={t.inventoryAvailable}
           value={stats.available}
           active={filterStatus === "Available"}
-          onClick={() => setFilterStatus(filterStatus === "Available" ? "all" : "Available")}
+          onClick={() =>
+            setFilterStatus(filterStatus === "Available" ? "all" : "Available")
+          }
         />
         <StatCard
           icon={<Clock className="text-amber-500" />}
-          label={t.rented}
+          label={t.inventoryRented}
           value={stats.rented}
           active={filterStatus === "Rented"}
-          onClick={() => setFilterStatus(filterStatus === "Rented" ? "all" : "Rented")}
+          onClick={() =>
+            setFilterStatus(filterStatus === "Rented" ? "all" : "Rented")
+          }
         />
         <StatCard
           icon={<AlertCircle className="text-rose-500" />}
-          label={t.overdue}
+          label={t.inventoryOverdue}
           value={stats.overdue}
           active={filterStatus === "Overdue"}
-          onClick={() => setFilterStatus(filterStatus === "Overdue" ? "all" : "Overdue")}
+          onClick={() =>
+            setFilterStatus(filterStatus === "Overdue" ? "all" : "Overdue")
+          }
         />
         <StatCard
           icon={<DollarSign className="text-teal-600" />}
-          label={t.totalValue}
+          label={t.inventoryTotalValue}
           value={`${(stats.totalValue / 1000000).toFixed(1)}M`}
         />
       </section>
@@ -193,10 +184,10 @@ export default function InventoryPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 sm:p-8 bg-linear-to-r from-slate-50/50 to-transparent dark:from-slate-700/20">
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-none">
-              {t.listTitle}
+              {t.inventoryListTitle}
             </h2>
             <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              {t.listDesc}
+              {t.inventoryListDesc}
             </p>
           </div>
 
@@ -206,15 +197,17 @@ export default function InventoryPage() {
                 onClick={() => setFilterStatus("all")}
                 className={`rounded-lg px-4 py-1.5 text-[10px] font-black uppercase transition-all ${filterStatus === "all" ? "bg-white text-teal-600 shadow-sm dark:bg-slate-700 dark:text-teal-400" : "text-slate-400"}`}
               >
-                {t.all}
+                {t.inventoryAll}
               </button>
-              {["Available", "Rented", "Overdue"].map(s => (
+              {["Rented", "Overdue"].map((s) => (
                 <button
                   key={s}
                   onClick={() => setFilterStatus(s as any)}
                   className={`rounded-lg px-4 py-1.5 text-[10px] font-black uppercase transition-all ${filterStatus === s ? "bg-white text-teal-600 shadow-sm dark:bg-slate-700 dark:text-teal-400" : "text-slate-400"}`}
                 >
-                  {lang === "vi" ? (s === "Available" ? "Rảnh" : s === "Rented" ? "Thuê" : "Trễ") : s}
+                  {s === "Rented"
+                    ? t.inventoryFilterRented
+                    : t.inventoryFilterOverdue}
                 </button>
               ))}
             </div>
@@ -236,7 +229,9 @@ export default function InventoryPage() {
               <div className="mx-auto h-20 w-20 rounded-full bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center text-slate-200 dark:text-slate-700 mb-6 border-2 border-dashed border-slate-100 dark:border-slate-800">
                 <Filter size={32} />
               </div>
-              <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">No matching items found</p>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+                No matching items found
+              </p>
             </div>
           )}
         </div>
@@ -256,17 +251,22 @@ function StatCard({ icon, label, value, active, onClick }: any) {
     <button
       onClick={onClick}
       disabled={!onClick}
-      className={`group relative overflow-hidden rounded-3xl border p-5 sm:p-6 text-left transition-all duration-300 ${active
-        ? "border-teal-500 bg-white shadow-teal-500/10 dark:border-teal-500 dark:bg-teal-500/5"
-        : "border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800"
-        } ${onClick ? "hover:-translate-y-1 hover:shadow-2xl active:scale-95 shadow-lg shadow-slate-100 dark:shadow-none" : "shadow-md shadow-slate-100 dark:shadow-none ring-1 ring-slate-900/5 dark:ring-white/5"}`}
+      className={`group relative overflow-hidden rounded-3xl border p-5 sm:p-6 text-left transition-all duration-300 ${
+        active
+          ? "border-teal-500 bg-white shadow-teal-500/10 dark:border-teal-500 dark:bg-teal-500/5"
+          : "border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800"
+      } ${onClick ? "hover:-translate-y-1 hover:shadow-2xl active:scale-95 shadow-lg shadow-slate-100 dark:shadow-none" : "shadow-md shadow-slate-100 dark:shadow-none ring-1 ring-slate-900/5 dark:ring-white/5"}`}
     >
       <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900/50 transition-colors group-hover:bg-teal-500 group-hover:text-white border border-slate-100 dark:border-slate-700">
         {icon}
       </div>
       <div className="flex flex-col">
-        <span className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tabular-nums">{value}</span>
-        <span className="mt-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-teal-500 transition-colors">{label}</span>
+        <span className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tabular-nums">
+          {value}
+        </span>
+        <span className="mt-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-teal-500 transition-colors">
+          {label}
+        </span>
       </div>
 
       {active && (

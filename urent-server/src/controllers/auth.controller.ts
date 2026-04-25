@@ -55,8 +55,13 @@ const verifyOtpWithPurpose = async (req: Request, res: Response, purpose: AuthOt
 };
 
 export const register = async (req: Request, res: Response) => {
-  const { email, password } = req.body as { email: string; password: string };
-  const user = await createUserWithOtp(normalizeEmail(email), password);
+  const { email, password, username, displayName } = req.body as {
+    email: string;
+    password: string;
+    username: string;
+    displayName?: string;
+  };
+  const user = await createUserWithOtp(normalizeEmail(email), password, username, displayName);
   if (!user) return res.status(409).json({ message: 'Email already exists' });
   return res.status(201).json({ message: 'OTP has been sent to your email' });
 };
@@ -158,9 +163,27 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const getMe = async (req: Request, res: Response) => {
   const userId = req.user?.sub;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
   const user = await UserModel.findById(userId).select(
     '-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt'
   );
+
+  if (!user && req.user?.authProvider === 'firebase') {
+    return res.json({
+      id: req.user.sub,
+      email: req.user.email,
+      displayName: req.user.displayName ?? req.user.email,
+      avatarUrl: req.user.avatarUrl ?? null,
+      phone: req.user.phoneNumber ?? null,
+      bio: null,
+      createdAt: null
+    });
+  }
+
   if (!user) return res.status(404).json({ message: 'User not found' });
   return res.json(user);
 };

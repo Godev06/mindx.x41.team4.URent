@@ -2,9 +2,11 @@ import http from 'http';
 import { app } from './app';
 import { connectDb } from './config/db';
 import { env } from './config/env';
+import { initializeFirebase } from './config/firebase';
 import { initRealtime } from './realtime/socket';
 
 const start = async () => {
+  initializeFirebase();
   await connectDb();
   const server = http.createServer(app);
   initRealtime(server);

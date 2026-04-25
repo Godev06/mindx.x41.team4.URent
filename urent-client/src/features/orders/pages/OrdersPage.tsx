@@ -8,7 +8,7 @@ import { useI18n } from "../../shared/context/LanguageContext";
 
 export function OrdersPage() {
   const { theme } = useTheme();
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const activeOrders = ORDERS.filter(
     (item) =>
@@ -19,26 +19,6 @@ export function OrdersPage() {
   const completedOrders = ORDERS.filter(
     (item) => item.status === "delivered",
   ).length;
-  const t =
-    lang === "vi"
-      ? {
-          title: "Đơn hàng",
-          desc: "Theo dõi thuê và trả thiết bị của bạn.",
-          active: "Đơn đang xử lý",
-          done: "Đơn hoàn tất",
-          recent: "Danh sách đơn gần đây",
-          qrHint: "Chọn đơn để xử lý QR",
-          viewDetail: "Xem chi tiết đơn",
-        }
-      : {
-          title: "Orders",
-          desc: "Track your device rental and return workflow.",
-          active: "Processing orders",
-          done: "Completed orders",
-          recent: "Recent orders",
-          qrHint: "Select an order to process QR",
-          viewDetail: "View order details",
-        };
 
   return (
     <div className="space-y-8">
@@ -48,14 +28,14 @@ export function OrdersPage() {
             theme === "dark" ? "text-slate-100" : "text-slate-900"
           }`}
         >
-          {t.title}
+          {t.ordersTitle}
         </h1>
         <p
           className={`mt-1 text-sm ${
             theme === "dark" ? "text-slate-400" : "text-slate-500"
           }`}
         >
-          {t.desc}
+          {t.ordersDesc}
         </p>
       </div>
 
@@ -72,7 +52,7 @@ export function OrdersPage() {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            {t.active}
+            {t.ordersActive}
           </p>
           <p
             className={`mt-2 text-2xl font-bold ${
@@ -94,7 +74,7 @@ export function OrdersPage() {
               theme === "dark" ? "text-slate-400" : "text-slate-500"
             }`}
           >
-            {t.done}
+            {t.ordersDone}
           </p>
           <p
             className={`mt-2 text-2xl font-bold ${
@@ -107,9 +87,11 @@ export function OrdersPage() {
       </section>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">{t.recent}</h2>
+        <h2 className="text-sm font-semibold text-slate-900">
+          {t.ordersRecent}
+        </h2>
         <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-          {t.qrHint}
+          {t.ordersQrHint}
         </span>
       </div>
 
@@ -133,7 +115,7 @@ export function OrdersPage() {
                   }
                   className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500"
                 >
-                  {t.viewDetail}
+                  {t.ordersViewDetail}
                   <ChevronRight size={14} />
                 </button>
               </div>

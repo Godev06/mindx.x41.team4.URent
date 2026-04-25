@@ -14,8 +14,8 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviews: 124,
     owner: { name: "Alex Chen", avatar: "https://randomuser.me/api/portraits/men/32.jpg", rating: 5.0, trips: 48 },
-    description: "Sony Alpha a7 IV là máy ảnh hybrid tối ưu, kết hợp hoàn hảo giữa chất lượng hình ảnh tĩnh 33MP và khả năng quay video 4K 60p chuyên nghiệp.",
-    specs: ["Full-frame Exmor R 33MP", "Lấy nét theo mắt", "Chống rung 5 trục", "ISO 50 - 204,800"],
+    summary: "Sony Alpha a7 IV là máy ảnh hybrid tối ưu, kết hợp hoàn hảo giữa chất lượng hình ảnh tĩnh 33MP và khả năng quay video 4K 60p chuyên nghiệp.",
+    description: ["Full-frame Exmor R 33MP", "Lấy nét theo mắt", "Chống rung 5 trục", "ISO 50 - 204,800"],
   },
   {
     id: 2,
@@ -28,8 +28,8 @@ export const PRODUCTS: Product[] = [
     rating: 4.8,
     reviews: 89,
     owner: { name: "Sarah Miller", avatar: "https://randomuser.me/api/portraits/women/44.jpg", rating: 4.9, trips: 32 },
-    description: "MacBook Pro M2 mạnh mẽ, màn hình 14 inch, pin lâu, phù hợp cho công việc sáng tạo.",
-    specs: ["Apple M2", "14 inch Retina", "16GB RAM", "SSD 512GB"],
+    summary: "MacBook Pro M2 mạnh mẽ, màn hình 14 inch, pin lâu, phù hợp cho công việc sáng tạo.",
+    description: ["Apple M2", "14 inch Retina", "16GB RAM", "SSD 512GB"],
   },
   {
     id: 3,
@@ -42,8 +42,8 @@ export const PRODUCTS: Product[] = [
     rating: 4.7,
     reviews: 156,
     owner: { name: "Marcus Chen", avatar: "https://randomuser.me/api/portraits/men/45.jpg", rating: 5.0, trips: 61 },
-    description: "Canon EOS R5 - máy ảnh flagship cho nhiếp ảnh gia chuyên nghiệp.",
-    specs: ["CMOS 45MP", "8K Video", "IBIS", "Dual Pixel AF"],
+    summary: "Canon EOS R5 - máy ảnh flagship cho nhiếp ảnh gia chuyên nghiệp.",
+    description: ["CMOS 45MP", "8K Video", "IBIS", "Dual Pixel AF"],
   },
   {
     id: 4,
@@ -56,8 +56,8 @@ export const PRODUCTS: Product[] = [
     rating: 4.6,
     reviews: 45,
     owner: { name: "Elena Rodriguez", avatar: "https://randomuser.me/api/portraits/women/68.jpg", rating: 4.8, trips: 28 },
-    description: "Lều 4 người, chống nước, dễ dựng, phù hợp cho dã ngoại.",
-    specs: ["Chống nước", "Dễ dựng", "4 người"],
+    summary: "Lều 4 người, chống nước, dễ dựng, phù hợp cho dã ngoại.",
+    description: ["Chống nước", "Dễ dựng", "4 người"],
   },
   {
     id: 5,
@@ -70,8 +70,8 @@ export const PRODUCTS: Product[] = [
     rating: 4.9,
     reviews: 234,
     owner: { name: "James Wilson", avatar: "https://randomuser.me/api/portraits/men/12.jpg", rating: 5.0, trips: 15 },
-    description: "Bộ sách Tolkien đầy đủ, bìa cứng, dành cho fan fantasy.",
-    specs: ["The Hobbit", "LOTR", "Silmarillion"],
+    summary: "Bộ sách Tolkien đầy đủ, bìa cứng, dành cho fan fantasy.",
+    description: ["The Hobbit", "LOTR", "Silmarillion"],
   },
   {
     id: 6,
@@ -84,8 +84,8 @@ export const PRODUCTS: Product[] = [
     rating: 4.8,
     reviews: 167,
     owner: { name: "David Lee", avatar: "https://randomuser.me/api/portraits/men/77.jpg", rating: 4.9, trips: 42 },
-    description: "Flycam DJI Air 3, quay 4K, pin lâu, điều khiển thông minh.",
-    specs: ["4K Video", "Pin 34 phút", "GPS"],
+    summary: "Flycam DJI Air 3, quay 4K, pin lâu, điều khiển thông minh.",
+    description: ["4K Video", "Pin 34 phút", "GPS"],
   },
   // Thêm nhiều sản phẩm mẫu
   ...Array.from({ length: 10 }, (_, i) => {
@@ -101,8 +101,8 @@ export const PRODUCTS: Product[] = [
       rating: 4.5 + (i % 5) * 0.1,
       reviews: 10 + i * 7,
       owner: { name: `User ${i + 1}`, avatar: `https://randomuser.me/api/portraits/men/${20 + i}.jpg`, rating: 4.5 + (i % 5) * 0.1, trips: 5 + i },
-      description: `Mô tả sản phẩm mẫu ${i + 1}`,
-      specs: ["Spec 1", "Spec 2"],
+      summary: `Mô tả sản phẩm mẫu ${i + 1}`,
+      description: ["Spec 1", "Spec 2"],
     };
   }),
 ];

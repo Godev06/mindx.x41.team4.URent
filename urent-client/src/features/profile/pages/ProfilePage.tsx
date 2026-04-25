@@ -15,47 +15,7 @@ import { useI18n } from "../../shared/context/LanguageContext";
 export function ProfilePage() {
   const { user, refreshCurrentUser, replaceCurrentUser } = useAuth();
   const { showToast } = useToast();
-  const { lang } = useI18n();
-  const t =
-    lang === "vi"
-      ? {
-          loading: "Đang tải hồ sơ của bạn...",
-          profileTitle: "Thông tin cá nhân",
-          profileDesc: "Xem và quản lý thông tin hồ sơ của bạn.",
-          uploadAvatar: "Tải avatar mới",
-          uploadingAvatar: "Đang tải avatar...",
-          displayName: "Tên hiển thị",
-          email: "Email",
-          phone: "Số điện thoại",
-          joinedDate: "Ngày tham gia",
-          noData: "Chưa có dữ liệu",
-          save: "Cập nhật hồ sơ",
-          saving: "Đang lưu thay đổi...",
-          profileUpdatedTitle: "Cập nhật hồ sơ thành công",
-          profileUpdatedDesc: "Thông tin hồ sơ đã được đồng bộ với backend.",
-          avatarUpdatedTitle: "Tải avatar thành công",
-          avatarUpdatedDesc: "Ảnh đại diện mới đã được cập nhật.",
-          userFallback: "U-Rent User",
-        }
-      : {
-          loading: "Loading your profile...",
-          profileTitle: "Profile",
-          profileDesc: "View and manage your profile information.",
-          uploadAvatar: "Upload new avatar",
-          uploadingAvatar: "Uploading avatar...",
-          displayName: "Display name",
-          email: "Email",
-          phone: "Phone number",
-          joinedDate: "Joined date",
-          noData: "No data available",
-          save: "Update profile",
-          saving: "Saving changes...",
-          profileUpdatedTitle: "Profile updated successfully",
-          profileUpdatedDesc: "Your profile was synced with the backend.",
-          avatarUpdatedTitle: "Avatar uploaded successfully",
-          avatarUpdatedDesc: "Your new avatar has been updated.",
-          userFallback: "U-Rent User",
-        };
+  const { t } = useI18n();
   const [form, setForm] = useState({ displayName: "", bio: "", phone: "" });
   const [errors, setErrors] = useState<
     Partial<Record<keyof typeof form, string>>
@@ -77,12 +37,13 @@ export function ProfilePage() {
   }, [user]);
 
   const avatarMeta = useMemo(() => {
-    const displayName = user?.displayName ?? user?.email ?? t.userFallback;
+    const displayName =
+      user?.displayName ?? user?.email ?? t.profileUserFallback;
     return getAvatarStyle(displayName);
-  }, [t.userFallback, user?.displayName, user?.email]);
+  }, [t.profileUserFallback, user?.displayName, user?.email]);
 
   if (!user) {
-    return <PageLoader label={t.loading} />;
+    return <PageLoader label={t.profileLoading} />;
   }
 
   const handleProfileSubmit = async (
@@ -142,8 +103,8 @@ export function ProfilePage() {
       const nextUser = await profileService.uploadAvatar(file);
       replaceCurrentUser(nextUser);
       showToast({
-        title: t.avatarUpdatedTitle,
-        description: t.avatarUpdatedDesc,
+        title: t.profileAvatarUpdatedTitle,
+        description: t.profileAvatarUpdatedDesc,
         variant: "success",
       });
     } catch (error: unknown) {
@@ -211,7 +172,9 @@ export function ProfilePage() {
                   onChange={handleAvatarUpload}
                   disabled={isUploadingAvatar}
                 />
-                {isUploadingAvatar ? t.uploadingAvatar : t.uploadAvatar}
+                {isUploadingAvatar
+                  ? t.profileUploadingAvatar
+                  : t.profileUploadAvatar}
               </label>
             </div>
           </div>
@@ -222,7 +185,7 @@ export function ProfilePage() {
           <form className="space-y-5" onSubmit={handleProfileSubmit}>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className={fieldClass}>
-                {t.displayName}
+                {t.profileDisplayName}
                 <input
                   type="text"
                   maxLength={100}
@@ -243,7 +206,7 @@ export function ProfilePage() {
               </label>
 
               <label className={fieldClass}>
-                {t.email}
+                {t.profileEmail}
                 <input
                   type="email"
                   disabled
@@ -253,7 +216,7 @@ export function ProfilePage() {
               </label>
 
               <label className={fieldClass}>
-                {t.phone}
+                {t.profilePhone}
                 <input
                   type="tel"
                   className={inputClass}
@@ -273,11 +236,11 @@ export function ProfilePage() {
               </label>
 
               <div className={fieldClass}>
-                {t.joinedDate}
+                {t.profileJoinedDate}
                 <p className="mt-2 text-sm font-semibold normal-case tracking-normal text-slate-700 dark:text-slate-300">
                   {user.createdAt
                     ? new Date(user.createdAt).toLocaleDateString("vi-VN")
-                    : t.noData}
+                    : t.profileNoData}
                 </p>
               </div>
             </div>
@@ -315,7 +278,7 @@ export function ProfilePage() {
               disabled={isSaving}
               className="inline-flex items-center gap-2 rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-teal-900/20 transition hover:bg-teal-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 dark:bg-teal-500 dark:hover:bg-teal-400"
             >
-              {isSaving ? t.saving : t.save}
+              {isSaving ? t.profileSaving : t.profileSave}
             </button>
           </form>
         </div>

@@ -17,15 +17,26 @@ export const getProfile = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: Request, res: Response) => {
   const userId = req.user?.sub;
-  const { displayName, bio, phone } = req.body as UpdateProfileInput;
+  const { displayName, bio, phone, currentPassword, newPassword } = req.body as UpdateProfileInput;
 
-  const user = await UserModel.findByIdAndUpdate(
-    userId,
-    { displayName, bio, phone },
-    { new: true, runValidators: true }
-  ).select(EXCLUDED_FIELDS);
-
+  const user = await UserModel.findById(userId);
   if (!user) return res.status(404).json({ message: 'User not found' });
+
+  // Handle password change if requested
+  if (currentPassword && newPassword) {
+    const isMatch = await comparePassword(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+    user.password = await hashPassword(newPassword);
+  }
+
+  // Update other fields
+  if (displayName) user.displayName = displayName;
+  if (bio !== undefined) user.bio = bio;
+  if (phone) user.phone = phone;
+
+  await user.save();
 
   try {
     await createActivityOnly({
@@ -38,7 +49,8 @@ export const updateProfile = async (req: Request, res: Response) => {
     // Non-fatal: activity logging failure should not block profile update
   }
 
-  return res.json(user);
+  const updatedUser = await UserModel.findById(userId).select(EXCLUDED_FIELDS);
+  return res.json(updatedUser);
 };
 
 export const uploadAvatar = async (req: Request, res: Response) => {

@@ -2,7 +2,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import { env } from '../config/env';
 import { getConversationAccessState } from '../services/message.service';
-import { verifyToken } from '../utils/jwt';
+import { verifyAccessToken } from '../utils/auth-token';
+import { resolveAppIdentity } from '../services/auth-identity.service';
 
 let io: Server | null = null;
 
@@ -16,7 +17,7 @@ export const initRealtime = (server: http.Server) => {
     }
   });
 
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const rawAuth = socket.handshake.auth as { token?: string };
     const authHeader = socket.handshake.headers.authorization;
     const bearerToken = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
@@ -31,9 +32,10 @@ export const initRealtime = (server: http.Server) => {
     }
 
     try {
-      const payload = verifyToken(token);
-      socket.data.userId = payload.sub;
-      socket.data.email = payload.email;
+      const identity = await verifyAccessToken(token);
+      const appIdentity = await resolveAppIdentity(identity);
+      socket.data.userId = appIdentity.sub;
+      socket.data.email = appIdentity.email;
       next();
     } catch {
       next(new Error('UNAUTHORIZED'));

@@ -110,6 +110,7 @@ export function ProductCard({
                   })
                 : `$${product.price}`}
             </span>
+            <br></br>
             <span className="text-xs md:text-sm font-normal text-slate-500 dark:text-slate-300">
               {` ${dayUnit}`}
             </span>

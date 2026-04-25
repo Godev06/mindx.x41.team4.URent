@@ -22,8 +22,8 @@ export interface Product {
   rating?: number;
   reviews?: number;
   owner?: ProductOwner;
-  description?: string;
-  specs?: string[];
+  summary?: string;
+  description?: string[];
 }
 
 export interface Chat {
@@ -78,7 +78,7 @@ export interface InventoryItem {
   };
   condition?: string;
   lastUpdated: string;
-  specs?: string[];
+  description?: string[];
   imageUrl?: string;
 }
 
