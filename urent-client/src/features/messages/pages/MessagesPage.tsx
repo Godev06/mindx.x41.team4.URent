@@ -21,56 +21,11 @@ import {
 
 export function MessagesPage() {
   const { theme } = useTheme();
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const { user } = useAuth();
   const { id: conversationId } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-
-  const t =
-    lang === "vi"
-      ? {
-          title: "Tin nhắn",
-          desc: "Chọn cuộc trò chuyện để xem chi tiết.",
-          search: "Tìm kiếm tin nhắn, người...",
-          noResult: "Không tìm thấy kết quả",
-          noMessage: "Chưa có tin nhắn nào",
-          loadError: "Không thể tải tin nhắn lúc này.",
-          realtimeError: "Không thể tham gia phòng chat hiện tại.",
-          searchError: "Không thể tìm kiếm tin nhắn lúc này.",
-          createByEmail: "Tạo hội thoại với email này",
-          creatingByEmail: "Đang tạo hội thoại...",
-          openByEmail: "Mở hội thoại hiện có",
-          invalidEmail: "Nhập email hợp lệ để tạo hội thoại.",
-          quickResults: "Kết quả phù hợp",
-          quickAction: "Hành động nhanh",
-          selfEmail: "Đây là email của bạn",
-          lookingUpEmail: "Đang tìm người dùng...",
-          userNotFoundByEmail: "Không tìm thấy người dùng với email này",
-          emailLookupUnavailable:
-            "Backend chưa hỗ trợ tra cứu tên và avatar theo email.",
-        }
-      : {
-          title: "Messages",
-          desc: "Select a conversation to view details.",
-          search: "Search messages, people...",
-          noResult: "No results found",
-          noMessage: "No messages yet",
-          loadError: "Unable to load messages right now.",
-          realtimeError: "Unable to join the current conversation room.",
-          searchError: "Unable to search messages right now.",
-          createByEmail: "Create conversation with this email",
-          creatingByEmail: "Creating conversation...",
-          openByEmail: "Open existing conversation",
-          invalidEmail: "Enter a valid email to create a conversation.",
-          quickResults: "Matching conversations",
-          quickAction: "Quick action",
-          selfEmail: "This is your email",
-          lookingUpEmail: "Looking up user...",
-          userNotFoundByEmail: "No user found with this email",
-          emailLookupUnavailable:
-            "Backend does not support name/avatar lookup by email yet.",
-        };
 
   const [realtimeError, setRealtimeError] = useState<string | null>(null);
 
@@ -120,7 +75,7 @@ export function MessagesPage() {
 
     const joinCurrentConversation = () => {
       joinConversation(conversationId, () => {
-        setRealtimeError(t.realtimeError);
+        setRealtimeError(t.messagesRealtimeError);
       });
     };
 
@@ -139,7 +94,7 @@ export function MessagesPage() {
     leaveConversation,
     resetUnread,
     socket,
-    t.realtimeError,
+    t.messagesRealtimeError,
   ]);
 
   // Listen to socket events
@@ -313,7 +268,7 @@ export function MessagesPage() {
             setResolvedPeer(null);
             setResolvePeerError(
               errorCode === "USER_NOT_FOUND"
-                ? t.userNotFoundByEmail
+                ? t.messagesUserNotFoundByEmail
                 : apiError.message,
             );
           }
@@ -335,7 +290,7 @@ export function MessagesPage() {
     isSelfEmail,
     normalizedSearch,
     supportsPeerLookup,
-    t.userNotFoundByEmail,
+    t.messagesUserNotFoundByEmail,
   ]);
 
   const handleCreateByEmail = async () => {
@@ -444,12 +399,12 @@ export function MessagesPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              {t.title}
+              {t.messagesTitle}
             </h2>
             <p
               className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
             >
-              {t.desc}
+              {t.messagesDesc}
             </p>
             <div className="mt-3">
               <div className="relative">
@@ -461,7 +416,7 @@ export function MessagesPage() {
                 />
                 <input
                   type="text"
-                  placeholder={t.search}
+                  placeholder={t.messagesSearch}
                   value={searchTerm}
                   onChange={(e) => {
                     setCreateByEmailError(null);
@@ -509,7 +464,7 @@ export function MessagesPage() {
                       theme === "dark" ? "text-slate-400" : "text-slate-500"
                     }`}
                   >
-                    {t.quickAction}
+                    {t.messagesQuickAction}
                   </p>
 
                   {isEmailQuery ? (
@@ -568,23 +523,23 @@ export function MessagesPage() {
                       )}
                       <span className="min-w-0 flex-1 truncate">
                         {isSelfEmail
-                          ? t.selfEmail
+                          ? t.messagesSelfEmail
                           : isResolvingPeer
-                            ? t.lookingUpEmail
+                            ? t.messagesLookingUpEmail
                             : isCreatingByEmail
-                              ? t.creatingByEmail
+                              ? t.messagesCreatingByEmail
                               : resolvePeerError && !existingConversationByEmail
                                 ? resolvePeerError
                                 : existingConversationByEmail
-                                  ? `${t.openByEmail}: ${actionPeer?.displayName ?? actionPeer?.email ?? normalizedSearch}`
-                                  : `${t.createByEmail}: ${actionPeer?.displayName ?? actionPeer?.email ?? normalizedSearch}`}
+                                  ? `${t.messagesOpenByEmail}: ${actionPeer?.displayName ?? actionPeer?.email ?? normalizedSearch}`
+                                  : `${t.messagesCreateByEmail}: ${actionPeer?.displayName ?? actionPeer?.email ?? normalizedSearch}`}
                       </span>
                     </button>
                   ) : (
                     <p
                       className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
                     >
-                      {t.invalidEmail}
+                      {t.messagesInvalidEmail}
                     </p>
                   )}
 
@@ -594,7 +549,7 @@ export function MessagesPage() {
                         theme === "dark" ? "text-slate-500" : "text-slate-500"
                       }`}
                     >
-                      {t.emailLookupUnavailable}
+                      {t.messagesEmailLookupUnavailable}
                     </p>
                   ) : null}
                 </div>
@@ -606,7 +561,7 @@ export function MessagesPage() {
                         theme === "dark" ? "text-slate-400" : "text-slate-500"
                       }`}
                     >
-                      {t.quickResults}
+                      {t.messagesQuickResults}
                     </p>
                     {quickMatchConversations.map((conversation) => {
                       const displayName =
@@ -664,7 +619,7 @@ export function MessagesPage() {
                 <p
                   className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
                 >
-                  {searchTerm ? t.noResult : t.noMessage}
+                  {searchTerm ? t.messagesNoResult : t.messagesNoMessage}
                 </p>
               </div>
             )}
@@ -709,7 +664,7 @@ export function MessagesPage() {
               <p
                 className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
               >
-                {t.desc}
+                {t.messagesDesc}
               </p>
             </div>
           )}

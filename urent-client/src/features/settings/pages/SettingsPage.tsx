@@ -8,13 +8,14 @@ import {
   ShieldCheck,
   Sliders,
 } from "lucide-react";
-import { ACTIVITY_LOGS } from "../../shared/data";
+import { ACTIVITY_LOGS } from "../../dataset/activityLogs";
 import { useTheme } from "../hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { PageLoader } from "../../shared/components/PageLoader";
 import { useToast } from "../../shared/hooks/useToast";
 import { normalizeApiError } from "../../../lib/api/apiError";
 import { settingsService } from "../services/settingsService";
+import { ChangePasswordModal } from "../components/ChangePasswordModal";
 
 function SettingSwitch({
   checked,
@@ -63,6 +64,7 @@ export function SettingsPage() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [isLoadingTwoFactor, setIsLoadingTwoFactor] = useState(true);
   const [isSavingTwoFactor, setIsSavingTwoFactor] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -118,6 +120,21 @@ export function SettingsPage() {
     } finally {
       setIsSavingTwoFactor(false);
     }
+  };
+
+  const handlePasswordChange = async (
+    currentPassword: string,
+    newPassword: string
+  ) => {
+    await settingsService.updatePassword(currentPassword, newPassword);
+  };
+
+  const handlePasswordSuccess = () => {
+    showToast({
+      title: t.settingsChangePassword,
+      description: "Password updated successfully!",
+      variant: "success",
+    });
   };
 
   const tabs = [
@@ -295,6 +312,7 @@ export function SettingsPage() {
                     <div className="mt-5 flex items-center justify-end">
                       <button
                         type="button"
+                        onClick={() => setIsPasswordModalOpen(true)}
                         className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:text-teal-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-teal-500 dark:hover:text-teal-300"
                       >
                         {t.settingsChange}
@@ -353,8 +371,10 @@ export function SettingsPage() {
                     >
                       {t.settingsSecurityStrengthLabel}
                     </p>
-                    <p className={`mt-2 text-base font-semibold ${strongText}`}>
-                      {t.settingsSecurityStrengthValue}
+                    <p className={`mt-2 text-base font-semibold ${
+                      twoFactorEnabled ? "text-teal-600 dark:text-teal-400" : "text-amber-600 dark:text-amber-400"
+                    }`}>
+                      {twoFactorEnabled ? t.settingsSecurityLevelHigh : t.settingsSecurityLevelMedium}
                     </p>
                     <p className={`mt-1 text-sm leading-6 ${mutedText}`}>
                       {t.settingsSecurityStrengthDesc}
@@ -367,11 +387,13 @@ export function SettingsPage() {
                     >
                       {t.settingsSecurityStatusLabel}
                     </p>
-                    <p className={`mt-2 text-base font-semibold ${strongText}`}>
-                      {t.settingsSecurityStatusValue}
+                    <p className={`mt-2 text-base font-semibold ${
+                      twoFactorEnabled ? "text-teal-600 dark:text-teal-400" : "text-amber-600 dark:text-amber-400"
+                    }`}>
+                      {twoFactorEnabled ? t.settingsSecurityStatusProtected : t.settingsSecurityStatusWarning}
                     </p>
                     <p className={`mt-1 text-sm leading-6 ${mutedText}`}>
-                      {t.settingsSecurityStatusDesc}
+                      {twoFactorEnabled ? t.settingsSecurityStatusDescProtected : t.settingsSecurityStatusDescWarning}
                     </p>
                   </div>
                 </div>
@@ -601,6 +623,12 @@ export function SettingsPage() {
           )}
         </div>
       </section>
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSuccess={handlePasswordSuccess}
+        onSubmit={handlePasswordChange}
+      />
     </div>
   );
 }

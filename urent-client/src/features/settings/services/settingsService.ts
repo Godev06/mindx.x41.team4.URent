@@ -24,10 +24,22 @@ export const settingsService = {
     return mapUserSettings(response.data);
   },
 
-  async updateTwoFactorEnabled(twoFactorEnabled: boolean): Promise<UserSettings> {
+  async updateTwoFactorEnabled(
+    twoFactorEnabled: boolean
+  ): Promise<UserSettings> {
     const response = await apiClient.patch<unknown>("/api/settings", {
       twoFactorEnabled,
     });
     return mapUserSettings(response.data);
+  },
+
+  async updatePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
+    await apiClient.patch("/api/profile", {
+      currentPassword,
+      newPassword,
+    });
   },
 };

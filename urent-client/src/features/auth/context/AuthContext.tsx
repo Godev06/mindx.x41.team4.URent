@@ -6,6 +6,8 @@ import {
   type PropsWithChildren,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "../../../lib/firebase";
 import { APP_ROUTES, AUTH_SESSION_EXPIRED_EVENT } from "../constants";
 import { authService } from "../services/authService";
 import { authFlowStorage } from "../utils/flowStorage";
@@ -198,6 +200,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
       refreshCurrentUser,
       replaceCurrentUser: (nextUser: AuthUser) => {
         setUser(nextUser);
+      },
+      loginWithGoogle: async (): Promise<AuthSession> => {
+        const provider = new GoogleAuthProvider();
+        const credential = await signInWithPopup(auth, provider);
+        const idToken = await credential.user.getIdToken();
+        const session = await hydrateUserFromSession({
+          token: idToken,
+          user: null,
+          message: "Dang nhap Google thanh cong.",
+        });
+        setToken(session.token);
+        setUser(session.user);
+        return session;
       },
       logout,
     };

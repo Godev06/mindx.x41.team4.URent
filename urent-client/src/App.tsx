@@ -15,7 +15,6 @@ import { NotificationsPage } from "./features/notifications/pages/NotificationsP
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
 import { ProfilePage } from "./features/profile/pages/ProfilePage";
 import { ProductDetailPage } from "./features/product/pages/ProductDetailPage";
-import CreateProductPage from "./features/product/pages/CreateProductPage";
 import { AppShell } from "./features/layout/components/AppShell";
 import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
 import { PublicOnlyRoute } from "./features/auth/components/PublicOnlyRoute";
@@ -57,31 +56,35 @@ export default function App() {
         />
       </Route>
 
+      {/* Public routes — accessible without login */}
+      <Route element={<AppShell />}>
+        <Route
+          path={APP_ROUTES.home}
+          element={<HomePage onProductClick={handleProductClick} />}
+        />
+        <Route
+          path="/products"
+          element={
+            <ProductListingPage
+              onProductClick={handleProductClick}
+              onBack={() => navigate("/")}
+            />
+          }
+        />
+        <Route path="/product/:id" element={<ProductRoute />} />
+      </Route>
+
+      {/* Protected routes — require login */}
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
-          <Route
-            path={APP_ROUTES.home}
-            element={<HomePage onProductClick={handleProductClick} />}
-          />
-          <Route
-            path="/products"
-            element={
-              <ProductListingPage
-                onProductClick={handleProductClick}
-                onBack={() => navigate("/")}
-              />
-            }
-          />
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/products/create" element={<CreateProductPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/messages/:id" element={<MessagesPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path={APP_ROUTES.profile} element={<ProfilePage />} />
-          <Route path="/product/:id" element={<ProductRoute />} />
         </Route>
       </Route>
 

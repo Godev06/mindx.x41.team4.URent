@@ -1,7 +1,19 @@
 import { useState } from "react";
-import { Calendar, Minus, Plus, ShieldCheck } from "lucide-react";
+import {
+  Clock,
+  LogIn,
+  Loader2,
+  Minus,
+  Plus,
+  ShieldCheck,
+  X,
+  Zap,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { Product } from "../../shared/types";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { useAuth } from "../../auth/hooks/useAuth";
+import { APP_ROUTES } from "../../auth/constants";
 
 interface ProductBookingCardProps {
   product: Product;
@@ -9,111 +21,222 @@ interface ProductBookingCardProps {
 
 export function ProductBookingCard({ product }: ProductBookingCardProps) {
   const [days, setDays] = useState(1);
-  const { lang } = useI18n();
-  const t =
-    lang === "vi"
-      ? {
-          rentPrice: "Giá thuê",
-          dayUnit: "/ ngày",
-          ready: "Sẵn sàng",
-          subtotal: "Tạm tính",
-          days: "Số ngày",
-          decreaseDays: "Giảm số ngày",
-          increaseDays: "Tăng số ngày",
-          total: "Tổng cộng",
-          rentRequest: "Gửi yêu cầu thuê",
-          protectedPayment: "Thanh toán được bảo vệ",
-          schedulable: "Có thể đặt lịch giao nhận",
-        }
-      : {
-          rentPrice: "Rental price",
-          dayUnit: "/ day",
-          ready: "Available",
-          subtotal: "Subtotal",
-          days: "Days",
-          decreaseDays: "Decrease days",
-          increaseDays: "Increase days",
-          total: "Total",
-          rentRequest: "Send rental request",
-          protectedPayment: "Protected payment",
-          schedulable: "Pickup scheduling available",
-        };
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { t } = useI18n();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const serviceFee = 2.5;
+  const total = product.price * days + serviceFee;
+
+  const handleRentClick = () => {
+    if (isAuthenticated) {
+      // authenticated flow — proceed normally
+      return;
+    }
+    setShowModal(true);
+  };
+
+  const handleConfirmLogin = () => {
+    setShowModal(false);
+    setIsLoading(true);
+    setTimeout(() => {
+      navigate(APP_ROUTES.login, {
+        state: { from: window.location.pathname },
+      });
+    }, 800);
+  };
 
   return (
-    <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-6 shadow-xl shadow-slate-900/5 ring-1 ring-slate-900/4 md:sticky md:top-24 md:p-6 lg:p-8">
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-            {t.rentPrice}
-          </p>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-3xl font-bold tabular-nums text-teal-600">
-              ${product.price}
-            </span>
-            <span className="text-sm font-medium text-slate-500">
-              {t.dayUnit}
-            </span>
+    <>
+      {/* Login confirm modal */}
+      {showModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="booking-modal-title"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+            onClick={() => setShowModal(false)}
+          />
+          {/* Card */}
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-white shadow-[0_32px_80px_-20px_rgba(15,23,42,0.5)] dark:border-white/10 dark:bg-[#0f1929]">
+            <div className="h-1.5 w-full bg-linear-to-r from-teal-400 via-cyan-400 to-teal-500" />
+            <div className="p-6">
+              {/* Close */}
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/8 dark:hover:text-white"
+                aria-label="Đóng"
+              >
+                <X size={16} strokeWidth={2.5} />
+              </button>
+
+              {/* Icon */}
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-500/30">
+                <LogIn size={24} strokeWidth={2} className="text-white" />
+              </div>
+
+              <h2
+                id="booking-modal-title"
+                className="text-lg font-bold text-slate-900 dark:text-white"
+              >
+                {t.bookingLoginModalTitle}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                {t.bookingLoginModalDesc}
+              </p>
+
+              <div className="mt-6 flex flex-col gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleConfirmLogin}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-teal-500 to-cyan-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-600 hover:to-cyan-600 active:scale-[0.98]"
+                >
+                  <LogIn size={16} strokeWidth={2.5} />
+                  {t.bookingLoginModalConfirm}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-white/20 dark:hover:bg-white/8"
+                >
+                  {t.bookingLoginModalCancel}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-        <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-          {t.ready}
-        </span>
-      </div>
+      )}
 
-      <div className="mb-6 space-y-4 rounded-xl bg-slate-50/90 p-4 ring-1 ring-slate-200/80">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600">{t.subtotal}</span>
-          <span className="font-semibold tabular-nums text-slate-900">
-            ${product.price * days}
-          </span>
-        </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-600">{t.days}</span>
-          <div className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-0.5 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setDays((n) => Math.max(1, n - 1))}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100"
-              aria-label={t.decreaseDays}
-            >
-              <Minus size={16} strokeWidth={2.5} />
-            </button>
-            <span className="min-w-8 text-center text-sm font-semibold tabular-nums">
-              {days}
-            </span>
-            <button
-              type="button"
-              onClick={() => setDays((n) => n + 1)}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition hover:bg-slate-100"
-              aria-label={t.increaseDays}
-            >
-              <Plus size={16} strokeWidth={2.5} />
-            </button>
+      <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/8 ring-1 ring-slate-900/4 md:sticky md:top-24 dark:border-white/8 dark:bg-[#101a2a] dark:ring-white/4">
+        {/* Gradient top strip */}
+        <div className="h-1.5 w-full bg-linear-to-r from-teal-400 via-cyan-400 to-teal-500" />
+
+        <div className="p-5 sm:p-6">
+          {/* Price header */}
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                {t.bookingRentPrice}
+              </p>
+              <div className="mt-1 flex items-baseline gap-1.5">
+                <span className="text-4xl font-bold tabular-nums text-slate-900 dark:text-white">
+                  ${product.price}
+                </span>
+                <span className="mb-0.5 text-sm font-medium text-slate-400 dark:text-slate-500">
+                  {t.bookingDayUnit}
+                </span>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-1.5">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                {t.bookingReady}
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500">
+                <Zap size={10} />
+                Instant confirm
+              </span>
+            </div>
+          </div>
+
+          {/* Day picker */}
+          <div className="mt-5 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-white/8 dark:bg-white/4">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                {t.bookingDays}
+              </span>
+              <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-0.5 shadow-sm dark:border-white/10 dark:bg-white/6">
+                <button
+                  type="button"
+                  onClick={() => setDays((n) => Math.max(1, n - 1))}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/8 dark:hover:text-white"
+                  aria-label={t.bookingDecreaseDays}
+                >
+                  <Minus size={15} strokeWidth={2.5} />
+                </button>
+                <span className="min-w-8 text-center text-sm font-bold tabular-nums text-slate-900 dark:text-white">
+                  {days}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setDays((n) => n + 1)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/8 dark:hover:text-white"
+                  aria-label={t.bookingIncreaseDays}
+                >
+                  <Plus size={15} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            {/* Price breakdown */}
+            <div className="space-y-2.5 border-t border-slate-200/80 pt-3 dark:border-white/8">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">
+                  ${product.price} × {days} ngày
+                </span>
+                <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">
+                  ${product.price * days}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-slate-500 dark:text-slate-400">
+                  {t.bookingSubtotal}
+                </span>
+                <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">
+                  ${serviceFee.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2.5 dark:border-white/10">
+                <span className="text-sm font-bold text-slate-900 dark:text-white">
+                  {t.bookingTotal}
+                </span>
+                <span className="text-2xl font-bold tabular-nums text-teal-600 dark:text-teal-400">
+                  ${total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA button */}
+          <button
+            type="button"
+            onClick={handleRentClick}
+            disabled={isLoading}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-teal-500 to-cyan-500 py-4 text-sm font-bold tracking-wide text-white shadow-lg shadow-teal-500/25 transition hover:from-teal-600 hover:to-cyan-600 hover:shadow-teal-500/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 size={16} strokeWidth={2.5} className="animate-spin" />
+                <span>Đang chuyển hướng...</span>
+              </>
+            ) : (
+              t.bookingRentRequest
+            )}
+          </button>
+
+          {/* Trust footer */}
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <ShieldCheck
+                size={13}
+                className="text-teal-500"
+                strokeWidth={2}
+              />
+              {t.bookingProtectedPayment}
+            </div>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-400 dark:text-slate-500">
+              <Clock size={12} strokeWidth={2} />
+              {t.bookingSchedulable}
+            </div>
           </div>
         </div>
-        <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-4 text-sm">
-          <span className="font-semibold text-slate-900">{t.total}</span>
-          <span className="text-xl font-bold tabular-nums text-teal-600">
-            ${product.price * days + 2.5}
-          </span>
-        </div>
       </div>
-
-      <button
-        type="button"
-        className="w-full rounded-xl bg-amber-500 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-500/15 transition hover:bg-amber-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-      >
-        {t.rentRequest}
-      </button>
-
-      <div className="mt-4 flex items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-        <ShieldCheck size={14} className="text-teal-600" strokeWidth={2} />
-        {t.protectedPayment}
-      </div>
-      <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-        <Calendar size={14} className="text-slate-400" strokeWidth={2} />
-        {t.schedulable}
-      </div>
-    </div>
+    </>
   );
 }

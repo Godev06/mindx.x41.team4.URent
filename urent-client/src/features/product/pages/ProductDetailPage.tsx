@@ -1,9 +1,19 @@
 import { useMemo } from "react";
-import { ArrowLeft, MapPin, ShieldCheck, Star, Truck } from "lucide-react";
-import { PRODUCTS } from "../../shared/data";
+import {
+  ArrowLeft,
+  Award,
+  MapPin,
+  MessageCircle,
+  ShieldCheck,
+  Star,
+  Truck,
+  Zap,
+} from "lucide-react";
+import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { ProductBookingCard } from "../components/ProductBookingCard";
 import { ProductSpecRow } from "../components/ProductSpecRow";
+import { ProductReviews } from "../components/ProductReviews";
 import { useI18n } from "../../shared/context/LanguageContext";
 
 interface ProductDetailPageProps {
@@ -11,7 +21,7 @@ interface ProductDetailPageProps {
   onBack: () => void;
 }
 
-const DEFAULT_SPECS = [
+const DEFAULT_DESCRIPTION = [
   "Đầy đủ phụ kiện theo mô tả",
   "Hỗ trợ giao nhận tại địa điểm thỏa thuận",
 ];
@@ -20,132 +30,208 @@ export function ProductDetailPage({
   productId,
   onBack,
 }: ProductDetailPageProps) {
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const product: Product = useMemo(
     () => PRODUCTS.find((item) => item.id === productId) ?? PRODUCTS[0],
     [productId],
   );
 
-  const specs = product.specs ?? DEFAULT_SPECS;
-  const t =
-    lang === "vi"
-      ? {
-          back: "Quay lại",
-          assurance: "Bảo đảm thiết bị",
-          assuranceValue: "Đã kiểm định trước giao",
-          support: "Hỗ trợ",
-          supportValue: "24/7 qua chat và hotline",
-          response: "Phản hồi chủ thiết bị",
-          responseValue: "Dưới 10 phút",
-          reviewUnit: "đánh giá",
-          location: "Thủ Đức, TP.HCM",
-          defaultDescription: "Thông tin sản phẩm đang được cập nhật.",
-          renterPolicy: "Chính sách bảo vệ người thuê",
-          flexibleDelivery: "Hỗ trợ giao nhận linh hoạt",
-        }
-      : {
-          back: "Back",
-          assurance: "Device assurance",
-          assuranceValue: "Inspected before delivery",
-          support: "Support",
-          supportValue: "24/7 via chat and hotline",
-          response: "Owner response time",
-          responseValue: "Under 10 minutes",
-          reviewUnit: "reviews",
-          location: "Thu Duc, Ho Chi Minh City",
-          defaultDescription: "Product information is being updated.",
-          renterPolicy: "Renter protection policy",
-          flexibleDelivery: "Flexible delivery support",
-        };
+  const description = product.description ?? DEFAULT_DESCRIPTION;
 
   return (
-    <div className="pb-8 sm:pb-10 md:pb-12">
+    <div className="pb-12">
+      {/* Back button */}
       <button
         type="button"
         onClick={onBack}
-        className="mb-5 sm:mb-6 md:mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 sm:mb-8"
+        className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm backdrop-blur-sm transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-teal-400/40 dark:hover:bg-teal-500/10 dark:hover:text-teal-300"
       >
-        <ArrowLeft size={18} strokeWidth={2} />
-        {t.back}
+        <ArrowLeft size={16} strokeWidth={2.5} />
+        {t.productDetailBack}
       </button>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
-        <div className="space-y-6 lg:col-span-8">
-          <div className="grid grid-cols-1 gap-4 sm:gap-5 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-3 sm:p-4 shadow-sm ring-1 ring-slate-900/4">
-              <p className="text-xs font-medium text-slate-500">
-                {t.assurance}
-              </p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">
-                {t.assuranceValue}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-900/4">
-              <p className="text-xs font-medium text-slate-500">{t.support}</p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">
-                {t.supportValue}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm ring-1 ring-slate-900/4">
-              <p className="text-xs font-medium text-slate-500">{t.response}</p>
-              <p className="mt-2 text-sm font-semibold text-slate-900">
-                {t.responseValue}
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-900/4 sm:p-8">
-            <h1 className="text-balance text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
+      {/* Hero image */}
+      {product.imageUrl && (
+        <div className="relative mb-8 h-64 w-full overflow-hidden rounded-3xl sm:h-80 md:h-96">
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-linear-to-t from-slate-900/60 via-slate-900/10 to-transparent" />
+          {/* Floating category badge */}
+          <span className="absolute top-4 left-4 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md">
+            {product.category}
+          </span>
+          {/* Floating availability badge */}
+          <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200 backdrop-blur-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            {t.bookingReady}
+          </span>
+          {/* Bottom info on hero */}
+          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+            <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow sm:text-3xl md:text-4xl">
               {product.name}
             </h1>
-            <div className="mt-4 md:mt-6 flex flex-wrap items-center gap-3 md:gap-4 text-sm">
-              <div className="inline-flex items-center gap-1.5 font-semibold text-orange-500">
-                <Star
-                  size={17}
-                  fill="currentColor"
-                  className="text-orange-400"
-                />
-                <span className="tabular-nums text-slate-900">
-                  {product.rating ?? 4.9}
-                </span>
-                <span className="font-normal text-slate-400">
-                  {t.reviewUnit}
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+              <div className="inline-flex items-center gap-1 font-semibold text-amber-300">
+                <Star size={14} fill="currentColor" />
+                <span className="tabular-nums">{product.rating ?? 4.9}</span>
+                <span className="font-normal text-white/70">
+                  {t.productDetailReviewUnit}
                 </span>
               </div>
-              <span
-                className="hidden h-4 w-px bg-slate-200 sm:block"
-                aria-hidden
-              />
-              <div className="inline-flex items-center gap-1.5 text-slate-600">
-                <MapPin size={16} className="text-slate-400" strokeWidth={2} />
-                {t.location}
-              </div>
-            </div>
-            <p className="mt-6 text-sm leading-relaxed text-slate-600 sm:text-[15px]">
-              {product.description ?? t.defaultDescription}
-            </p>
-            <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {specs.map((spec) => (
-                <ProductSpecRow key={spec} text={spec} />
-              ))}
-            </ul>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                <ShieldCheck size={16} className="text-teal-700" />
-                {t.renterPolicy}
-              </div>
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                <Truck size={16} className="text-orange-500" />
-                {t.flexibleDelivery}
+              <span className="h-3 w-px bg-white/30" aria-hidden />
+              <div className="inline-flex items-center gap-1 text-white/80">
+                <MapPin size={13} strokeWidth={2} />
+                {t.productDetailLocation}
               </div>
             </div>
           </div>
         </div>
+      )}
 
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+        {/* Left column */}
+        <div className="space-y-6 lg:col-span-8">
+          {/* Trust badges */}
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              {
+                label: t.productDetailAssurance,
+                value: t.productDetailAssuranceValue,
+                icon: ShieldCheck,
+                color: "text-teal-600 dark:text-teal-400",
+                bg: "bg-teal-50 dark:bg-teal-500/10",
+              },
+              {
+                label: t.productDetailSupport,
+                value: t.productDetailSupportValue,
+                icon: Zap,
+                color: "text-amber-600 dark:text-amber-400",
+                bg: "bg-amber-50 dark:bg-amber-500/10",
+              },
+              {
+                label: t.productDetailResponse,
+                value: t.productDetailResponseValue,
+                icon: MessageCircle,
+                color: "text-violet-600 dark:text-violet-400",
+                bg: "bg-violet-50 dark:bg-violet-500/10",
+              },
+            ].map(({ label, value, icon: Icon, color, bg }) => (
+              <div
+                key={label}
+                className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200/80 bg-white p-3 text-center shadow-sm ring-1 ring-slate-900/4 dark:border-white/8 dark:bg-white/4 dark:ring-white/4"
+              >
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-xl ${bg}`}
+                >
+                  <Icon size={16} strokeWidth={2} className={color} />
+                </div>
+                <p className="text-[10px] font-medium text-slate-400 dark:text-slate-500">
+                  {label}
+                </p>
+                <p className="text-xs font-bold leading-tight text-slate-800 dark:text-slate-100">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Main info card */}
+          <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-900/4 dark:border-white/8 dark:bg-[#101a2a] dark:ring-white/4">
+            {/* Header gradient strip */}
+            <div className="h-1.5 w-full bg-linear-to-r from-teal-400 via-cyan-400 to-teal-500" />
+
+            <div className="p-6 sm:p-8">
+              {/* Title (shown if no imageUrl) */}
+              {!product.imageUrl && (
+                <h1 className="mb-4 text-balance text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                  {product.name}
+                </h1>
+              )}
+
+              {/* Summary */}
+              <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
+                {product.summary ?? t.productDetailDefaultDescription}
+              </p>
+
+              {/* Specs */}
+              <div className="mt-8">
+                <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">
+                  Thông số kỹ thuật
+                </h2>
+                <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                  {description.map((spec) => (
+                    <ProductSpecRow key={spec} text={spec} />
+                  ))}
+                </ul>
+              </div>
+
+              {/* Policy pills */}
+              <div className="mt-8 flex flex-wrap gap-2.5">
+                <span className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3.5 py-1.5 text-xs font-semibold text-teal-700 dark:border-teal-500/25 dark:bg-teal-500/10 dark:text-teal-300">
+                  <ShieldCheck size={13} strokeWidth={2.2} />
+                  {t.productDetailRenterPolicy}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-xs font-semibold text-orange-700 dark:border-orange-500/25 dark:bg-orange-500/10 dark:text-orange-300">
+                  <Truck size={13} strokeWidth={2.2} />
+                  {t.productDetailFlexibleDelivery}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Owner card */}
+          {product.owner && (
+            <div className="flex items-center gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm ring-1 ring-slate-900/4 dark:border-white/8 dark:bg-[#101a2a] dark:ring-white/4">
+              <img
+                src={product.owner.avatar}
+                alt={product.owner.name}
+                className="h-14 w-14 rounded-2xl object-cover ring-2 ring-slate-200 dark:ring-white/10"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  Chủ sở hữu
+                </p>
+                <p className="mt-0.5 text-base font-bold text-slate-900 dark:text-white">
+                  {product.owner.name}
+                </p>
+                <div className="mt-1 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="inline-flex items-center gap-1 font-semibold text-amber-500">
+                    <Star size={11} fill="currentColor" />
+                    {product.owner.rating.toFixed(1)}
+                  </span>
+                  <span className="h-3 w-px bg-slate-200 dark:bg-white/10" />
+                  <span className="inline-flex items-center gap-1">
+                    <Award size={11} className="text-slate-400" />
+                    {product.owner.trips} chuyến
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-slate-500 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:hover:border-teal-400/30 dark:hover:bg-teal-500/10 dark:hover:text-teal-400"
+              >
+                <MessageCircle size={18} strokeWidth={2} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Booking sidebar */}
         <div className="lg:col-span-4">
           <ProductBookingCard product={product} />
         </div>
+      </div>
+
+      {/* Reviews */}
+      <div className="mt-8">
+        <ProductReviews
+          productId={product.id}
+          rating={product.rating}
+          reviews={product.reviews}
+        />
       </div>
     </div>
   );

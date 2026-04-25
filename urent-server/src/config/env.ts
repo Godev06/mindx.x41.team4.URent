@@ -31,7 +31,11 @@ export const env = {
   resetTokenExpiresMinutes: Number(rawEnv.RESET_TOKEN_EXPIRES_MINUTES ?? 15),
   cloudinaryCloudName: rawEnv.CLOUDINARY_CLOUD_NAME,
   cloudinaryApiKey: rawEnv.CLOUDINARY_API_KEY,
-  cloudinaryApiSecret: rawEnv.CLOUDINARY_API_SECRET
+  cloudinaryApiSecret: rawEnv.CLOUDINARY_API_SECRET,
+  firebaseServiceAccountPath: rawEnv.FIREBASE_SERVICE_ACCOUNT_PATH,
+  firebaseProjectId: rawEnv.FIREBASE_PROJECT_ID,
+  firebaseClientEmail: rawEnv.FIREBASE_CLIENT_EMAIL,
+  firebasePrivateKey: rawEnv.FIREBASE_PRIVATE_KEY
 };
 
 if ((!env.mongoUri && !env.mongoUriFallback) || !env.jwtSecret) {

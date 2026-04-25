@@ -10,7 +10,8 @@ import {
   ArrowUpDown,
   Search,
 } from "lucide-react";
-import { PRODUCTS } from "../../shared/data";
+import { PRODUCTS } from "../../dataset/products";
+import type { Product } from "../../shared/types";
 import { ProductCard } from "../components/ProductCard";
 import { useI18n } from "../../shared/context/LanguageContext";
 
@@ -129,7 +130,7 @@ export function ProductListingPage({
   onProductClick,
   onBack,
 }: ProductListingPageProps) {
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   const [category, setCategory] = useState<CategoryKey>("all");
   const [sortBy, setSortBy] = useState<"latest" | "price-low" | "price-high">(
     "latest",
@@ -139,12 +140,17 @@ export function ProductListingPage({
   const [currentPage, setCurrentPage] = useState(1);
 
   const activeProducts = useMemo(
-    () => PRODUCTS.filter((product) => ACTIVE_STATUSES.has(product.status)),
+    () =>
+      PRODUCTS.filter((product: Product) =>
+        ACTIVE_STATUSES.has(product.status),
+      ),
     [],
   );
 
   const { dataMinPriceVnd, dataMaxPriceVnd } = useMemo(() => {
-    const prices = activeProducts.map((product) => toVnd(product.price));
+    const prices = activeProducts.map((product: Product) =>
+      toVnd(product.price),
+    );
     if (prices.length === 0) {
       return { dataMinPriceVnd: 0, dataMaxPriceVnd: 0 };
     }
@@ -160,20 +166,24 @@ export function ProductListingPage({
     setMaxPriceInput(String(dataMaxPriceVnd));
   }, [dataMinPriceVnd, dataMaxPriceVnd]);
 
-  const categories =
-    lang === "vi"
-      ? [
-          { id: "all" as const, label: "Tất cả", icon: House },
-          { id: "electronics" as const, label: "Điện tử", icon: Laptop },
-          { id: "textbooks" as const, label: "Giáo trình", icon: BookOpen },
-          { id: "appliances" as const, label: "Đồ gia dụng", icon: House },
-        ]
-      : [
-          { id: "all" as const, label: "All", icon: House },
-          { id: "electronics" as const, label: "Electronics", icon: Laptop },
-          { id: "textbooks" as const, label: "Textbooks", icon: BookOpen },
-          { id: "appliances" as const, label: "Home appliances", icon: House },
-        ];
+  const categories = [
+    { id: "all" as const, label: t.productListingCatAll, icon: House },
+    {
+      id: "electronics" as const,
+      label: t.productListingCatElectronics,
+      icon: Laptop,
+    },
+    {
+      id: "textbooks" as const,
+      label: t.productListingCatTextbooks,
+      icon: BookOpen,
+    },
+    {
+      id: "appliances" as const,
+      label: t.productListingCatAppliances,
+      icon: House,
+    },
+  ];
 
   const filteredAndSortedProducts = useMemo(() => {
     const minPrice = Number(minPriceInput);
@@ -183,7 +193,7 @@ export function ProductListingPage({
     const effectiveMinPrice = hasMinPrice ? minPrice : dataMinPriceVnd;
     const effectiveMaxPrice = hasMaxPrice ? maxPrice : dataMaxPriceVnd;
 
-    let result = activeProducts.filter((product) => {
+    let result = activeProducts.filter((product: Product) => {
       const meta = PRODUCT_META[product.id];
       if (!meta) {
         return false;
@@ -198,7 +208,7 @@ export function ProductListingPage({
     });
 
     // Sort
-    result.sort((a, b) => {
+    result.sort((a: Product, b: Product) => {
       if (sortBy === "price-low") {
         return a.price - b.price;
       } else if (sortBy === "price-high") {
@@ -267,67 +277,10 @@ export function ProductListingPage({
     }
   }, [currentPage, totalPages]);
 
-  const t =
-    lang === "vi"
-      ? {
-          allProducts: "Tất cả sản phẩm",
-          categories: "Danh mục",
-          sortBy: "Sắp xếp theo",
-          latest: "Mới nhất",
-          priceLow: "Giá: Thấp → Cao",
-          priceHigh: "Giá: Cao → Thấp",
-          noResult: "Không có sản phẩm phù hợp với bộ lọc hiện tại.",
-          items: "sản phẩm",
-          home: "Trang chủ",
-          viewFilters: "Bộ lọc",
-          showResults: "Hiển thị kết quả",
-          priceRange: "Khoảng giá (VND)",
-          minPrice: "Giá từ",
-          maxPrice: "Giá đến",
-          defaultPriceRange: "Mặc định",
-          clearPrice: "Xóa giá",
-          previous: "Trước",
-          next: "Sau",
-          page: "Trang",
-          showing: "Hiển thị",
-          of: "trên",
-          activeFilters: "Bộ lọc đang áp dụng",
-          sortLabel: "Sắp xếp",
-          allCategory: "Tất cả",
-          resultsLabel: "Kết quả",
-        }
-      : {
-          allProducts: "All Products",
-          categories: "Categories",
-          sortBy: "Sort by",
-          latest: "Latest",
-          priceLow: "Price: Low → High",
-          priceHigh: "Price: High → Low",
-          noResult: "No items match current filters.",
-          items: "items",
-          home: "Home",
-          viewFilters: "Filters",
-          showResults: "Show results",
-          priceRange: "Price range (VND)",
-          minPrice: "Min price",
-          maxPrice: "Max price",
-          defaultPriceRange: "Default",
-          clearPrice: "Clear price",
-          previous: "Previous",
-          next: "Next",
-          page: "Page",
-          showing: "Showing",
-          of: "of",
-          activeFilters: "Active filters",
-          sortLabel: "Sort",
-          allCategory: "All",
-          resultsLabel: "Results",
-        };
-
   const sortOptions = [
-    { value: "latest", label: t.latest },
-    { value: "price-low", label: t.priceLow },
-    { value: "price-high", label: t.priceHigh },
+    { value: "latest", label: t.productListingLatest },
+    { value: "price-low", label: t.productListingPriceLow },
+    { value: "price-high", label: t.productListingPriceHigh },
   ] as const;
 
   const [showFilters, setShowFilters] = useState(false);
@@ -379,7 +332,9 @@ export function ProductListingPage({
                 style={{ boxShadow: "0 2px 8px 0 rgba(0,0,0,0.04)" }}
               >
                 <Sliders size={13} />
-                <span className="hidden sm:inline">{t.viewFilters}</span>
+                <span className="hidden sm:inline">
+                  {t.productListingViewFilters}
+                </span>
               </button>
             </div>
           </div>
@@ -397,7 +352,7 @@ export function ProductListingPage({
                       className="text-slate-600 dark:text-slate-400"
                     />
                     <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                      {t.sortBy}
+                      {t.productListingSortBy}
                     </h3>
                   </div>
                   <div className="space-y-2">
@@ -448,7 +403,7 @@ export function ProductListingPage({
                 <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-3 sm:p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
                   <div className="mb-3 sm:mb-3.5 flex items-center justify-between">
                     <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                      {t.priceRange}
+                      {t.productListingPriceRange}
                     </h3>
                     <button
                       type="button"
@@ -458,12 +413,12 @@ export function ProductListingPage({
                       }}
                       className="text-[11px] sm:text-xs font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-300 dark:hover:text-teal-200"
                     >
-                      {t.clearPrice}
+                      {t.productListingClearPrice}
                     </button>
                   </div>
                   <div className="space-y-2 sm:space-y-3">
                     <label className="block text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {t.minPrice}
+                      {t.productListingMinPrice}
                       <input
                         type="number"
                         min={0}
@@ -476,7 +431,7 @@ export function ProductListingPage({
                       />
                     </label>
                     <label className="block text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400">
-                      {t.maxPrice}
+                      {t.productListingMaxPrice}
                       <input
                         type="number"
                         min={0}
@@ -489,7 +444,7 @@ export function ProductListingPage({
                       />
                     </label>
                     <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">
-                      {t.defaultPriceRange}:{" "}
+                      {t.productListingDefaultPriceRange}:{" "}
                       {formatCompactNumber(dataMinPriceVnd)} -{" "}
                       {formatCompactNumber(dataMaxPriceVnd)} VND
                     </p>
@@ -502,7 +457,7 @@ export function ProductListingPage({
                   onClick={() => setShowFilters(false)}
                   className="w-full rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/90 dark:text-white dark:hover:bg-slate-700"
                 >
-                  {t.showResults}
+                  {t.productListingShowResults}
                 </button>
               )}
             </div>
@@ -512,8 +467,8 @@ export function ProductListingPage({
           <div className="lg:col-span-4">
             {filteredAndSortedProducts.length > 0 ? (
               <div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
-                  {paginatedProducts.map((product) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-5">
+                  {paginatedProducts.map((product: Product) => {
                     const meta = PRODUCT_META[product.id];
                     const location =
                       lang === "vi" ? meta.locationVi : meta.locationEn;
@@ -525,7 +480,7 @@ export function ProductListingPage({
                         product={product}
                         onSelect={onProductClick}
                         dayUnit={lang === "vi" ? "ngày" : "day"}
-                        priceVnd={toVnd(product.price)}   
+                        priceVnd={toVnd(product.price)}
                         location={location}
                         distanceKm={meta.distanceKm}
                         conditionLabel={conditionLabel}
@@ -544,7 +499,7 @@ export function ProductListingPage({
                       className="inline-flex h-9 items-center gap-1 rounded-xl px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45 dark:text-slate-200 dark:hover:bg-slate-700"
                     >
                       <ChevronLeft size={15} />
-                      {t.previous}
+                      {t.productListingPrevious}
                     </button>
 
                     {visiblePageItems.map((item, index) => {
@@ -583,7 +538,7 @@ export function ProductListingPage({
                       disabled={currentPage === totalPages}
                       className="inline-flex h-9 items-center gap-1 rounded-xl px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45 dark:text-slate-200 dark:hover:bg-slate-700"
                     >
-                      {t.next}
+                      {t.productListingNext}
                       <ChevronRight size={15} />
                     </button>
                   </div>
@@ -600,7 +555,7 @@ export function ProductListingPage({
                   </div>
                   <div>
                     <p className="font-medium text-slate-600 dark:text-slate-400">
-                      {t.noResult}
+                      {t.productListingNoResult}
                     </p>
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
                       Try adjusting your filters

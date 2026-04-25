@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { PRODUCTS } from "../../shared/data";
+import { PRODUCTS } from "../../dataset/products";
+import type { Product } from "../../shared/types";
 import { HeroIntro } from "../components/HeroIntro";
 import { FeaturedProducts } from "../components/FeaturedProducts";
 import { CategoryShowcase } from "../components/CategoryShowcase";
@@ -95,7 +96,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
   const navigate = useNavigate();
 
   const activeProducts = useMemo(
-    () => PRODUCTS.filter((product) => ACTIVE_STATUSES.has(product.status)),
+    () => PRODUCTS.filter((product: Product) => ACTIVE_STATUSES.has(product.status)),
     [],
   );
 

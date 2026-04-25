@@ -1,94 +1,117 @@
-# URent Client
+# 🚀 URent - Nền tảng Cho thuê Đa năng
 
-Frontend React + Vite + TypeScript da duoc ket noi voi backend URent cho cac flow auth/profile sau:
+[![React](https://img.shields.io/badge/React-19.2-blue.svg)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.4-646CFF.svg)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.2-38B2AC.svg)](https://tailwindcss.com/)
 
-- GET /health
-- POST /api/auth/register
-- POST /api/auth/register/verify-otp
-- POST /api/auth/login
-- POST /api/auth/login/verify-otp
-- POST /api/auth/forgot-password
-- POST /api/auth/reset-password
-- GET /api/auth/me
-- PATCH /api/profile
-- POST /api/profile/avatar
+**URent Client** là giao diện người dùng hiện đại, hiệu năng cao cho hệ sinh thái cho thuê URent. Dự án được xây dựng với mục tiêu mang lại trải nghiệm thuê đồ mượt mà, tin cậy và chuyên nghiệp.
 
-## Cau truc de xuat
+---
+
+## 📌 Tổng quan dự án (Dành cho Leader & Stakeholders)
+
+Dự án URent tập trung vào việc giải quyết nhu cầu thuê và cho thuê đồ dùng (điện tử, máy ảnh, thiết bị sự kiện...) một cách an toàn và nhanh chóng.
+
+### Tầm nhìn kỹ thuật:
+- **Scalability**: Kiến trúc dựa trên tính năng (Feature-based Architecture) giúp dễ dàng mở rộng và bảo trì.
+- **Security**: Hệ thống xác thực OTP 2 lớp (Auth OTP) đảm bảo an toàn tài khoản.
+- **Performance**: Sử dụng Vite 6 và React 19 để tối ưu thời gian phản hồi và render.
+- **Experience**: UI/UX được chau chuốt với TailwindCSS 4, hỗ trợ responsive hoàn hảo trên mọi thiết bị.
+
+---
+
+## 📚 Tài liệu chi tiết
+
+Để hiểu rõ hơn về dự án, vui lòng tham khảo các tài liệu sau:
+
+- [📖 Kiến trúc Hệ thống (Architecture)](./docs/ARCHITECTURE.md)
+- [💻 Hướng dẫn Phát triển Frontend](./docs/FRONTEND_DOCUMENTATION.md)
+- [🛠 Quy định & Tiêu chuẩn Code](./docs/DEVELOPMENT_GUIDELINE.md)
+- [💬 Tích hợp API Message](./docs/message-api-integration.md)
+
+---
+
+
+| Công nghệ | Vai trò |
+| :--- | :--- |
+| **React 19** | Thư viện UI cốt lõi |
+| **TypeScript 5** | Đảm bảo an toàn kiểu dữ liệu (Type-safety) |
+| **Vite 6** | Build tool & Dev server siêu tốc |
+| **TailwindCSS 4** | Styling hệ thống với kiến trúc utility-first |
+| **React Router 7** | Quản lý điều hướng và routing mạnh mẽ |
+| **Axios** | Xử lý HTTP requests với interceptors chuyên nghiệp |
+| **Socket.io** | Hỗ trợ tính năng Chat & Thông báo thời gian thực |
+| **Google Maps API** | Định vị và tìm kiếm sản phẩm theo bản đồ |
+
+---
+
+## 📂 Cấu trúc dự án (Dành cho Developer)
+
+Dự án áp dụng mô hình **Feature-based Folders** để tránh việc folder `components` hay `hooks` bị phình to quá mức.
 
 ```text
 src/
-  lib/api/
-    apiClient.ts
-    apiError.ts
-    tokenStorage.ts
-  features/
-    auth/
-      components/
-      context/
-      hooks/
-      pages/
-      services/
-      utils/
-      constants.ts
-      types.ts
-    profile/
-      pages/
-      services/
-    shared/
-      components/
-      utils/
+├── features/           # Chứa các module nghiệp vụ chính
+│   ├── auth/           # Login, Register, OTP, Reset Password
+│   ├── product/        # Danh sách, chi tiết, tạo sản phẩm
+│   ├── messages/       # Hệ thống chat realtime
+│   ├── orders/         # Quản lý đơn hàng (Booking/Rental)
+│   ├── inventory/      # Quản lý kho đồ cá nhân
+│   └── profile/        # Thông tin cá nhân & Avatar
+├── lib/                # Cấu hình các thư viện bên thứ 3 (Axios, Socket)
+├── shared/             # Các UI Components và Utils dùng chung
+└── layout/             # Các thành phần giao diện chính (Sidebar, Header, Shell)
 ```
 
-## Bien moi truong
+---
 
-1. Tao file `.env` tu `.env.example`.
-2. Neu khong khai bao, frontend se dung mac dinh `http://localhost:5003`.
+## 🚀 Bắt đầu phát triển
 
+### 1. Cấu hình môi trường
+Sao chép file `.env.example` thành `.env` và cập nhật các tham số cần thiết:
 ```env
 VITE_API_BASE_URL=http://localhost:5003
+VITE_GOOGLE_MAPS_API_KEY=your_key_here
 ```
 
-## Chay du an
-
+### 2. Cài đặt và Chạy
 ```bash
+# Cài đặt dependencies
 npm install
-npm run dev
+
+# Chạy ở chế độ Development (Port 5173)
+npm run dev:strict
 ```
 
-### Chay on dinh mot lenh (khuyen nghi)
-
-Dung mot terminal duy nhat cho frontend, sau do chay:
-
+### 3. Kiểm tra mã nguồn
 ```bash
-npm run dev:strict
+# Kiểm tra lỗi TypeScript
+npm run typecheck
+
+# Linting code
+npm run lint
 ```
 
-Lenh nay khoa cung port `5173`, tranh tinh trang nhay port lien tuc khi co nhieu Vite process cu.
+---
 
-Neu gap loi port dang duoc su dung, dung PowerShell de don process cu roi chay lai:
+## 💎 Các tính năng nổi bật
 
-```powershell
-Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue |
-  Select-Object -ExpandProperty OwningProcess -Unique |
-  ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
-npm run dev:strict
-```
+1.  **Hệ thống Auth Bảo mật**: Đăng ký/Đăng nhập đi kèm xác thực OTP qua Email.
+2.  **Quản lý Kho đồ**: Người dùng có thể đăng tải sản phẩm cho thuê với đầy đủ thông số kỹ thuật.
+3.  **Real-time Messaging**: Trao đổi trực tiếp giữa người thuê và người cho thuê qua Socket.io.
+4.  **Lịch sử Đơn hàng**: Theo dõi trạng thái đơn hàng từ lúc đặt đến khi hoàn tất.
+5.  **Tích hợp Bản đồ**: Tìm kiếm thiết bị cho thuê xung quanh khu vực người dùng.
 
-## Auth architecture
+---
 
-- Axios client chung co timeout, request interceptor gan `Authorization: Bearer <token>` tu `localStorage` key `auth_token`.
-- Response interceptor chuan hoa loi sang message de doc va xu ly `401` bang cach xoa token, logout session va dua ve trang login.
-- `AuthProvider` quan ly `user`, `token`, bootstrap session, `login/logout`, `refreshCurrentUser`.
-- Cac route private di qua `ProtectedRoute`, route auth di qua `PublicOnlyRoute`.
-- Toan bo form auth/profile co validation frontend cho email, password, otp, profile fields va avatar file.
+## 🤝 Đóng góp phát triển
 
-## Test end-to-end
+Mọi đóng góp cần tuân thủ quy trình sau:
+1. Tạo branch mới từ `develop` (ví dụ: `feature/chat-system` hoặc `fix/login-bug`).
+2. Viết code sạch, có comment đầy đủ cho các hàm phức tạp.
+3. Chạy `npm run typecheck` trước khi tạo Pull Request.
+4. Yêu cầu Review từ Leader trước khi Merge.
 
-1. Health check: vao `/login`, xac nhan the `Backend status` hien `Healthy` khi backend dang chay.
-2. Register: vao `/register`, nhap email hop le + password >= 6, submit de backend gui OTP, sau do vao `/register/verify-otp` va nhap OTP 6 ky tu.
-3. Login OTP: vao `/login`, nhap email/password, submit, sau do nhap OTP o `/login/verify-otp`; verify thanh cong phai vao duoc dashboard va token xuat hien trong localStorage key `auth_token`.
-4. Me/profile bootstrap: refresh browser khi da dang nhap, frontend phai goi `/api/auth/me` va giu session.
-5. Forgot/reset password: vao `/forgot-password`, gui email, sang `/reset-password`, nhap email + OTP + mat khau moi.
-6. Update profile: vao `/profile`, sua `displayName`, `bio`, `phone`, submit va kiem tra du lieu moi hien ngay sau khi PATCH thanh cong.
-7. Upload avatar: tren `/profile`, chon anh <= 5MB, backend tra du lieu moi va avatar phai cap nhat tren UI.
-8. Session expiry: chu dong lam token het han hoac dung token sai, request tiep theo phai bi logout va quay lai `/login`.
+---
+*Phát triển bởi Đội ngũ URent - 2026*

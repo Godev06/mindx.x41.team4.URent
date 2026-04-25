@@ -9,7 +9,7 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const statusVariant =
     order.status === "delivered"
       ? "green"
@@ -53,7 +53,7 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
           </span>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          {lang === "vi" ? "Mã đơn:" : "Order code:"}{" "}
+          {t.orderCardCode}{" "}
           <span className="font-medium text-slate-700 dark:text-slate-300">
             {order.id}
           </span>
@@ -64,26 +64,18 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
             className="text-slate-400 dark:text-slate-500"
             strokeWidth={2}
           />
-          {lang === "vi" ? "Trả dự kiến" : "Expected return"}: {order.endDate}
+          {t.orderCardExpectedReturn}: {order.endDate}
         </div>
         <span
           className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-tight ${statusClass}`}
         >
-          {lang === "vi"
-            ? order.status === "delivered"
-              ? "Đã giao"
-              : order.status === "shipped"
-                ? "Đang giao"
-                : order.status === "confirmed"
-                  ? "Đã xác nhận"
-                  : "Chờ xử lý"
-            : order.status === "delivered"
-              ? "Delivered"
-              : order.status === "shipped"
-                ? "Shipping"
-                : order.status === "confirmed"
-                  ? "Confirmed"
-                  : "Pending"}
+          {order.status === "delivered"
+            ? t.orderCardDelivered
+            : order.status === "shipped"
+              ? t.orderCardShipping
+              : order.status === "confirmed"
+                ? t.orderCardConfirmed
+                : t.orderCardPending}
         </span>
       </div>
     </article>

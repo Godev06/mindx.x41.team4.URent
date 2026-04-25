@@ -39,7 +39,12 @@ export const authService = {
   },
 
   async register(payload: RegisterPayload): Promise<MutationResult> {
-    const response = await apiClient.post<unknown>("/api/auth/register", payload);
+    const response = await apiClient.post<unknown>("/api/auth/register", {
+      username: payload.username,
+      ...(payload.displayName ? { displayName: payload.displayName } : {}),
+      email: payload.email,
+      password: payload.password,
+    });
     return mapMutationResult(response.data, "Da gui OTP dang ky den email cua ban.");
   },
 

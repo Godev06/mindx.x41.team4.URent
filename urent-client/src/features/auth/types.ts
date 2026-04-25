@@ -9,6 +9,8 @@ export interface AuthUser {
 }
 
 export interface RegisterPayload {
+  username: string;
+  displayName?: string;
   email: string;
   password: string;
 }
@@ -70,5 +72,6 @@ export interface AuthContextValue {
   resetPassword: (payload: ResetPasswordPayload) => Promise<MutationResult>;
   refreshCurrentUser: () => Promise<AuthUser | null>;
   replaceCurrentUser: (user: AuthUser) => void;
+  loginWithGoogle: () => Promise<AuthSession>;
   logout: (options?: { redirectTo?: string; silent?: boolean }) => void;
 }

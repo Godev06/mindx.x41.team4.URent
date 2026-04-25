@@ -10,6 +10,7 @@ import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { APP_ROUTES } from "../../auth/constants";
+import { useAuthGate } from "../../auth/context/AuthGateContext";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { SidebarItem } from "../../shared/components/SidebarItem";
 import { useI18n } from "../../shared/context/LanguageContext";
@@ -23,79 +24,16 @@ interface ProfileMenuItem {
   isDanger?: boolean;
 }
 
-const notifications = [
-  { id: 1, title: "Đơn hàng #A102 đã gửi", time: "2 phút trước" },
-  { id: 2, title: "Tin nhắn mới từ Lan", time: "10 phút trước" },
-  { id: 3, title: "Khuyến mãi 20% cho camera", time: "1 giờ trước" },
-];
-
 export function AppHeader() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { user, logout } = useAuth();
-  const { lang } = useI18n();
+  const { user, logout, isAuthenticated } = useAuth();
+  const { guardedNavigate } = useAuthGate();
+  const { t } = useI18n();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-
-  const t =
-    lang === "vi"
-      ? {
-          searchPlaceholder: "Tìm máy ảnh, laptop, hoặc mã đơn hàng...",
-          userFallback: "U-Rent User",
-          home: "Trang chủ",
-          orders: "Đơn hàng",
-          inventory: "Kho",
-          messages: "Tin nhắn",
-          profile: "Hồ sơ",
-          myOrders: "Đơn của tôi",
-          logout: "Đăng xuất",
-          notificationsAria: "Thông báo",
-          settingsAria: "Cài đặt",
-          profileMenuAria: "Menu hồ sơ",
-          homeAria: "U-Rent - Trang chủ",
-          notificationsTitle: "Thông báo mới",
-          notificationsSubtitle:
-            "Cập nhật đơn hàng, tin nhắn và ưu đãi gần đây.",
-          notificationsBadge: "Mới",
-          notificationsHint: "Vừa cập nhật, nhấn để xem chi tiết",
-          profilePanelTitle: "Tài khoản của bạn",
-          profilePanelSubtitle: "Quản lý hồ sơ, cài đặt và đơn thuê nhanh hơn.",
-          profileStatus: "Đang hoạt động",
-          viewAll: "Xem tất cả",
-          notifItems: notifications,
-        }
-      : {
-          searchPlaceholder: "Search cameras, laptops, or order code...",
-          userFallback: "U-Rent User",
-          home: "Home",
-          orders: "Orders",
-          inventory: "Inventory",
-          messages: "Messages",
-          profile: "Profile",
-          myOrders: "My orders",
-          logout: "Logout",
-          notificationsAria: "Notifications",
-          settingsAria: "Settings",
-          profileMenuAria: "Profile menu",
-          homeAria: "U-Rent - Home",
-          notificationsTitle: "New notifications",
-          notificationsSubtitle:
-            "Recent updates for orders, messages, and offers.",
-          notificationsBadge: "New",
-          notificationsHint: "Recently updated, tap to view details",
-          profilePanelTitle: "Your account",
-          profilePanelSubtitle:
-            "Manage your profile, settings, and rentals faster.",
-          profileStatus: "Active now",
-          viewAll: "View all",
-          notifItems: [
-            { id: 1, title: "Order #A102 shipped", time: "2 minutes ago" },
-            { id: 2, title: "New message from Lan", time: "10 minutes ago" },
-            { id: 3, title: "20% off for cameras", time: "1 hour ago" },
-          ],
-        };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -126,15 +64,15 @@ export function AppHeader() {
   }, [pathname]);
 
   const navLabelMap: Record<string, string> = {
-    "/": t.home,
-    "/orders": t.orders,
-    "/inventory": t.inventory,
-    "/messages": t.messages,
+    "/": t.headerHome,
+    "/orders": t.headerOrders,
+    "/inventory": t.headerInventory,
+    "/messages": t.headerMessages,
   };
 
   const profileMenuItems: ProfileMenuItem[] = [
     {
-      label: t.profile,
+      label: t.headerProfile,
       icon: User,
       onClick: () => {
         navigate(APP_ROUTES.profile);
@@ -142,7 +80,7 @@ export function AppHeader() {
       },
     },
     {
-      label: t.settingsAria,
+      label: t.headerSettingsAria,
       icon: Settings,
       onClick: () => {
         navigate("/settings");
@@ -150,7 +88,7 @@ export function AppHeader() {
       },
     },
     {
-      label: t.myOrders,
+      label: t.headerMyOrders,
       icon: ShoppingCart,
       onClick: () => {
         navigate("/orders");
@@ -158,7 +96,7 @@ export function AppHeader() {
       },
     },
     {
-      label: t.logout,
+      label: t.headerLogout,
       icon: LogOut,
       onClick: () => {
         setIsProfileOpen(false);
@@ -168,14 +106,19 @@ export function AppHeader() {
     },
   ];
 
-  const displayName = user?.displayName ?? user?.email ?? t.userFallback;
+  const displayName = user?.displayName ?? user?.email ?? t.headerUserFallback;
   const { initials, colorClass } = getAvatarStyle(displayName);
   const isSettingsPage = pathname.startsWith("/settings");
   const isNotificationsPage = pathname.startsWith("/notifications");
   const supportsSearch = ["/", "/orders", "/inventory", "/products"].some(
     (p) => (p === "/" ? pathname === "/" : pathname.startsWith(p)),
   );
-  const unreadCount = t.notifItems.length;
+  const unreadCount = 3;
+  const notifItems = [
+    { id: 1, title: t.headerNotif1Title, time: t.headerNotif1Time },
+    { id: 2, title: t.headerNotif2Title, time: t.headerNotif2Time },
+    { id: 3, title: t.headerNotif3Title, time: t.headerNotif3Time },
+  ];
   const handleNotificationClick = () => {
     if (window.matchMedia("(max-width: 1023px)").matches) {
       setIsNotifOpen(false);
@@ -206,7 +149,7 @@ export function AppHeader() {
           <button
             type="button"
             onClick={() => navigate(APP_ROUTES.home)}
-            aria-label={t.homeAria}
+            aria-label={t.headerHomeAria}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-teal-400 to-cyan-500 shadow-lg shadow-teal-900/30"
           >
             <img
@@ -238,7 +181,7 @@ export function AppHeader() {
             />
             <input
               type="search"
-              placeholder={t.searchPlaceholder}
+              placeholder={t.headerSearchPlaceholder}
               className="w-full rounded-full border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-10 text-sm text-slate-800 placeholder:text-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400/40"
             />
           </div>
@@ -254,7 +197,7 @@ export function AppHeader() {
                 <button
                   key={item.path}
                   type="button"
-                  onClick={() => navigate(item.path)}
+                  onClick={() => guardedNavigate(item.path)}
                   className={`flex items-center gap-2 rounded-full px-3.5 py-2 transition-all duration-200 lg:px-4.5 ${
                     isActive
                       ? "bg-teal-600 font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900"
@@ -271,172 +214,193 @@ export function AppHeader() {
           </div>
 
           <div className="flex items-center gap-2 border-l border-slate-200 pl-2.5 sm:gap-3.5 sm:pl-4.5 dark:border-white/10">
-            <div className="relative" ref={notifRef}>
-              <button
-                type="button"
-                className={`relative rounded-xl p-2.5 transition sm:p-2 ${
-                  isNotificationsPage || isNotifOpen
-                    ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-teal-300"
-                }`}
-                aria-label={t.notificationsAria}
-                aria-expanded={isNotifOpen}
-                onClick={handleNotificationClick}
-              >
-                <Bell size={20} strokeWidth={2} />
-                <span className="absolute top-2 right-2 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-[#0b1220]" />
-              </button>
+            {isAuthenticated ? (
+              <>
+                <div className="relative" ref={notifRef}>
+                  <button
+                    type="button"
+                    className={`relative rounded-xl p-2.5 transition sm:p-2 ${
+                      isNotificationsPage || isNotifOpen
+                        ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                        : "text-slate-500 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-teal-300"
+                    }`}
+                    aria-label={t.headerNotificationsAria}
+                    aria-expanded={isNotifOpen}
+                    onClick={handleNotificationClick}
+                  >
+                    <Bell size={20} strokeWidth={2} />
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-[#0b1220]" />
+                  </button>
 
-              {isNotifOpen && (
-                <div className="absolute right-0 z-20 mt-3 hidden w-92 overflow-hidden rounded-[1.75rem] border border-slate-200/90 bg-white text-slate-800 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:text-slate-100 dark:ring-black lg:block">
-                  <div className="border-b border-slate-100 bg-linear-to-br from-teal-50 via-white to-cyan-50 px-4 py-4 dark:border-white/10 dark:from-teal-500/10 dark:via-[#101a2a] dark:to-cyan-500/10">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-base font-semibold text-slate-900 dark:text-white lg:text-sm">
-                          {t.notificationsTitle}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400 lg:text-xs lg:leading-5">
-                          {t.notificationsSubtitle}
-                        </p>
-                      </div>
-                      <span className="shrink-0 rounded-full bg-teal-600 px-3 py-1 text-xs font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900 lg:px-2.5 lg:text-[11px]">
-                        {unreadCount}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="max-h-80 space-y-2 overflow-y-auto p-2.5">
-                    {t.notifItems.map((item, index) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-left transition hover:border-teal-200 hover:bg-white hover:shadow-sm dark:border-white/8 dark:bg-white/4 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
-                            <Bell size={16} strokeWidth={2.2} />
+                  {isNotifOpen && (
+                    <div className="absolute right-0 z-20 mt-3 hidden w-92 overflow-hidden rounded-[1.75rem] border border-slate-200/90 bg-white text-slate-800 shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:text-slate-100 dark:ring-black lg:block">
+                      <div className="border-b border-slate-100 bg-linear-to-br from-teal-50 via-white to-cyan-50 px-4 py-4 dark:border-white/10 dark:from-teal-500/10 dark:via-[#101a2a] dark:to-cyan-500/10">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-base font-semibold text-slate-900 dark:text-white lg:text-sm">
+                              {t.headerNotificationsTitle}
+                            </p>
+                            <p className="mt-1 text-sm leading-6 text-slate-500 dark:text-slate-400 lg:text-xs lg:leading-5">
+                              {t.headerNotificationsSubtitle}
+                            </p>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className="line-clamp-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                    {item.title}
-                                  </p>
-                                  {index === 0 ? (
-                                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                                      {t.notificationsBadge}
-                                    </span>
-                                  ) : null}
+                          <span className="shrink-0 rounded-full bg-teal-600 px-3 py-1 text-xs font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900 lg:px-2.5 lg:text-[11px]">
+                            {unreadCount}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="max-h-80 space-y-2 overflow-y-auto p-2.5">
+                        {notifItems.map((item, index) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-left transition hover:border-teal-200 hover:bg-white hover:shadow-sm dark:border-white/8 dark:bg-white/4 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
+                                <Bell size={16} strokeWidth={2.2} />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <p className="line-clamp-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                        {item.title}
+                                      </p>
+                                      {index === 0 ? (
+                                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                                          {t.headerNotificationsBadge}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                  <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                                    {item.time}
+                                  </span>
+                                </div>
+                                <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                                  <span>{t.headerNotificationsHint}</span>
                                 </div>
                               </div>
-                              <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                                {item.time}
-                              </span>
                             </div>
-                            <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                              <span>{t.notificationsHint}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+                          </button>
+                        ))}
+                      </div>
 
-                  <div className="border-t border-slate-100 bg-slate-50/80 px-3 py-3 dark:border-white/10 dark:bg-white/3">
-                    <button
-                      type="button"
-                      className="flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
-                      onClick={() => {
-                        setIsNotifOpen(false);
-                        navigate("/notifications");
-                      }}
-                    >
-                      {t.viewAll}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <button
-              type="button"
-              className={`hidden rounded-xl p-2 transition lg:inline-flex ${
-                isSettingsPage
-                  ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
-                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
-              }`}
-              aria-label={t.settingsAria}
-              onClick={() => navigate("/settings")}
-            >
-              <Settings size={20} strokeWidth={2} />
-            </button>
-
-            <div className="relative" ref={profileRef}>
-              <button
-                type="button"
-                className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1.5 pr-2.5 transition-all hover:border-slate-300 hover:bg-slate-100 sm:gap-2.5 sm:pr-4 dark:border-white/12 dark:bg-white/5 dark:hover:border-white/25 dark:hover:bg-white/8"
-                onClick={() => setIsProfileOpen((open) => !open)}
-                aria-label={t.profileMenuAria}
-                aria-expanded={isProfileOpen}
-              >
-                {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={displayName}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-inner ${colorClass}`}
-                  >
-                    {initials}
-                  </div>
-                )}
-                <div className="hidden text-left lg:block">
-                  <p className="text-xs font-semibold text-slate-800 dark:text-white">
-                    {displayName}
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                    {user?.email ?? ""}
-                  </p>
-                </div>
-              </button>
-
-              {isProfileOpen && (
-                <div className="fixed inset-x-3 top-23 z-40 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:ring-black/40 sm:top-28 lg:absolute lg:inset-x-auto lg:top-auto lg:right-0 lg:z-20 lg:mt-3 lg:w-72 lg:rounded-[1.75rem]">
-                  <div className="space-y-2.5 p-3 lg:space-y-2 lg:p-2.5">
-                    {profileMenuItems.map((item) => {
-                      const Icon = item.icon;
-                      return (
+                      <div className="border-t border-slate-100 bg-slate-50/80 px-3 py-3 dark:border-white/10 dark:bg-white/3">
                         <button
-                          key={item.label}
                           type="button"
-                          onClick={item.onClick}
-                          className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-[15px] transition lg:py-3 lg:text-sm ${
-                            item.isDanger
-                              ? "border border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500/15 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
-                              : "border border-slate-200/80 bg-slate-50/80 text-slate-700 hover:border-teal-200 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:text-slate-100 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
-                          }`}
+                          className="flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-teal-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                          onClick={() => {
+                            setIsNotifOpen(false);
+                            navigate("/notifications");
+                          }}
                         >
-                          <div
-                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-                              item.isDanger
-                                ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
-                                : "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
-                            }`}
-                          >
-                            <Icon size={16} strokeWidth={2} />
-                          </div>
-                          <span className="font-medium">{item.label}</span>
+                          {t.headerViewAll}
                         </button>
-                      );
-                    })}
-                  </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+
+                <button
+                  type="button"
+                  className={`hidden rounded-xl p-2 transition lg:inline-flex ${
+                    isSettingsPage
+                      ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
+                  }`}
+                  aria-label={t.headerSettingsAria}
+                  onClick={() => navigate("/settings")}
+                >
+                  <Settings size={20} strokeWidth={2} />
+                </button>
+
+                <div className="relative" ref={profileRef}>
+                  <button
+                    type="button"
+                    className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1.5 pr-2.5 transition-all hover:border-slate-300 hover:bg-slate-100 sm:gap-2.5 sm:pr-4 dark:border-white/12 dark:bg-white/5 dark:hover:border-white/25 dark:hover:bg-white/8"
+                    onClick={() => setIsProfileOpen((open) => !open)}
+                    aria-label={t.headerProfileMenuAria}
+                    aria-expanded={isProfileOpen}
+                  >
+                    {user?.avatarUrl ? (
+                      <img
+                        src={user.avatarUrl}
+                        alt={displayName}
+                        className="h-8 w-8 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-inner ${colorClass}`}
+                      >
+                        {initials}
+                      </div>
+                    )}
+                    <div className="hidden text-left lg:block">
+                      <p className="text-xs font-semibold text-slate-800 dark:text-white">
+                        {displayName}
+                      </p>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                        {user?.email ?? ""}
+                      </p>
+                    </div>
+                  </button>
+
+                  {isProfileOpen && (
+                    <div className="fixed inset-x-3 top-23 z-40 overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 dark:border-white/10 dark:bg-[#101a2a] dark:ring-black/40 sm:top-28 lg:absolute lg:inset-x-auto lg:top-auto lg:right-0 lg:z-20 lg:mt-3 lg:w-72 lg:rounded-[1.75rem]">
+                      <div className="space-y-2.5 p-3 lg:space-y-2 lg:p-2.5">
+                        {profileMenuItems.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <button
+                              key={item.label}
+                              type="button"
+                              onClick={item.onClick}
+                              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-[15px] transition lg:py-3 lg:text-sm ${
+                                item.isDanger
+                                  ? "border border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500/15 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                                  : "border border-slate-200/80 bg-slate-50/80 text-slate-700 hover:border-teal-200 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:text-slate-100 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
+                              }`}
+                            >
+                              <div
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
+                                  item.isDanger
+                                    ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
+                                    : "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                                }`}
+                              >
+                                <Icon size={16} strokeWidth={2} />
+                              </div>
+                              <span className="font-medium">{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate(APP_ROUTES.login)}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-teal-400 hover:bg-teal-50 hover:text-teal-700 dark:border-white/12 dark:bg-white/5 dark:text-slate-200 dark:hover:border-teal-400/40 dark:hover:bg-teal-500/10 dark:hover:text-teal-300"
+                >
+                  {t.headerLogin}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(APP_ROUTES.register)}
+                  className="rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100"
+                >
+                  {t.headerRegister}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -451,7 +415,7 @@ export function AppHeader() {
             />
             <input
               type="search"
-              placeholder={t.searchPlaceholder}
+              placeholder={t.headerSearchPlaceholder}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 sm:py-3 pr-4 pl-10 text-sm sm:text-[15px] text-slate-800 placeholder:text-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400/40"
             />
           </div>
@@ -462,24 +426,16 @@ export function AppHeader() {
 }
 
 export function MobileBottomNav() {
-  const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { lang } = useI18n();
+  const { t } = useI18n();
+  const { guardedNavigate } = useAuthGate();
 
-  const navLabelMap: Record<string, string> =
-    lang === "vi"
-      ? {
-          "/": "Trang chủ",
-          "/orders": "Đơn hàng",
-          "/inventory": "Kho",
-          "/messages": "Tin nhắn",
-        }
-      : {
-          "/": "Home",
-          "/orders": "Orders",
-          "/inventory": "Inventory",
-          "/messages": "Messages",
-        };
+  const navLabelMap: Record<string, string> = {
+    "/": t.headerHome,
+    "/orders": t.headerOrders,
+    "/inventory": t.headerInventory,
+    "/messages": t.headerMessages,
+  };
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] lg:hidden">
@@ -493,7 +449,7 @@ export function MobileBottomNav() {
               <button
                 key={item.path}
                 type="button"
-                onClick={() => navigate(item.path)}
+                onClick={() => guardedNavigate(item.path)}
                 className={`flex min-h-14 sm:min-h-16 flex-col items-center justify-center gap-0.5 sm:gap-1 rounded-[1rem] px-1 sm:px-1.5 py-1.5 sm:py-2 text-center transition-all duration-200 ${
                   isActive
                     ? "bg-teal-600 text-white shadow-lg shadow-teal-900/20 dark:bg-white dark:text-slate-900"
@@ -518,42 +474,15 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { user, logout } = useAuth();
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  const t =
-    lang === "vi"
-      ? {
-          home: "Trang chủ",
-          orders: "Đơn hàng",
-          inventory: "Kho",
-          messages: "Tin nhắn",
-          profile: "Hồ sơ",
-          settings: "Cài đặt",
-          myOrders: "Đơn của tôi",
-          logout: "Đăng xuất",
-          homeAria: "U-Rent - Trang chủ",
-          profileMenuAria: "Menu hồ sơ",
-        }
-      : {
-          home: "Home",
-          orders: "Orders",
-          inventory: "Inventory",
-          messages: "Messages",
-          profile: "Profile",
-          settings: "Settings",
-          myOrders: "My orders",
-          logout: "Logout",
-          homeAria: "U-Rent - Home",
-          profileMenuAria: "Profile menu",
-        };
-
   const navLabelMap: Record<string, string> = {
-    "/": t.home,
-    "/orders": t.orders,
-    "/inventory": t.inventory,
-    "/messages": t.messages,
+    "/": t.headerHome,
+    "/orders": t.headerOrders,
+    "/inventory": t.headerInventory,
+    "/messages": t.headerMessages,
   };
 
   useEffect(() => {
@@ -572,7 +501,7 @@ export function AppSidebar() {
 
   const profileMenuItems: ProfileMenuItem[] = [
     {
-      label: t.profile,
+      label: t.headerProfile,
       icon: User,
       onClick: () => {
         navigate(APP_ROUTES.profile);
@@ -580,7 +509,7 @@ export function AppSidebar() {
       },
     },
     {
-      label: t.settings,
+      label: t.headerSettings,
       icon: Settings,
       onClick: () => {
         navigate("/settings");
@@ -588,7 +517,7 @@ export function AppSidebar() {
       },
     },
     {
-      label: t.myOrders,
+      label: t.headerMyOrders,
       icon: ShoppingCart,
       onClick: () => {
         navigate("/orders");
@@ -596,7 +525,7 @@ export function AppSidebar() {
       },
     },
     {
-      label: t.logout,
+      label: t.headerLogout,
       icon: LogOut,
       onClick: () => {
         setIsProfileOpen(false);
@@ -615,7 +544,7 @@ export function AppSidebar() {
         type="button"
         onClick={() => navigate(APP_ROUTES.home)}
         className="mb-6 flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-white shadow-lg shadow-teal-900/20 ring-1 ring-teal-600/20 transition hover:scale-[0.95]"
-        aria-label={t.homeAria}
+        aria-label={t.headerHomeAria}
       >
         <img src="/urent.png" alt="U-Rent" className="h-11 w-11" />
       </button>
@@ -637,7 +566,7 @@ export function AppSidebar() {
           type="button"
           className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-sm font-bold text-white ring-1 ring-white/30 transition hover:scale-110 ${colorClass}`}
           onClick={() => setIsProfileOpen(!isProfileOpen)}
-          aria-label={t.profileMenuAria}
+          aria-label={t.headerProfileMenuAria}
         >
           {initials}
         </button>

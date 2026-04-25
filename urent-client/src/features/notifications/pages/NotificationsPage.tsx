@@ -3,85 +3,35 @@ import { Bell } from "lucide-react";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
 
-const notifications = [
-  {
-    id: 1,
-    title: "Đơn hàng #A102 đã gửi",
-    time: "2 phút trước",
-    description:
-      "Đơn hàng của bạn đã được gửi thành công. Nhấn vào chi tiết để xem trạng thái giao hàng và lịch trình nhận hàng.",
-  },
-  {
-    id: 2,
-    title: "Tin nhắn mới từ Lan",
-    time: "10 phút trước",
-    description:
-      "Lan đã gửi cho bạn một tin nhắn mới về thời gian nhận thiết bị. Mở tin nhắn để trả lời ngay.",
-  },
-  {
-    id: 3,
-    title: "Khuyến mãi 20% cho camera",
-    time: "1 giờ trước",
-    description:
-      "Chương trình giảm giá 20% cho mảng camera đang diễn ra. Kiểm tra các sản phẩm phù hợp và đặt trước để nhận ưu đãi.",
-  },
-];
-
 export function NotificationsPage() {
   const { theme } = useTheme();
-  const { lang } = useI18n();
-  const t =
-    lang === "vi"
-      ? {
-          title: "Trung tâm thông báo",
-          desc: "Xem tất cả thông báo và chi tiết thông tin mới nhất của bạn.",
-          count: "thông báo",
-          listTitle: "Danh sách thông báo",
-          listDesc: "Chọn một mục để xem chi tiết nội dung.",
-          detailTitle: "Chi tiết thông báo",
-          detailDesc:
-            "Xem nội dung và hướng dẫn hành động cho thông báo đã chọn.",
-          notifItems: notifications,
-        }
-      : {
-          title: "Notification Center",
-          desc: "View all notifications and your latest updates.",
-          count: "notifications",
-          listTitle: "Notification list",
-          listDesc: "Select an item to view full details.",
-          detailTitle: "Notification details",
-          detailDesc:
-            "View content and suggested actions for the selected notification.",
-          notifItems: [
-            {
-              id: 1,
-              title: "Order #A102 shipped",
-              time: "2 minutes ago",
-              description:
-                "Your order has been shipped successfully. Open details to view delivery status and schedule.",
-            },
-            {
-              id: 2,
-              title: "New message from Lan",
-              time: "10 minutes ago",
-              description:
-                "Lan sent you a new message about pickup time. Open messages to reply now.",
-            },
-            {
-              id: 3,
-              title: "20% promotion for cameras",
-              time: "1 hour ago",
-              description:
-                "A 20% discount campaign for cameras is live. Check eligible products and reserve early.",
-            },
-          ],
-        };
+  const { t } = useI18n();
+  const notifItems = [
+    {
+      id: 1,
+      title: t.notifItem1Title,
+      time: t.notifItem1Time,
+      description: t.notifItem1Desc,
+    },
+    {
+      id: 2,
+      title: t.notifItem2Title,
+      time: t.notifItem2Time,
+      description: t.notifItem2Desc,
+    },
+    {
+      id: 3,
+      title: t.notifItem3Title,
+      time: t.notifItem3Time,
+      description: t.notifItem3Desc,
+    },
+  ];
   const [selectedNotificationId, setSelectedNotificationId] = useState(
-    t.notifItems[0]?.id ?? 1,
+    notifItems[0]?.id ?? 1,
   );
   const selectedNotification =
-    t.notifItems.find((item) => item.id === selectedNotificationId) ??
-    t.notifItems[0];
+    notifItems.find((item) => item.id === selectedNotificationId) ??
+    notifItems[0];
 
   return (
     <div className="space-y-4">
@@ -99,14 +49,14 @@ export function NotificationsPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              {t.title}
+              {t.notifCenterTitle}
             </h1>
             <p
               className={`mt-1 text-sm ${
                 theme === "dark" ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              {t.desc}
+              {t.notifCenterDesc}
             </p>
           </div>
           <div
@@ -117,7 +67,7 @@ export function NotificationsPage() {
             }`}
           >
             <Bell size={16} strokeWidth={2} />
-            {t.notifItems.length} {t.count}
+            {notifItems.length} {t.notifCenterCount}
           </div>
         </div>
       </div>
@@ -142,20 +92,20 @@ export function NotificationsPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              {t.listTitle}
+              {t.notifCenterListTitle}
             </h2>
             <p
               className={`mt-1 text-xs ${
                 theme === "dark" ? "text-slate-400" : "text-slate-500"
               }`}
             >
-              {t.listDesc}
+              {t.notifCenterListDesc}
             </p>
           </div>
           <div
             className={`divide-y ${theme === "dark" ? "divide-slate-800" : "divide-slate-100"}`}
           >
-            {t.notifItems.map((notification) => (
+            {notifItems.map((notification) => (
               <button
                 key={notification.id}
                 type="button"
@@ -203,14 +153,14 @@ export function NotificationsPage() {
                   theme === "dark" ? "text-slate-100" : "text-slate-900"
                 }`}
               >
-                {t.detailTitle}
+                {t.notifCenterDetailTitle}
               </p>
               <p
                 className={`mt-1 text-xs ${
                   theme === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                {t.detailDesc}
+                {t.notifCenterDetailDesc}
               </p>
             </div>
             <span

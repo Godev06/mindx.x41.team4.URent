@@ -77,7 +77,7 @@ export function MessagesChatBox({
   onSendLocation,
 }: MessagesChatBoxProps) {
   const { theme } = useTheme();
-  const { lang } = useI18n();
+  const { t } = useI18n();
   const [messageInput, setMessageInput] = useState(() =>
     getDraftMessage(conversationId),
   );
@@ -94,55 +94,6 @@ export function MessagesChatBox({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const conversationMenuRef = useRef<HTMLDivElement>(null);
-  const t =
-    lang === "vi"
-      ? {
-          noMatch: "Không tìm thấy tin nhắn nào khớp với",
-          emptyChat: "Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!",
-          inputPlaceholder: "Nhập tin nhắn...",
-          moreOptions: "Thêm tùy chọn",
-          conversationOptions: "Tùy chọn hội thoại",
-          muteConversation: "Tắt thông báo hội thoại",
-          unmuteConversation: "Bật lại thông báo",
-          deleteConversation: "Xóa hội thoại",
-          deleteConversationConfirm:
-            "Bạn có chắc muốn xóa hội thoại này khỏi danh sách không?",
-          conversationDeleted: "Đã xóa hội thoại khỏi danh sách.",
-          conversationMuted: "Đã tắt thông báo hội thoại này.",
-          conversationUnmuted: "Đã bật lại thông báo hội thoại này.",
-          managingConversation: "Quản lý hội thoại",
-          contactLabel: "Liên hệ",
-          sendProduct: "Gửi sản phẩm",
-          shareLocation: "Chia sẻ vị trí",
-          sending: "Đang gửi...",
-          loading: "Đang tải tin nhắn...",
-          searching: "Đang tìm tin nhắn...",
-          locale: "vi-VN",
-        }
-      : {
-          noMatch: "No messages match",
-          emptyChat: "No messages yet. Start the conversation!",
-          inputPlaceholder: "Type a message...",
-          moreOptions: "More options",
-          conversationOptions: "Conversation options",
-          muteConversation: "Mute conversation",
-          unmuteConversation: "Unmute conversation",
-          deleteConversation: "Delete conversation",
-          deleteConversationConfirm:
-            "Are you sure you want to remove this conversation from the list?",
-          conversationDeleted: "Conversation removed from the list.",
-          conversationMuted: "Conversation notifications muted.",
-          conversationUnmuted: "Conversation notifications restored.",
-          managingConversation: "Manage conversation",
-          contactLabel: "Contact",
-          sendProduct: "Send product",
-          shareLocation: "Share location",
-          sending: "Sending...",
-          loading: "Loading messages...",
-          searching: "Searching messages...",
-          locale: "en-US",
-        };
-
   useEffect(() => {
     const nextPreference = getConversationPreference(conversationId);
     setConversationPreference(nextPreference);
@@ -284,13 +235,15 @@ export function MessagesChatBox({
   const handleToggleMutedConversation = () => {
     const nextPreference = toggleConversationMuted(conversationId);
     setComposerError(
-      nextPreference.muted ? t.conversationMuted : t.conversationUnmuted,
+      nextPreference.muted
+        ? t.chatBoxConversationMuted
+        : t.chatBoxConversationUnmuted,
     );
     setIsConversationMenuOpen(false);
   };
 
   const handleDeleteConversation = async () => {
-    if (!window.confirm(t.deleteConversationConfirm)) {
+    if (!window.confirm(t.chatBoxDeleteConversationConfirm)) {
       return;
     }
 
@@ -464,7 +417,7 @@ export function MessagesChatBox({
             }`}
           >
             <BellOff size={12} strokeWidth={2} />
-            {t.muteConversation}
+            {t.chatBoxMuteConversation}
           </span>
         ) : null}
         <div className="relative ml-auto" ref={conversationMenuRef}>
@@ -478,7 +431,7 @@ export function MessagesChatBox({
                 ? "border-slate-700 text-slate-300 hover:border-teal-500/40 hover:bg-teal-500/10 hover:text-teal-300"
                 : "border-slate-200 text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
             }`}
-            aria-label={t.conversationOptions}
+            aria-label={t.chatBoxConversationOptions}
             aria-expanded={isConversationMenuOpen}
           >
             <EllipsisVertical size={18} strokeWidth={2} />
@@ -504,14 +457,14 @@ export function MessagesChatBox({
                     theme === "dark" ? "text-slate-100" : "text-slate-900"
                   }`}
                 >
-                  {t.managingConversation}
+                  {t.chatBoxManagingConversation}
                 </p>
                 <p
                   className={`mt-1 truncate text-xs ${
                     theme === "dark" ? "text-slate-400" : "text-slate-500"
                   }`}
                 >
-                  {t.contactLabel}: {peerEmail || baseConversationName}
+                  {t.chatBoxContactLabel}: {peerEmail || baseConversationName}
                 </p>
               </div>
 
@@ -531,8 +484,8 @@ export function MessagesChatBox({
                     <BellOff size={16} strokeWidth={2} />
                   )}
                   {conversationPreference.muted
-                    ? t.unmuteConversation
-                    : t.muteConversation}
+                    ? t.chatBoxUnmuteConversation
+                    : t.chatBoxMuteConversation}
                 </button>
                 <button
                   type="button"
@@ -544,7 +497,7 @@ export function MessagesChatBox({
                   }`}
                 >
                   <Trash2 size={16} strokeWidth={2} />
-                  {t.deleteConversation}
+                  {t.chatBoxDeleteConversation}
                 </button>
               </div>
             </div>
@@ -555,11 +508,11 @@ export function MessagesChatBox({
         <div className="flex-1 space-y-4 overflow-y-auto p-3 scroll-smooth sm:p-4">
           {isLoading ? (
             <div className="flex flex-1 items-center justify-center py-8 text-sm text-slate-500">
-              {t.loading}
+              {t.chatBoxLoading}
             </div>
           ) : isSearching ? (
             <div className="flex flex-1 items-center justify-center py-8 text-sm text-slate-500">
-              {t.searching}
+              {t.chatBoxSearching}
             </div>
           ) : filteredMessages.length > 0 ? (
             filteredMessages.map((message) => {
@@ -594,7 +547,7 @@ export function MessagesChatBox({
                       }`}
                     >
                       {new Date(message.createdAt).toLocaleTimeString(
-                        t.locale,
+                        t.chatBoxLocale,
                         {
                           hour: "2-digit",
                           minute: "2-digit",
@@ -616,7 +569,7 @@ export function MessagesChatBox({
               <p
                 className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
               >
-                {`${t.noMatch} "${searchTerm}"`}
+                {`${t.chatBoxNoMatch} "${searchTerm}"`}
               </p>
             </div>
           ) : (
@@ -636,7 +589,7 @@ export function MessagesChatBox({
                   theme === "dark" ? "text-slate-400" : "text-slate-500"
                 }`}
               >
-                {t.emptyChat}
+                {t.chatBoxEmptyChat}
               </p>
             </div>
           )}
@@ -661,7 +614,7 @@ export function MessagesChatBox({
           <div className="relative flex items-end gap-2">
             <textarea
               ref={textareaRef}
-              placeholder={t.inputPlaceholder}
+              placeholder={t.chatBoxInputPlaceholder}
               value={messageInput}
               onChange={(event) => {
                 setComposerError(null);
@@ -683,7 +636,7 @@ export function MessagesChatBox({
                   setIsMoreMenuOpen((currentValue) => !currentValue)
                 }
                 disabled={isSending}
-                title={t.moreOptions}
+                title={t.chatBoxMoreOptions}
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition ${
                   theme === "dark"
                     ? "border-slate-700 bg-slate-800 text-slate-300 hover:border-teal-500/40 hover:bg-teal-500/10 hover:text-teal-300"
@@ -713,7 +666,7 @@ export function MessagesChatBox({
                     }`}
                   >
                     <Package size={16} strokeWidth={2} />
-                    {t.sendProduct}
+                    {t.chatBoxSendProduct}
                   </button>
                   <button
                     type="button"
@@ -728,7 +681,7 @@ export function MessagesChatBox({
                     }`}
                   >
                     <MapPin size={16} strokeWidth={2} />
-                    {t.shareLocation}
+                    {t.chatBoxShareLocation}
                   </button>
                 </div>
               )}

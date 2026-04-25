@@ -11,6 +11,7 @@ export interface UserDocument extends mongoose.Document {
   resetToken?: string;
   resetTokenExpiresAt?: Date;
   displayName?: string;
+  username?: string;
   bio?: string;
   avatarUrl?: string;
   phone?: string;
@@ -28,6 +29,7 @@ const userSchema = new Schema<UserDocument>(
     resetToken: { type: String },
     resetTokenExpiresAt: { type: Date },
     displayName: { type: String, trim: true },
+    username: { type: String, unique: true, sparse: true, trim: true },
     bio: { type: String, maxlength: 200 },
     avatarUrl: { type: String },
     phone: { type: String, trim: true }
