@@ -151,12 +151,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if ("token" in result) {
           const hydratedSession = await hydrateUserFromSession(result);
           authFlowStorage.clearPendingLoginEmail();
+          authFlowStorage.clearPendingResetEmail();
           setToken(hydratedSession.token);
           setUser(hydratedSession.user);
           return hydratedSession;
         }
 
-        authFlowStorage.setPendingLoginEmail(payload.email);
+        if (result.requiresPasswordSetup) {
+          authFlowStorage.clearPendingLoginEmail();
+          authFlowStorage.setPendingResetEmail(result.email ?? payload.email ?? "");
+          return result;
+        }
+
+        authFlowStorage.setPendingLoginEmail(
+          payload.email ?? payload.phone ?? "",
+        );
         return result;
       },
       verifyOtp: async (
@@ -205,11 +214,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const provider = new GoogleAuthProvider();
         const credential = await signInWithPopup(auth, provider);
         const idToken = await credential.user.getIdToken();
-        const session = await hydrateUserFromSession({
-          token: idToken,
-          user: null,
-          message: "Dang nhap Google thanh cong.",
-        });
+        const googleSession = await authService.loginWithGoogleIdToken(idToken);
+        const session = await hydrateUserFromSession(googleSession);
+        authFlowStorage.clearPendingResetEmail();
         setToken(session.token);
         setUser(session.user);
         return session;

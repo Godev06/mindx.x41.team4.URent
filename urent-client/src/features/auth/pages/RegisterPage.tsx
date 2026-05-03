@@ -78,7 +78,7 @@ export function RegisterPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await register({
+      await register({
         username: deriveUsername(form.email.trim()),
         ...(form.displayName.trim()
           ? { displayName: form.displayName.trim() }
@@ -88,7 +88,10 @@ export function RegisterPage() {
       });
       showToast({
         title: t.registerSuccessToast,
-        description: result.message,
+        description: t.registerSuccessToastDesc.replace(
+          "{{email}}",
+          form.email.trim(),
+        ),
         variant: "success",
       });
       navigate(APP_ROUTES.authOtp, {

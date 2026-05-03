@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, setLogLevel } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
@@ -14,6 +14,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Keep console clean from Firebase warning-level noise in development.
+setLogLevel("error");
 
 // Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);

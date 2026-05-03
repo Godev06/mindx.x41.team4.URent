@@ -59,7 +59,7 @@ export function AppShell() {
           />
         </div>
         <main className="relative flex min-h-screen flex-col pb-20 sm:pb-24 lg:pb-0">
-          <div className="sticky top-0 z-10 py-2 sm:py-3 md:py-4 lg:py-5">
+          <div className="sticky top-0 z-50 py-2 sm:py-3 md:py-4 lg:py-5">
             <div className="mx-auto w-[95%]">
               <AppHeader />
             </div>

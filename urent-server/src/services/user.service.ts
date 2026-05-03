@@ -100,6 +100,7 @@ export const createUserWithOtp = async (email: string, password: string, usernam
   const user = await UserModel.create({
     email: normalizedEmail,
     password: await hashPassword(password),
+    authProviders: ['local'],
     username,
     displayName,
     otpCode: otp,

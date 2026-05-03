@@ -12,7 +12,22 @@ const start = async () => {
   initRealtime(server);
 
   server.listen(env.port, () => {
-    console.log(`Backend running at http://localhost:${env.port}`);
+    const e = '\x1b';
+    const reset  = `${e}[0m`;
+    const bold   = `${e}[1m`;
+    const dim    = `${e}[2m`;
+    const cyan   = `${e}[96m`;
+    const yellow = `${e}[93m`;
+    const blue   = `${e}[94m`;
+    const green  = `${e}[92m`;
+
+    console.log('');
+    console.log(`${bold}${cyan}  URent Server${reset}`);
+    console.log(`${dim}  ──────────────────────────────────────────${reset}`);
+    console.log(`  ${green}${bold}API   ${reset}  ${blue}${bold}http://localhost:${env.port}${reset}`);
+    console.log(`  ${yellow}${bold}Docs  ${reset}  ${blue}${bold}http://localhost:${env.port}/api-docs${reset}`);
+    console.log(`${dim}  ──────────────────────────────────────────${reset}`);
+    console.log('');
   });
 };
 

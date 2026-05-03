@@ -12,6 +12,7 @@ interface VerifyOtpRouteState {
   email?: string;
   purpose?: OtpPurpose;
   from?: string;
+  flowVariant?: "default" | "setup-password";
 }
 
 const resolvePendingEmail = (purpose: OtpPurpose) => {
@@ -34,6 +35,8 @@ export function VerifyOtpPage() {
 
   const routeState = (location.state as VerifyOtpRouteState | null) ?? null;
   const purpose = routeState?.purpose;
+  const isPasswordSetupFlow =
+    purpose === "reset password" && routeState?.flowVariant === "setup-password";
   const email = useMemo(() => {
     if (!purpose) {
       return "";
@@ -51,21 +54,27 @@ export function VerifyOtpPage() {
       ? t.verifyRegTitle
       : purpose === "login"
         ? t.verifyLoginTitle
-        : t.verifyResetTitle;
+        : isPasswordSetupFlow
+          ? t.verifySetupPasswordTitle
+          : t.verifyResetTitle;
 
   const description =
     purpose === "register"
       ? t.verifyRegDesc
       : purpose === "login"
         ? t.verifyLoginDesc
-        : t.verifyResetDesc;
+        : isPasswordSetupFlow
+          ? t.verifySetupPasswordDesc
+          : t.verifyResetDesc;
 
   const backLabel =
     purpose === "register"
       ? t.verifyRegBack
       : purpose === "login"
         ? t.verifyLoginBackLink
-        : t.verifyResetBack;
+        : isPasswordSetupFlow
+          ? t.verifySetupPasswordBack
+          : t.verifyResetBack;
 
   const onBack = () => {
     if (purpose === "register") {
@@ -78,7 +87,10 @@ export function VerifyOtpPage() {
       return;
     }
 
-    navigate(APP_ROUTES.forgotPassword, { replace: true });
+    navigate(
+      isPasswordSetupFlow ? APP_ROUTES.login : APP_ROUTES.forgotPassword,
+      { replace: true },
+    );
   };
 
   return (
@@ -97,6 +109,20 @@ export function VerifyOtpPage() {
         </p>
       }
     >
+      {purpose === "register" ? (
+        <div className="mb-4 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm leading-6 text-teal-900">
+          <p className="font-semibold">{t.verifyRegNoticeTitle}</p>
+          <p>
+            {t.verifyRegNoticeBody}{" "}
+            <span className="font-medium break-all">{email}</span>
+          </p>
+        </div>
+      ) : isPasswordSetupFlow ? (
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+          <p className="font-semibold">{t.verifySetupPasswordNoticeTitle}</p>
+          <p>{t.verifySetupPasswordNoticeBody}</p>
+        </div>
+      ) : null}
       <OTPForm
         email={email}
         purpose={purpose}
@@ -105,7 +131,7 @@ export function VerifyOtpPage() {
           if (purpose === "register") {
             showToast({
               title: t.otpRegisterSuccessToast,
-              description: t.otpRegisterSuccessToast,
+              description: t.otpRegisterSuccessToastDesc,
               variant: "success",
             });
             navigate(APP_ROUTES.login, {
@@ -130,6 +156,7 @@ export function VerifyOtpPage() {
             state: {
               email,
               otp,
+              flowVariant: routeState?.flowVariant,
             },
           });
         }}

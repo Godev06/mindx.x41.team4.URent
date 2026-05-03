@@ -98,13 +98,14 @@ export const createOneToOneConversationBodySchema = z.object({
   peerUserId: objectIdSchema
 });
 
-export const createOneToOneConversationByEmailBodySchema = z.object({
-  peerEmail: z.string().trim().email().max(320)
-});
-
-export const conversationPeerByEmailQuerySchema = z.object({
-  email: z.string().trim().email().max(320)
-});
+export const conversationPeerQuerySchema = z
+  .object({
+    email: z.string().trim().email().max(320).optional(),
+    phone: z.string().trim().min(7).max(20).optional()
+  })
+  .refine((v) => v.email !== undefined || v.phone !== undefined, {
+    message: 'Provide either email or phone'
+  });
 
 export type ListConversationsQuery = z.infer<typeof listConversationsQuerySchema>;
 export type ListMessagesParams = z.infer<typeof listMessagesParamsSchema>;
@@ -114,9 +115,4 @@ export type ReadConversationParams = z.infer<typeof readConversationParamsSchema
 export type DeleteConversationParams = z.infer<typeof deleteConversationParamsSchema>;
 export type SearchMessagesQuery = z.infer<typeof searchMessagesQuerySchema>;
 export type CreateOneToOneConversationBody = z.infer<typeof createOneToOneConversationBodySchema>;
-export type CreateOneToOneConversationByEmailBody = z.infer<
-  typeof createOneToOneConversationByEmailBodySchema
->;
-export type ConversationPeerByEmailQuery = z.infer<
-  typeof conversationPeerByEmailQuerySchema
->;
+export type ConversationPeerQuery = z.infer<typeof conversationPeerQuerySchema>;

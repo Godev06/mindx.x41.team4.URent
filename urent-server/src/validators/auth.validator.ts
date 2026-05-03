@@ -1,15 +1,35 @@
 import { z } from 'zod';
 
-export const registerSchema = z.object({
-  username: z.string().min(3).max(30),
-  displayName: z.string().min(1).max(100).optional(),
-  email: z.string().email(),
-  password: z.string().min(6)
+const googleAuthSchema = z.object({
+  idToken: z.string().min(1)
 });
 
-export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6)
+export const registerSchema = z.union([
+  z.object({
+    username: z.string().min(3).max(30),
+    displayName: z.string().min(1).max(100).optional(),
+    email: z.string().email(),
+    password: z.string().min(6)
+  }),
+  googleAuthSchema
+]);
+
+export const loginSchema = z.union([
+  z
+    .object({
+      email: z.string().email().optional(),
+      phone: z.string().trim().min(7).max(20).optional(),
+      password: z.string().min(6)
+    })
+    .refine((v) => v.email !== undefined || v.phone !== undefined, {
+      message: 'Provide either email or phone',
+      path: ['email']
+    }),
+  googleAuthSchema
+]);
+
+export const loginIdentitySchema = z.object({
+  identifier: z.string().trim().min(1)
 });
 
 export const otpSchema = z.object({

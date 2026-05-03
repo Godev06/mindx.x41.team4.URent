@@ -121,9 +121,14 @@ export const mapMutationResult = (
 
   return {
     message: extractMessage(value, fallback),
+    email: typeof record?.email === "string" ? record.email : undefined,
     requiresTwoFactor:
       typeof record?.requiresTwoFactor === "boolean"
         ? record.requiresTwoFactor
+        : undefined,
+    requiresPasswordSetup:
+      typeof record?.requiresPasswordSetup === "boolean"
+        ? record.requiresPasswordSetup
         : undefined,
   };
 };

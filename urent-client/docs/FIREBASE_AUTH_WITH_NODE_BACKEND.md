@@ -1,45 +1,45 @@
-# Firebase Authentication with Node.js Backend (URent)
+# Firebase Authentication với Node.js Backend (URent)
 
-This project now supports both:
+Tài liệu mô tả luồng xác thực Dual-Auth: JWT (email/password + OTP) và Firebase (Google Sign-In / Phone OTP).
 
-- Existing backend JWT tokens (email/password + OTP flow)
-- Firebase ID tokens (verified on backend with Firebase Admin SDK)
+---
 
-## 1. Authentication Flow
+## 1. Tổng quan Dual-Auth
 
-1. Frontend signs in user with Firebase Auth SDK.
-2. Frontend sends Firebase ID token in `Authorization: Bearer <token>`.
-3. Backend verifies token:
+| Phương thức     | Luồng                                                                  |
+| :-------------- | :--------------------------------------------------------------------- |
+| JWT             | Register → OTP email → JWT → `Authorization: Bearer <jwt>`             |
+| Firebase Google | Google Sign-In (Firebase SDK) → ID token → backend verify → JWT nội bộ |
+| Firebase Phone  | JWT user lấy Custom Token → `signInWithCustomToken()` → OTP phone      |
 
-- First tries local JWT verification.
-- If JWT verification fails, tries Firebase Admin `verifyIdToken`.
+Backend chấp nhận **cả hai loại token** trong header `Authorization: Bearer <token>`. `authGuard` middleware tự phân biệt và xác minh.
 
-4. For Firebase users, backend resolves/creates a local `User` record by email and maps request identity to local Mongo `_id`.
-5. Protected APIs continue to work with existing `req.user.sub` logic.
+---
 
-## 2. Files Added/Updated
+## 2. Luồng xác thực
 
-### Backend
+```
+Client Request
+    │
+    ▼
+authGuard middleware
+    │
+    ├─► Bearer token là Firebase ID token?
+    │       └─► admin.auth().verifyIdToken()
+    │               └─► resolveAppIdentity() → req.user = { sub, email }
+    │
+    └─► Bearer token là JWT nội bộ?
+            └─► jwt.verify(token, JWT_SECRET)
+                    └─► req.user = { sub, email, ... }
+```
 
-- `src/config/firebase.ts`: Firebase Admin initialization via env.
-- `src/utils/auth-token.ts`: unified token verification (JWT + Firebase).
-- `src/services/auth-identity.service.ts`: map Firebase identity to local app user.
-- `src/middlewares/auth.middleware.ts`: async guard using unified verifier.
-- `src/realtime/socket.ts`: socket auth uses same verifier + identity mapping.
-- `src/server.ts`: calls `initializeFirebase()` on startup.
-- `src/controllers/auth.controller.ts`: `getMe` has Firebase-safe fallback.
-- `.env.example`: includes Firebase Admin env options.
+`resolveAppIdentity()` trong `auth-identity.service.ts` tìm/tạo user MongoDB từ Firebase identity, đảm bảo `req.user.sub` luôn là MongoDB `_id`.
 
-### Frontend
+---
 
-- `src/lib/api/apiClient.ts`: request interceptor now refreshes Firebase token from `auth.currentUser` when present.
-- `.env.example`: includes Firebase web SDK variables.
+## 3. Cấu hình Frontend
 
-## 3. Frontend Setup
-
-### 3.1 Configure env
-
-In `urent-client/.env`:
+### 3.1 Biến môi trường (`urent-client/.env`)
 
 ```env
 VITE_API_BASE_URL=http://localhost:5003
@@ -51,62 +51,44 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=...
 VITE_FIREBASE_APP_ID=...
 ```
 
-### 3.2 Firebase init (already available)
+### 3.2 Firebase init
 
-`src/lib/firebase.ts` already initializes Firebase app and exports `auth`.
+`src/lib/firebase.ts` khởi tạo Firebase app và export `auth`. `apiClient` tự động đính kèm Firebase ID token (refresh nếu cần) qua request interceptor.
 
-### 3.3 Example Google Sign-In component
+### 3.3 Google Sign-In (ví dụ)
 
 ```tsx
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "../../lib/firebase";
-import { apiClient } from "../../lib/api/apiClient";
 
-export function FirebaseLoginDemo() {
+export function GoogleLoginButton() {
   const handleSignIn = async () => {
     const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    const idToken = await result.user.getIdToken();
-
-    // Optional: immediate test against protected backend route
-    const me = await apiClient.get("/api/auth/me", {
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-
-    console.log("Signed in user:", me.data);
+    await signInWithPopup(auth, provider);
+    // apiClient tự động lấy token từ auth.currentUser
   };
 
-  const handleSignOut = async () => {
-    await signOut(auth);
-  };
-
-  return (
-    <div>
-      <button onClick={handleSignIn}>Sign in with Google</button>
-      <button onClick={handleSignOut}>Sign out</button>
-    </div>
-  );
+  return <button onClick={handleSignIn}>Đăng nhập với Google</button>;
 }
 ```
 
-Note:
+> `apiClient` đã có interceptor tự refresh token — không cần set `Authorization` header thủ công trong hầu hết trường hợp.
 
-- You normally do not need to manually set the `Authorization` header because `apiClient` now auto-attaches token.
-- The explicit header above is only for quick testing.
+---
 
-## 4. Backend Setup
+## 4. Cấu hình Backend
 
-### 4.1 Configure env
+### 4.1 Biến môi trường (`urent-server/.env`)
 
-In `urent-server/.env`, choose one option:
+Chọn **một** trong hai cách cấu hình Firebase Admin:
 
-Option A: Service account file path
+**Option A — Service account file:**
 
 ```env
 FIREBASE_SERVICE_ACCOUNT_PATH=./serviceAccountKey.json
 ```
 
-Option B: Inline credentials
+**Option B — Inline credentials:**
 
 ```env
 FIREBASE_PROJECT_ID=...
@@ -114,28 +96,54 @@ FIREBASE_CLIENT_EMAIL=...
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 ```
 
-Important:
+> Thêm `serviceAccountKey.json` vào `.gitignore`, không commit lên git.
 
-- Keep service account secrets out of git.
-- Add `serviceAccountKey.json` to `.gitignore`.
-
-### 4.2 Start backend
+### 4.2 Khởi động
 
 ```bash
 cd urent-server
 npm run dev
 ```
 
-## 5. Security Notes
+`initializeFirebase()` được gọi tự động trong `server.ts` khi khởi động.
 
-- Use HTTPS in production.
-- Restrict CORS to trusted frontend domains.
-- Handle expired token errors (`auth/id-token-expired`) on client by re-authenticating user.
-- Verification is authentication only; implement authorization checks (roles/claims/resource ownership) per route.
+### 4.3 Files liên quan
 
-## 6. Validation Checklist
+| File                                    | Vai trò                                              |
+| :-------------------------------------- | :--------------------------------------------------- |
+| `src/config/firebase.ts`                | Khởi tạo Firebase Admin SDK                          |
+| `src/utils/auth-token.ts`               | `verifyAccessToken()` — verify JWT và Firebase token |
+| `src/services/auth-identity.service.ts` | Map Firebase identity → MongoDB user                 |
+| `src/middlewares/auth.middleware.ts`    | `authGuard` middleware                               |
+| `src/realtime/socket.ts`                | Socket.IO auth dùng cùng verifier                    |
+| `src/controllers/auth.controller.ts`    | `getMe`, `googleLogin`, `getFirebaseCustomToken`     |
 
-- Firebase login succeeds on frontend.
-- Request to `/api/auth/me` returns 200 with user data.
-- Protected routes under `/api/v1/*` accept Firebase bearer token.
-- Existing JWT login flow still works unchanged.
+---
+
+## 5. Phone OTP (Firebase Custom Token)
+
+JWT users cần Firebase session để xác thực số điện thoại:
+
+1. Client gọi `GET /api/auth/firebase/custom-token` (kèm JWT).
+2. Server tạo Firebase Custom Token và trả về.
+3. Client gọi `signInWithCustomToken(auth, customToken)`.
+4. Client dùng Firebase session để bắt đầu Phone OTP flow.
+
+---
+
+## 6. Bảo mật
+
+- Dùng HTTPS trong production.
+- Giới hạn CORS chỉ cho domain trong `CLIENT_URLS`.
+- Xử lý `auth/id-token-expired` ở client bằng cách re-authenticate tự động (interceptor đã có sẵn).
+- `authGuard` chỉ xác thực danh tính (authentication) — phân quyền (authorization) cần kiểm tra thêm trong từng controller/service.
+
+---
+
+## 7. Checklist kiểm tra
+
+- [ ] Firebase login thành công trên frontend
+- [ ] `GET /api/auth/me` trả về 200 với dữ liệu user
+- [ ] Các route `/api/v1/*` chấp nhận Firebase Bearer token
+- [ ] Luồng JWT đăng ký/đăng nhập vẫn hoạt động bình thường
+- [ ] Phone OTP flow hoạt động sau khi lấy Custom Token

@@ -3,7 +3,6 @@ import type {
   ApiConversation,
   ApiConversationParticipant,
   ApiMessage,
-  ApiOneToOneConversation,
   ApiProduct,
   ApiResponse,
   ApiSearchMessage,
@@ -30,12 +29,11 @@ export const messageService = {
     return res.data;
   },
 
-  async createOneToOneConversationByEmail(peerEmail: string) {
-    const res = await apiClient.post<ApiResponse<ApiOneToOneConversation>>(
-      "/api/v1/conversations/one-to-one/by-email",
-      { peerEmail },
+  async createConversation(peerUserId: string) {
+    const res = await apiClient.post<ApiResponse<ApiConversation>>(
+      "/api/v1/conversations",
+      { peerUserId },
     );
-
     return res.data.data;
   },
 

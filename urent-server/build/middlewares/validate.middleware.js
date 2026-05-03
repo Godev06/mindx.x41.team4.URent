@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateBody = void 0;
 const zod_1 = require("zod");
+const api_response_1 = require("../utils/api-response");
 const validateBody = (schema) => {
     return (req, res, next) => {
         try {
@@ -10,15 +11,16 @@ const validateBody = (schema) => {
         }
         catch (error) {
             if (error instanceof zod_1.ZodError) {
-                return res.status(400).json({
+                return (0, api_response_1.sendError)(res, {
+                    code: 'VALIDATION_ERROR',
                     message: 'Validation failed',
-                    errors: error.issues.map((issue) => ({
+                    details: error.issues.map((issue) => ({
                         field: issue.path.join('.'),
                         message: issue.message
                     }))
-                });
+                }, 400);
             }
-            return res.status(400).json({ message: 'Invalid payload' });
+            return (0, api_response_1.sendError)(res, { code: 'VALIDATION_ERROR', message: 'Invalid payload' }, 400);
         }
     };
 };

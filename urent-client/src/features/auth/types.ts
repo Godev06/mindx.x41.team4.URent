@@ -24,8 +24,21 @@ export interface VerifyOtpPayload {
 }
 
 export interface LoginPayload {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
+}
+
+export interface CheckLoginIdentityPayload {
+  identifier: string;
+}
+
+export interface CheckLoginIdentityResult {
+  exists: boolean;
+  method: "email" | "phone";
+  identifier: string;
+  email?: string;
+  requiresPasswordSetup?: boolean;
 }
 
 export interface ForgotPasswordPayload {
@@ -47,6 +60,8 @@ export interface ProfileUpdatePayload {
 export interface MutationResult {
   message: string;
   requiresTwoFactor?: boolean;
+  requiresPasswordSetup?: boolean;
+  email?: string;
 }
 
 export interface AuthSession {

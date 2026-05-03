@@ -28,6 +28,16 @@ export const validateEmail = (value: string) => {
   return "";
 };
 
+const PHONE_REGEX = /^\+?[\d\s\-().]{7,20}$/;
+
+export const validatePhone = (value: string) => {
+  if (!PHONE_REGEX.test(value.trim())) {
+    return "So dien thoai khong hop le.";
+  }
+
+  return "";
+};
+
 export const validateProfileInput = (payload: ProfileUpdatePayload) => {
   const errors: Partial<Record<keyof ProfileUpdatePayload, string>> = {};
 

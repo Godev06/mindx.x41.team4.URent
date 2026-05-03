@@ -37,15 +37,20 @@ exports.UserModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const userSchema = new mongoose_1.Schema({
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
-    password: { type: String, required: true },
+    password: { type: String },
+    authProviders: [{ type: String, enum: ['local', 'google'] }],
     isEmailVerified: { type: Boolean, default: false },
     otpCode: { type: String },
     otpExpiresAt: { type: Date },
+    loginOtpCode: { type: String },
+    loginOtpExpiresAt: { type: Date },
     resetToken: { type: String },
     resetTokenExpiresAt: { type: Date },
     displayName: { type: String, trim: true },
+    username: { type: String, unique: true, sparse: true, trim: true },
     bio: { type: String, maxlength: 200 },
     avatarUrl: { type: String },
-    phone: { type: String, trim: true }
+    phone: { type: String, trim: true, unique: true, sparse: true },
+    isPhoneVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 exports.UserModel = mongoose_1.default.model('User', userSchema);

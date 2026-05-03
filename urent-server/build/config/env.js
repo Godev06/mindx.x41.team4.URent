@@ -7,6 +7,11 @@ exports.env = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const rawEnv = process.env;
+const defaultClientOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+const clientOrigins = (rawEnv.CLIENT_URLS ?? rawEnv.CLIENT_URL ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
 exports.env = {
     port: Number(rawEnv.PORT ?? 5003),
     mongoUri: rawEnv.MONGO_URI ?? '',
@@ -17,7 +22,7 @@ exports.env = {
         .filter(Boolean),
     jwtSecret: rawEnv.JWT_SECRET ?? '',
     jwtExpiresIn: rawEnv.JWT_EXPIRES_IN ?? '1d',
-    clientUrl: rawEnv.CLIENT_URL ?? 'http://localhost:5173',
+    clientOrigins: clientOrigins.length > 0 ? clientOrigins : defaultClientOrigins,
     smtpHost: rawEnv.SMTP_HOST ?? '',
     smtpPort: Number(rawEnv.SMTP_PORT ?? 587),
     smtpSecure: rawEnv.SMTP_SECURE === 'true',
@@ -28,7 +33,11 @@ exports.env = {
     resetTokenExpiresMinutes: Number(rawEnv.RESET_TOKEN_EXPIRES_MINUTES ?? 15),
     cloudinaryCloudName: rawEnv.CLOUDINARY_CLOUD_NAME,
     cloudinaryApiKey: rawEnv.CLOUDINARY_API_KEY,
-    cloudinaryApiSecret: rawEnv.CLOUDINARY_API_SECRET
+    cloudinaryApiSecret: rawEnv.CLOUDINARY_API_SECRET,
+    firebaseServiceAccountPath: rawEnv.FIREBASE_SERVICE_ACCOUNT_PATH,
+    firebaseProjectId: rawEnv.FIREBASE_PROJECT_ID,
+    firebaseClientEmail: rawEnv.FIREBASE_CLIENT_EMAIL,
+    firebasePrivateKey: rawEnv.FIREBASE_PRIVATE_KEY
 };
 if ((!exports.env.mongoUri && !exports.env.mongoUriFallback) || !exports.env.jwtSecret) {
     throw new Error('Missing required environment variables ((MONGO_URI or MONGO_URI_FALLBACK), JWT_SECRET)');
