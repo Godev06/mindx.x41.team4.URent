@@ -3,15 +3,37 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const rawEnv = process.env as Record<string, string | undefined>;
-const defaultClientOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+const normalizeOrigin = (value: string) => value.trim().replace(/\/$/, '');
+
+const defaultClientOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5003',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5003'
+].map(normalizeOrigin);
 
 const clientOrigins = (rawEnv.CLIENT_URLS ?? rawEnv.CLIENT_URL ?? '')
   .split(',')
-  .map((value) => value.trim())
+  .map(normalizeOrigin)
   .filter(Boolean);
 
+const resolvedPort = Number(rawEnv.PORT ?? 5003);
+const alwaysAllowedOrigins = [
+  `http://localhost:${resolvedPort}`,
+  `http://127.0.0.1:${resolvedPort}`
+].map(normalizeOrigin);
+
+const resolvedClientOrigins = Array.from(
+  new Set([
+    ...(clientOrigins.length > 0 ? clientOrigins : defaultClientOrigins),
+    ...alwaysAllowedOrigins
+  ])
+);
+
 export const env = {
-  port: Number(rawEnv.PORT ?? 5003),
+  port: resolvedPort,
   mongoUri: rawEnv.MONGO_URI ?? '',
   mongoUriFallback: rawEnv.MONGO_URI_FALLBACK ?? '',
   dnsServers: (rawEnv.DNS_SERVERS ?? '')
@@ -20,7 +42,7 @@ export const env = {
     .filter(Boolean),
   jwtSecret: rawEnv.JWT_SECRET ?? '',
   jwtExpiresIn: rawEnv.JWT_EXPIRES_IN ?? '1d',
-  clientOrigins: clientOrigins.length > 0 ? clientOrigins : defaultClientOrigins,
+  clientOrigins: resolvedClientOrigins,
   smtpHost: rawEnv.SMTP_HOST ?? '',
   smtpPort: Number(rawEnv.SMTP_PORT ?? 587),
   smtpSecure: rawEnv.SMTP_SECURE === 'true',

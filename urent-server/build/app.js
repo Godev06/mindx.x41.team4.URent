@@ -17,9 +17,10 @@ const profile_route_1 = require("./routes/profile.route");
 const product_route_1 = require("./routes/product.route");
 const settings_route_1 = require("./routes/settings.route");
 exports.app = (0, express_1.default)();
+const normalizeOrigin = (value) => value.trim().replace(/\/$/, '');
 exports.app.use((0, cors_1.default)({
     origin(origin, callback) {
-        if (!origin || env_1.env.clientOrigins.includes(origin)) {
+        if (!origin || env_1.env.clientOrigins.includes(normalizeOrigin(origin))) {
             callback(null, true);
             return;
         }

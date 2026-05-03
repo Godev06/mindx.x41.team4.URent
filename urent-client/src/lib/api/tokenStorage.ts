@@ -1,4 +1,4 @@
-import { AUTH_TOKEN_STORAGE_KEY } from "../../features/auth/constants";
+import { AUTH_TOKEN_STORAGE_KEY } from "../../features/user/auth/constants";
 
 export const getStoredAuthToken = () => {
   if (typeof window === "undefined") {

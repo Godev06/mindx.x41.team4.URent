@@ -13,10 +13,12 @@ import { settingsRouter } from './routes/settings.route';
 
 export const app = express();
 
+const normalizeOrigin = (value: string) => value.trim().replace(/\/$/, '');
+
 app.use(
 	cors({
 		origin(origin, callback) {
-			if (!origin || env.clientOrigins.includes(origin)) {
+			if (!origin || env.clientOrigins.includes(normalizeOrigin(origin))) {
 				callback(null, true);
 				return;
 			}
