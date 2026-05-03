@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import {
   deleteConversationParamsSchema,
-  conversationPeerByEmailQuerySchema,
-  createOneToOneConversationByEmailBodySchema,
+  conversationPeerQuerySchema,
   createOneToOneConversationBodySchema,
   listConversationsQuerySchema,
   listMessagesParamsSchema,
@@ -14,7 +13,7 @@ import {
 import {
   deleteConversationForUser,
   getConversationPeerByEmail,
-  getOrCreateOneToOneConversationByEmail,
+  getConversationPeerByPhone,
   getOrCreateOneToOneConversation,
   listConversationMessages,
   listConversations,
@@ -48,7 +47,7 @@ export const getConversations = async (req: Request, res: Response) => {
   });
 };
 
-export const postOneToOneConversation = async (req: Request, res: Response) => {
+export const postConversation = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const body = createOneToOneConversationBodySchema.parse(req.body);
 
@@ -57,29 +56,16 @@ export const postOneToOneConversation = async (req: Request, res: Response) => {
   return sendSuccess(res, conversation, undefined, 201);
 };
 
-export const postOneToOneConversationByEmail = async (
+export const getConversationPeerQuery = async (
   req: Request,
   res: Response
 ) => {
   const userId = requireUserId(req);
-  const body = createOneToOneConversationByEmailBodySchema.parse(req.body);
+  const query = conversationPeerQuerySchema.parse(req.query);
 
-  const conversation = await getOrCreateOneToOneConversationByEmail(
-    userId,
-    body.peerEmail
-  );
-
-  return sendSuccess(res, conversation, undefined, 201);
-};
-
-export const getConversationPeerByEmailQuery = async (
-  req: Request,
-  res: Response
-) => {
-  const userId = requireUserId(req);
-  const query = conversationPeerByEmailQuerySchema.parse(req.query);
-
-  const peer = await getConversationPeerByEmail(userId, query.email);
+  const peer = query.email
+    ? await getConversationPeerByEmail(userId, query.email)
+    : await getConversationPeerByPhone(userId, query.phone!);
 
   return sendSuccess(res, peer);
 };

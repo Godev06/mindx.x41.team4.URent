@@ -17,14 +17,16 @@ export function ResetPasswordPage() {
   const { resetPassword } = useAuth();
   const { showToast } = useToast();
   const { t } = useI18n();
+  const routeState = location.state as
+    | { email?: string; otp?: string; flowVariant?: "default" | "setup-password" }
+    | null;
+  const isPasswordSetupFlow = routeState?.flowVariant === "setup-password";
   const initialEmail = useMemo(() => {
-    const state = location.state as { email?: string; otp?: string } | null;
-    return state?.email ?? authFlowStorage.getPendingResetEmail();
-  }, [location.state]);
+    return routeState?.email ?? authFlowStorage.getPendingResetEmail();
+  }, [routeState]);
   const verifiedOtp = useMemo(() => {
-    const state = location.state as { email?: string; otp?: string } | null;
-    return state?.otp?.trim() ?? "";
-  }, [location.state]);
+    return routeState?.otp?.trim() ?? "";
+  }, [routeState]);
   const [form, setForm] = useState({
     email: initialEmail,
     newPassword: "",
@@ -59,8 +61,12 @@ export function ResetPasswordPage() {
       });
 
       showToast({
-        title: t.resetSuccessToast,
-        description: result.message,
+        title: isPasswordSetupFlow
+          ? t.setupPasswordSuccessToast
+          : t.resetSuccessToast,
+        description: isPasswordSetupFlow
+          ? t.setupPasswordSuccessToast
+          : result.message,
         variant: "success",
       });
       navigate(APP_ROUTES.login, {
@@ -80,19 +86,25 @@ export function ResetPasswordPage() {
 
   return (
     <AuthLayout
-      title={t.resetTitle}
-      description={t.resetDesc}
+      title={isPasswordSetupFlow ? t.setupPasswordTitle : t.resetTitle}
+      description={isPasswordSetupFlow ? t.setupPasswordDesc : t.resetDesc}
       footer={
         <p>
-          {t.resetBack}{" "}
+          {isPasswordSetupFlow ? t.setupPasswordBack : t.resetBack}{" "}
           <Link to={APP_ROUTES.login} className={authUi.link}>
-            {t.resetBackLogin}
+            {isPasswordSetupFlow ? t.setupPasswordBackLogin : t.resetBackLogin}
           </Link>
         </p>
       }
     >
       <form className={authUi.form} onSubmit={handleSubmit}>
         {errorMessage ? <AlertMessage message={errorMessage} /> : null}
+        {isPasswordSetupFlow ? (
+          <div className="rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm leading-6 text-teal-900">
+            <p className="font-semibold">{t.setupPasswordNoticeTitle}</p>
+            <p>{t.setupPasswordNoticeBody}</p>
+          </div>
+        ) : null}
         <label className={authUi.label}>
           {t.emailLabel}
           <input
@@ -142,7 +154,13 @@ export function ResetPasswordPage() {
           disabled={isSubmitting}
           className={authUi.buttonPrimary}
         >
-          {isSubmitting ? t.resetSubmitting : t.resetSubmit}
+          {isSubmitting
+            ? isPasswordSetupFlow
+              ? t.setupPasswordSubmitting
+              : t.resetSubmitting
+            : isPasswordSetupFlow
+              ? t.setupPasswordSubmit
+              : t.resetSubmit}
         </button>
       </form>
     </AuthLayout>

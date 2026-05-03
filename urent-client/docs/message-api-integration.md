@@ -15,8 +15,17 @@ Authorization: Bearer <access_token>
 ```json
 {
   "success": true,
-  "data": "<payload>",
-  "meta": { "limit": 20, "nextCursor": "...", "hasMore": true }
+  "data": "<payload>"
+}
+```
+
+**Response thành công có phân trang:**
+
+```json
+{
+  "success": true,
+  "data": ["..."],
+  "meta": { "nextCursor": "...", "hasMore": true }
 }
 ```
 
@@ -45,7 +54,64 @@ Authorization: Bearer <access_token>
 
 ---
 
-## 1. Danh sách hội thoại
+## 1. Danh sách endpoints
+
+| Method | URL                                  | Mô tả                                    |
+| :----- | :----------------------------------- | :--------------------------------------- |
+| GET    | `/conversations`                     | Danh sách hội thoại (cursor + search)    |
+| GET    | `/conversations/peer-by-email`       | Tìm peer theo email                      |
+| GET    | `/conversations/peer-by-phone`       | Tìm peer theo số điện thoại              |
+| POST   | `/conversations/one-to-one`          | Tạo/mở hội thoại 1-1 theo userId         |
+| POST   | `/conversations/one-to-one/by-email` | Tạo/mở hội thoại 1-1 theo email          |
+| GET    | `/conversations/:id/messages`        | Lịch sử tin nhắn                         |
+| POST   | `/conversations/:id/messages`        | Gửi tin nhắn (TEXT / PRODUCT / LOCATION) |
+| POST   | `/conversations/:id/read`            | Đánh dấu đã đọc                          |
+| DELETE | `/conversations/:id`                 | Xóa hội thoại                            |
+| GET    | `/messages/search`                   | Tìm kiếm tin nhắn                        |
+
+---
+
+## 2. Tạo / mở hội thoại
+
+**Tạo hoặc mở hội thoại 1-1 theo userId:**
+
+```
+POST /conversations/one-to-one
+Content-Type: application/json
+```
+
+```json
+{ "peerId": "664def..." }
+```
+
+**Tạo hoặc mở hội thoại 1-1 theo email:**
+
+```
+POST /conversations/one-to-one/by-email
+Content-Type: application/json
+```
+
+```json
+{ "email": "user@example.com" }
+```
+
+**Tìm peer theo email:**
+
+```
+GET /conversations/peer-by-email?email=user@example.com
+```
+
+**Tìm peer theo số điện thoại:**
+
+```
+GET /conversations/peer-by-phone?phone=0901234567
+```
+
+Cả ba endpoint đều trả về conversation object kèm thông tin participants.
+
+---
+
+## 3. Danh sách hội thoại
 
 ```
 GET /conversations?cursor=&limit=&q=
@@ -87,7 +153,7 @@ GET /conversations?cursor=&limit=&q=
 
 ---
 
-## 2. Lịch sử tin nhắn
+## 4. Lịch sử tin nhắn
 
 ```
 GET /conversations/:conversationId/messages?cursor=&limit=&search=
@@ -153,7 +219,7 @@ GET /conversations/:conversationId/messages?cursor=&limit=&search=
 
 ---
 
-## 3. Gửi tin nhắn
+## 5. Gửi tin nhắn
 
 ```
 POST /conversations/:conversationId/messages
@@ -210,7 +276,7 @@ Content-Type: application/json
 
 ---
 
-## 4. Đánh dấu đã đọc
+## 6. Đánh dấu đã đọc
 
 ```
 POST /conversations/:conversationId/read
@@ -232,7 +298,7 @@ Không có body. Gọi khi user mở conversation hoặc scroll đến tin cuố
 
 ---
 
-## 5. Tìm kiếm tin nhắn
+## 7. Tìm kiếm tin nhắn
 
 ```
 GET /messages/search?q=&conversationId=&cursor=&limit=
@@ -267,7 +333,7 @@ Tìm kiếm trong: `content`, `metadata.snapshot.name` (PRODUCT), `metadata.addr
 
 ---
 
-## 6. Realtime — Socket.IO
+## 8. Realtime — Socket.IO
 
 **Cài package:**
 
@@ -332,7 +398,7 @@ socket.on(
 
 ---
 
-## 7. Pagination — Cursor
+## 9. Pagination — Cursor
 
 Tất cả list API dùng cursor-based pagination, không dùng page/offset.
 

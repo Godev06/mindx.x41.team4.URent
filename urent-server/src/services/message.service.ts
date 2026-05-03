@@ -167,23 +167,6 @@ export const getOrCreateOneToOneConversation = async (userId: string, peerUserId
   };
 };
 
-export const getOrCreateOneToOneConversationByEmail = async (
-  userId: string,
-  peerEmail: string
-) => {
-  const normalizedEmail = peerEmail.trim().toLowerCase();
-
-  const peer = await UserModel.findOne({ email: normalizedEmail })
-    .select('_id')
-    .lean();
-
-  if (!peer) {
-    throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
-  }
-
-  return getOrCreateOneToOneConversation(userId, String(peer._id));
-};
-
 export const getConversationPeerByEmail = async (
   userId: string,
   email: string
@@ -191,7 +174,7 @@ export const getConversationPeerByEmail = async (
   const normalizedEmail = email.trim().toLowerCase();
 
   const peer = await UserModel.findOne({ email: normalizedEmail })
-    .select('displayName avatarUrl email')
+    .select('displayName avatarUrl email phone')
     .lean();
 
   if (!peer) {
@@ -206,7 +189,35 @@ export const getConversationPeerByEmail = async (
     userId: String(peer._id),
     displayName: peer.displayName ?? null,
     avatarUrl: peer.avatarUrl ?? null,
-    email: peer.email
+    email: peer.email,
+    phone: peer.phone ?? null
+  };
+};
+
+export const getConversationPeerByPhone = async (
+  userId: string,
+  phone: string
+) => {
+  const normalizedPhone = phone.trim();
+
+  const peer = await UserModel.findOne({ phone: normalizedPhone })
+    .select('displayName avatarUrl email phone')
+    .lean();
+
+  if (!peer) {
+    throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+  }
+
+  if (String(peer._id) === userId) {
+    throw new AppError(400, 'VALIDATION_ERROR', 'Khong the tao hoi thoai voi chinh minh');
+  }
+
+  return {
+    userId: String(peer._id),
+    displayName: peer.displayName ?? null,
+    avatarUrl: peer.avatarUrl ?? null,
+    email: peer.email,
+    phone: peer.phone ?? null
   };
 };
 

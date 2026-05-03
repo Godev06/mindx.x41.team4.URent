@@ -1,4 +1,6 @@
 import { apiClient } from "../../../lib/api/apiClient";
+import type { AuthUser } from "../../auth/types";
+import { mapAuthUser } from "../../auth/utils/authResponse";
 import type { UserSettings } from "../types";
 
 type UnknownRecord = Record<string, unknown>;
@@ -20,14 +22,14 @@ const mapUserSettings = (value: unknown): UserSettings => {
 
 export const settingsService = {
   async getSettings(): Promise<UserSettings> {
-    const response = await apiClient.get<unknown>("/api/settings");
+    const response = await apiClient.get<unknown>("/api/v1/settings");
     return mapUserSettings(response.data);
   },
 
   async updateTwoFactorEnabled(
     twoFactorEnabled: boolean
   ): Promise<UserSettings> {
-    const response = await apiClient.patch<unknown>("/api/settings", {
+    const response = await apiClient.patch<unknown>("/api/v1/settings", {
       twoFactorEnabled,
     });
     return mapUserSettings(response.data);
@@ -37,9 +39,20 @@ export const settingsService = {
     currentPassword: string,
     newPassword: string
   ): Promise<void> {
-    await apiClient.patch("/api/profile", {
+    await apiClient.patch("/api/v1/profile", {
       currentPassword,
       newPassword,
     });
+  },
+
+  async verifyPhone(idToken: string): Promise<AuthUser> {
+    const response = await apiClient.post<unknown>("/api/v1/profile/verify-phone", { idToken });
+    const user = mapAuthUser(response.data);
+
+    if (!user) {
+      throw new Error("Xac minh so dien thoai thanh cong nhung khong dong bo duoc ho so.");
+    }
+
+    return user;
   },
 };

@@ -26,7 +26,7 @@ export const profileService = {
   async updateProfile(payload: ProfileUpdatePayload): Promise<AuthUser> {
     const requestPayload = buildProfileUpdatePayload(payload);
     const response = await apiClient.patch<unknown>(
-      "/api/profile",
+      "/api/v1/profile",
       requestPayload,
     );
     const user = mapAuthUser(response.data);
@@ -42,7 +42,7 @@ export const profileService = {
     const formData = new FormData();
     formData.append("avatar", file);
 
-    const response = await apiClient.post<unknown>("/api/profile/avatar", formData, {
+    const response = await apiClient.post<unknown>("/api/v1/profile/avatar", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

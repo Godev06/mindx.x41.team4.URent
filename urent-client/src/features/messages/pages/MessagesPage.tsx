@@ -308,8 +308,8 @@ export function MessagesPage() {
       setIsCreatingByEmail(true);
 
       const conversation =
-        await messageService.createOneToOneConversationByEmail(
-          normalizedSearch,
+        await messageService.getConversationPeerByEmail(normalizedSearch).then((peer) =>
+          messageService.createConversation(peer.userId),
         );
       refreshConversations();
       navigate(`/messages/${conversation.id}`);

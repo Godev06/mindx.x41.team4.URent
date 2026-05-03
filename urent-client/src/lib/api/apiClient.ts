@@ -4,11 +4,9 @@ import {
   APP_ROUTES,
   AUTH_SESSION_EXPIRED_EVENT,
 } from "../../features/auth/constants";
-import { auth } from "../firebase";
 import {
   clearStoredAuthToken,
   getStoredAuthToken,
-  setStoredAuthToken,
 } from "./tokenStorage";
 import { normalizeApiError } from "./apiError";
 
@@ -20,17 +18,8 @@ export const apiClient = axios.create({
   timeout: API_REQUEST_TIMEOUT,
 });
 
-apiClient.interceptors.request.use(async (config) => {
-  let token = getStoredAuthToken();
-
-  if (auth.currentUser) {
-    try {
-      token = await auth.currentUser.getIdToken();
-      setStoredAuthToken(token);
-    } catch {
-      // Keep existing token fallback behavior when Firebase token refresh fails.
-    }
-  }
+apiClient.interceptors.request.use((config) => {
+  const token = getStoredAuthToken();
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
