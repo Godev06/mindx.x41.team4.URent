@@ -3,7 +3,7 @@ import {
   API_REQUEST_TIMEOUT,
   APP_ROUTES,
   AUTH_SESSION_EXPIRED_EVENT,
-} from "../../features/auth/constants";
+} from "../../features/user/auth/constants";
 import {
   clearStoredAuthToken,
   getStoredAuthToken,

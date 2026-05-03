@@ -1,10 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "./features/settings/context/ThemeContext";
-import { ToastProvider } from "./features/shared/components/ToastProvider";
-import { AuthProvider } from "./features/auth/context/AuthContext";
-import { LanguageProvider } from "./features/shared/context/LanguageContext";
+import { ThemeProvider } from "./features/user/settings/context/ThemeContext";
+import { ToastProvider } from "./features/user/shared/components/ToastProvider";
+import { AuthProvider } from "./features/user/auth/context/AuthContext";
+import { LanguageProvider } from "./features/user/shared/context/LanguageContext";
 import "./index.css";
 import App from "./App.tsx";
 

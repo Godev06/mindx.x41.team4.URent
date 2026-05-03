@@ -7,10 +7,18 @@ exports.env = void 0;
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const rawEnv = process.env;
-const defaultClientOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+const normalizeOrigin = (value) => value.trim().replace(/\/$/, '');
+const defaultClientOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5003',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
+    'http://127.0.0.1:5003'
+].map(normalizeOrigin);
 const clientOrigins = (rawEnv.CLIENT_URLS ?? rawEnv.CLIENT_URL ?? '')
     .split(',')
-    .map((value) => value.trim())
+    .map(normalizeOrigin)
     .filter(Boolean);
 exports.env = {
     port: Number(rawEnv.PORT ?? 5003),
