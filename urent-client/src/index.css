@@ -44,3 +44,28 @@
     color: var(--color-brand-accent);
   }
 }
+
+@layer base {
+  .admin {
+    @apply bg-slate-950 text-white;
+  }
+
+  .admin h1,
+  .admin h2,
+  .admin h3 {
+    @apply text-white;
+  }
+}
+
+/* ===== ANIMATION (CHỈ ADD, KHÔNG ĐỤNG CODE CŨ) ===== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
