@@ -36,8 +36,9 @@ export function VerifyOtpPage() {
   const routeState = (location.state as VerifyOtpRouteState | null) ?? null;
   const purpose = routeState?.purpose;
   const isPasswordSetupFlow =
-    purpose === "reset password" &&
-    routeState?.flowVariant === "setup-password";
+    purpose === "create password" ||
+    ((purpose === "reset password" || purpose === "create password") &&
+      routeState?.flowVariant === "setup-password");
   const email = useMemo(() => {
     if (!purpose) {
       return "";
@@ -152,11 +153,13 @@ export function VerifyOtpPage() {
             return;
           }
 
+          const verifiedToken = "token" in result ? result.token : otp;
+
           navigate(APP_ROUTES.resetPassword, {
             replace: true,
             state: {
               email,
-              otp,
+              otp: verifiedToken,
               flowVariant: routeState?.flowVariant,
             },
           });

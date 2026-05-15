@@ -121,9 +121,8 @@ export function ResetPasswordPage() {
         </label>
         <label className={authUi.label}>
           {t.resetNewPwdLabel}
-          <input
-            className={authUi.input}
-            type="password"
+          <PasswordInput
+            showLeftIcon={false}
             autoComplete="new-password"
             value={form.newPassword}
             onChange={(event) =>
@@ -137,9 +136,8 @@ export function ResetPasswordPage() {
         </label>
         <label className={authUi.label}>
           {t.resetConfirmPwdLabel}
-          <input
-            className={authUi.input}
-            type="password"
+          <PasswordInput
+            showLeftIcon={false}
             autoComplete="new-password"
             value={form.confirmPassword}
             onChange={(event) =>

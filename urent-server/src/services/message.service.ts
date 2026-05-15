@@ -6,6 +6,7 @@ import { ProductModel } from '../models/product.model';
 import { UserModel } from '../models/user.model';
 import { AppError } from '../utils/app-error';
 import { decodeCursor, encodeCursor } from '../utils/cursor';
+import { createLinkedActivityNotification } from './activity-notification.service';
 
 const DEFAULT_LIMIT = 20;
 const ONLY_ONE_TO_ONE_MESSAGE = 'Chi ho tro tin nhan cho hoi thoai 1v1';
@@ -501,6 +502,29 @@ export const sendConversationMessage = async (
       $set: { deletedAt: null }
     }
   );
+
+  // Tạo notification cho người nhận
+  const recipients = await ConversationParticipantModel.find(
+    { conversationId, userId: { $ne: userId } },
+    { userId: 1 }
+  ).lean();
+
+  for (const recipient of recipients) {
+    await createLinkedActivityNotification({
+      userId: String(recipient.userId),
+      activity: {
+        action: 'message_received',
+        description: `Nhận tin nhắn mới từ ${message.messageType === 'TEXT' ? 'chat' : message.messageType.toLowerCase()}`,
+        type: 'message'
+      },
+      notification: {
+        title: 'Tin nhắn mới',
+        description: `Bạn có tin nhắn mới từ ${message.messageType === 'TEXT' ? 'chat' : message.messageType.toLowerCase()}`,
+        type: 'message'
+      },
+      eventKey: `message_${String(message._id)}`
+    });
+  }
 
   return {
     id: String(message._id),

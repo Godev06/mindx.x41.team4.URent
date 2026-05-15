@@ -1,37 +1,77 @@
 import { useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Trash2, CheckCheck } from "lucide-react";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { useNotifications } from "../hooks/useNotifications";
+import { useUnreadCount } from "../hooks/useNotifications";
 
 export function NotificationsPage() {
   const { theme } = useTheme();
   const { t } = useI18n();
-  const notifItems = [
-    {
-      id: 1,
-      title: t.notifItem1Title,
-      time: t.notifItem1Time,
-      description: t.notifItem1Desc,
-    },
-    {
-      id: 2,
-      title: t.notifItem2Title,
-      time: t.notifItem2Time,
-      description: t.notifItem2Desc,
-    },
-    {
-      id: 3,
-      title: t.notifItem3Title,
-      time: t.notifItem3Time,
-      description: t.notifItem3Desc,
-    },
-  ];
-  const [selectedNotificationId, setSelectedNotificationId] = useState(
-    notifItems[0]?.id ?? 1,
-  );
+  const {
+    notifications,
+    isLoading,
+    error,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications({ limit: 20 });
+  const { unreadCount } = useUnreadCount();
+  const [selectedNotificationId, setSelectedNotificationId] = useState<
+    string | null
+  >(null);
+
   const selectedNotification =
-    notifItems.find((item) => item.id === selectedNotificationId) ??
-    notifItems[0];
+    notifications.find((item) => item._id === selectedNotificationId) ||
+    notifications[0];
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await markAsRead(id);
+    } catch (error) {
+      console.error("Failed to mark as read:", error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteNotification(id);
+      if (selectedNotificationId === id) {
+        setSelectedNotificationId(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-500">Loading notifications...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <p className="text-red-500">Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -67,8 +107,19 @@ export function NotificationsPage() {
             }`}
           >
             <Bell size={16} strokeWidth={2} />
-            {notifItems.length} {t.notifCenterCount}
+            {unreadCount} {t.notifCenterCount}
           </div>
+          <button
+            onClick={handleMarkAllAsRead}
+            className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition-colors ${
+              theme === "dark"
+                ? "bg-blue-500/15 text-blue-300 hover:bg-blue-500/25"
+                : "bg-blue-50 text-blue-700 hover:bg-blue-100"
+            }`}
+          >
+            <CheckCheck size={16} strokeWidth={2} />
+            Mark All Read
+          </button>
         </div>
       </div>
 
@@ -105,13 +156,11 @@ export function NotificationsPage() {
           <div
             className={`divide-y ${theme === "dark" ? "divide-slate-800" : "divide-slate-100"}`}
           >
-            {notifItems.map((notification) => (
-              <button
-                key={notification.id}
-                type="button"
-                onClick={() => setSelectedNotificationId(notification.id)}
-                className={`w-full px-5 py-4 text-left transition ${
-                  selectedNotificationId === notification.id
+            {notifications.map((notification) => (
+              <div
+                key={notification._id}
+                className={`group relative px-5 py-4 transition ${
+                  selectedNotificationId === notification._id
                     ? theme === "dark"
                       ? "bg-slate-800/80"
                       : "bg-slate-50"
@@ -120,22 +169,53 @@ export function NotificationsPage() {
                       : "hover:bg-slate-50"
                 }`}
               >
-                <div className="flex items-center justify-between gap-4">
-                  <div
-                    className={`text-sm font-medium ${
-                      theme === "dark" ? "text-slate-100" : "text-slate-900"
-                    }`}
-                  >
-                    {notification.title}
+                <button
+                  type="button"
+                  onClick={() => setSelectedNotificationId(notification._id)}
+                  className="w-full text-left"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div
+                      className={`text-sm font-medium ${
+                        theme === "dark" ? "text-slate-100" : "text-slate-900"
+                      }`}
+                    >
+                      {notification.title}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
+                      >
+                        {notification.time ||
+                          new Date(notification.createdAt).toLocaleDateString()}
+                      </div>
+                      {!notification.read && (
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      )}
+                    </div>
                   </div>
-                  <div
-                    className={`text-xs ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
-                  >
-                    {notification.time}
-                  </div>
-                </div>
-              </button>
+                </button>
+                <button
+                  onClick={() => handleDelete(notification._id)}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
+                    theme === "dark"
+                      ? "hover:bg-red-500/20 text-red-400"
+                      : "hover:bg-red-50 text-red-500"
+                  }`}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             ))}
+            {notifications.length === 0 && (
+              <div className="px-5 py-8 text-center">
+                <p
+                  className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"}`}
+                >
+                  No notifications yet
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -170,8 +250,26 @@ export function NotificationsPage() {
                   : "bg-teal-100 text-teal-700"
               }`}
             >
-              {selectedNotification.time}
+              {selectedNotification?.time ||
+                (selectedNotification
+                  ? new Date(
+                      selectedNotification.createdAt,
+                    ).toLocaleDateString()
+                  : "")}
             </span>
+            {selectedNotification && !selectedNotification.read && (
+              <button
+                onClick={() => handleMarkAsRead(selectedNotification._id)}
+                className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-medium transition-colors ${
+                  theme === "dark"
+                    ? "bg-green-500/15 text-green-300 hover:bg-green-500/25"
+                    : "bg-green-50 text-green-700 hover:bg-green-100"
+                }`}
+              >
+                <CheckCheck size={16} strokeWidth={2} />
+                Mark as Read
+              </button>
+            )}
           </div>
 
           <div className="mt-6">
@@ -180,14 +278,15 @@ export function NotificationsPage() {
                 theme === "dark" ? "text-slate-100" : "text-slate-900"
               }`}
             >
-              {selectedNotification.title}
+              {selectedNotification?.title || "No notification selected"}
             </h2>
             <p
               className={`mt-4 text-sm leading-7 ${
                 theme === "dark" ? "text-slate-300" : "text-slate-600"
               }`}
             >
-              {selectedNotification.description}
+              {selectedNotification?.description ||
+                "Select a notification to view details"}
             </p>
           </div>
         </div>

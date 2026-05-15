@@ -32,10 +32,9 @@ Dự án hỗ trợ hai phương thức xác thực song song:
 - **Session Bootstrap**: Khi ứng dụng khởi chạy, `AuthContext` gọi `GET /api/auth/me` để khôi phục session từ token đã lưu.
 - **Automatic Logout**: Nếu nhận `401 Unauthorized`, hệ thống dispatch sự kiện `auth:session-expired`, `AuthContext` lắng nghe và tự động đăng xuất.
 
-### 3b. Firebase (Google Sign-In / Phone OTP)
+### 3b. Firebase (Google Sign-In)
 
 - **Google Sign-In**: Dùng `signInWithPopup(GoogleAuthProvider)` để lấy Firebase ID token, sau đó gửi `POST /api/auth/google` để backend xác thực và cấp JWT của ứng dụng.
-- **Phone OTP (Settings)**: JWT users cần Firebase session để xác minh số điện thoại. `PhoneVerificationModal` gọi `GET /api/auth/firebase/custom-token` → `signInWithCustomToken()` → bắt đầu luồng OTP qua Firebase SMS (`RecaptchaVerifier` + `signInWithPhoneNumber`).
 
 ## 4. Xử lý API & Dữ liệu
 

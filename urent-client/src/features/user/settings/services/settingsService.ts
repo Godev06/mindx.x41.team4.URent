@@ -1,6 +1,4 @@
 import { apiClient } from "../../../../lib/api/apiClient";
-import type { AuthUser } from "../../auth/types";
-import { mapAuthUser } from "../../auth/utils/authResponse";
 import type { UserSettings } from "../types";
 
 type UnknownRecord = Record<string, unknown>;
@@ -17,6 +15,7 @@ const mapUserSettings = (value: unknown): UserSettings => {
 
   return {
     twoFactorEnabled: Boolean(source.twoFactorEnabled),
+    isPasswordSet: typeof source.isPasswordSet === "boolean" ? source.isPasswordSet : undefined,
   };
 };
 
@@ -43,16 +42,5 @@ export const settingsService = {
       currentPassword,
       newPassword,
     });
-  },
-
-  async verifyPhone(idToken: string): Promise<AuthUser> {
-    const response = await apiClient.post<unknown>("/api/v1/profile/verify-phone", { idToken });
-    const user = mapAuthUser(response.data);
-
-    if (!user) {
-      throw new Error("Xac minh so dien thoai thanh cong nhung khong dong bo duoc ho so.");
-    }
-
-    return user;
   },
 };

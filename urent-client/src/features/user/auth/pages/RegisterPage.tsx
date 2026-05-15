@@ -10,6 +10,7 @@ import { validateEmail, validatePassword } from "../../shared/utils/validation";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { authUi } from "../styles";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { PasswordInput } from "../components/PasswordInput";
 
 const deriveUsername = (email: string): string => {
   const local = email.split("@")[0] ?? "";
@@ -165,9 +166,8 @@ export function RegisterPage() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className={authUi.label}>
               {t.registerPwdLabel}
-              <input
-                className={authUi.input}
-                type="password"
+              <PasswordInput
+                showLeftIcon={false}
                 autoComplete="new-password"
                 value={form.password}
                 onChange={(event) =>
@@ -183,9 +183,8 @@ export function RegisterPage() {
 
             <label className={authUi.label}>
               {t.registerConfirmPwdLabel}
-              <input
-                className={authUi.input}
-                type="password"
+              <PasswordInput
+                showLeftIcon={false}
                 autoComplete="new-password"
                 value={form.confirmPassword}
                 onChange={(event) =>

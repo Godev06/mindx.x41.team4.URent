@@ -64,14 +64,6 @@ const findOrCreateUserByEmail = async (
       user.avatarUrl = avatarUrl;
       dirty = true;
     }
-    if (!user.phone && phoneNumber && !user.isPhoneVerified) {
-      // Kiểm tra phone chưa thuộc về user khác
-      const phoneOwner = await UserModel.findOne({ phone: phoneNumber });
-      if (!phoneOwner) {
-        user.phone = phoneNumber;
-        dirty = true;
-      }
-    }
 
     if (dirty) await user.save();
     return user;

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createActivityOnly } from '../services/activity-notification.service';
 import { SettingsModel } from '../models/settings.model';
+import { UserModel } from '../models/user.model';
 
 const buildDefaultSettings = (userId: string) => ({
   userId,
@@ -24,7 +25,11 @@ export const getSettings = async (req: Request, res: Response) => {
     { returnDocument: 'after', upsert: true }
   );
 
-  return res.json(settings);
+  // Check if password is set for this user
+  const user = await UserModel.findById(userId);
+  const isPasswordSet = !!user?.password;
+
+  return res.json({ ...settings?.toObject(), isPasswordSet });
 };
 
 export const updateSettings = async (req: Request, res: Response) => {

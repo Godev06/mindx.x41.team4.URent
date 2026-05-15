@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import multer, { memoryStorage } from 'multer';
-import { getProfile, updateProfile, uploadAvatar, verifyPhone } from '../controllers/profile.controller';
+import { getProfile, updateProfile, uploadAvatar } from '../controllers/profile.controller';
 import { authGuard } from '../middlewares/auth.middleware';
 import { validateBody } from '../middlewares/validate.middleware';
-import { updateProfileSchema, verifyPhoneSchema } from '../validators/profile.validator';
+import { updateProfileSchema } from '../validators/profile.validator';
 
 export const profileRouter = Router();
 
@@ -107,46 +107,4 @@ profileRouter.patch('/', authGuard, validateBody(updateProfileSchema), updatePro
  *         description: Không có file hoặc định dạng không hợp lệ
  */
 profileRouter.post('/avatar', authGuard, upload.single('avatar'), uploadAvatar);
-
-/**
- * @openapi
- * /api/v1/profile/verify-phone:
- *   post:
- *     tags: [Profile]
- *     summary: Xác minh & lưu số điện thoại qua Firebase SMS OTP
- *     description: |
- *       Luồng:
- *       1. Client lấy Firebase Custom Token từ `GET /api/auth/firebase/custom-token`
- *       2. Dùng token đó để `signInWithCustomToken` vào Firebase
- *       3. Gọi `signInWithPhoneNumber` → Firebase gửi SMS OTP
- *       4. Xác minh OTP → `linkWithCredential`
- *       5. Lấy ID token mới (`getIdToken(true)`) — token này chứa `phone_number` claim
- *       6. Gửi ID token đó lên endpoint này để lưu số điện thoại đã xác minh
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/VerifyPhoneBody'
- *     responses:
- *       200:
- *         description: Số điện thoại đã xác minh và lưu vào profile
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       400:
- *         description: Token không chứa phone_number claim
- *       401:
- *         description: Firebase ID token không hợp lệ
- *       403:
- *         description: Firebase ID token không thuộc về user hiện tại
- *       409:
- *         description: Số điện thoại đã liên kết với tài khoản khác
- *       503:
- *         description: Firebase chưa được cấu hình
- */
-profileRouter.post('/verify-phone', authGuard, validateBody(verifyPhoneSchema), verifyPhone);
 

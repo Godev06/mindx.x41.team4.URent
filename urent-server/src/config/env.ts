@@ -57,7 +57,8 @@ export const env = {
   firebaseServiceAccountPath: rawEnv.FIREBASE_SERVICE_ACCOUNT_PATH,
   firebaseProjectId: rawEnv.FIREBASE_PROJECT_ID,
   firebaseClientEmail: rawEnv.FIREBASE_CLIENT_EMAIL,
-  firebasePrivateKey: rawEnv.FIREBASE_PRIVATE_KEY
+  firebasePrivateKey: rawEnv.FIREBASE_PRIVATE_KEY,
+  firebaseApiKey: rawEnv.FIREBASE_API_KEY ?? ''
 };
 
 if ((!env.mongoUri && !env.mongoUriFallback) || !env.jwtSecret) {

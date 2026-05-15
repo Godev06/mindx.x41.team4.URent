@@ -9,9 +9,3 @@ export const updateProfileSchema = z.object({
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
-
-export const verifyPhoneSchema = z.object({
-  idToken: z.string().min(1)
-});
-
-export type VerifyPhoneInput = z.infer<typeof verifyPhoneSchema>;

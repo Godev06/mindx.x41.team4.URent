@@ -5,11 +5,10 @@ import {
   Languages,
   Lock,
   MoonStar,
-  Phone,
   ShieldCheck,
   Sliders,
 } from "lucide-react";
-import { ACTIVITY_LOGS } from "../../dataset/activityLogs";
+import { ACTIVITY_LOGS, type ActivityLog } from "../../dataset/activityLogs";
 import { useTheme } from "../hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { PageLoader } from "../../shared/components/PageLoader";
@@ -17,7 +16,6 @@ import { useToast } from "../../shared/hooks/useToast";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { settingsService } from "../services/settingsService";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
-import { PhoneVerificationModal } from "../components/PhoneVerificationModal";
 import { useAuth } from "../../auth/hooks/useAuth";
 
 function SettingSwitch({
@@ -61,15 +59,15 @@ export function SettingsPage() {
   } = useTheme();
   const { t, setLang, lang, isLanguageTransitioning } = useI18n();
   const { showToast } = useToast();
-  const { user, replaceCurrentUser } = useAuth();
+  const {} = useAuth();
   const [activeTab, setActiveTab] = useState<
-    "security" | "activity" | "preferences"
+    "security" | "activity" | "preferences" | "test"
   >("security");
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [isLoadingTwoFactor, setIsLoadingTwoFactor] = useState(true);
   const [isSavingTwoFactor, setIsSavingTwoFactor] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [isPhoneModalOpen, setIsPhoneModalOpen] = useState(false);
+  const [isPasswordSet, setIsPasswordSet] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -79,6 +77,7 @@ export function SettingsPage() {
         const settings = await settingsService.getSettings();
         if (isMounted) {
           setTwoFactorEnabled(settings.twoFactorEnabled);
+          setIsPasswordSet(settings.isPasswordSet ?? true);
         }
       } catch (error: unknown) {
         if (isMounted) {
@@ -127,27 +126,12 @@ export function SettingsPage() {
     }
   };
 
-  const handlePasswordChange = async (
-    currentPassword: string,
-    newPassword: string,
-  ) => {
-    await settingsService.updatePassword(currentPassword, newPassword);
-  };
+
 
   const handlePasswordSuccess = () => {
     showToast({
       title: t.settingsChangePassword,
       description: "Password updated successfully!",
-      variant: "success",
-    });
-  };
-
-  const handlePhoneVerifySuccess = async (idToken: string) => {
-    const updatedUser = await settingsService.verifyPhone(idToken);
-    replaceCurrentUser(updatedUser);
-    showToast({
-      title: t.settingsPhoneVerifySuccessTitle,
-      description: t.settingsPhoneVerifySuccess,
       variant: "success",
     });
   };
@@ -167,6 +151,11 @@ export function SettingsPage() {
       id: "preferences" as const,
       label: t.settingsTabPreferences,
       icon: Sliders,
+    },
+    {
+      id: "test" as const,
+      label: "Test",
+      icon: ShieldCheck,
     },
   ];
 
@@ -319,8 +308,8 @@ export function SettingsPage() {
                       >
                         {t.settingsSecurityStatusLabel}
                       </p>
-                      <p className={`mt-2 text-sm font-semibold ${strongText}`}>
-                        {t.settingsSecurityPasswordHint}
+                      <p className={`mt-2 text-sm font-semibold ${isPasswordSet ? "text-teal-600 dark:text-teal-400" : "text-red-600 dark:text-red-400"}`}>
+                        {isPasswordSet ? "Mật khẩu đã được đặt" : "Mật khẩu chưa được đặt"}
                       </p>
                     </div>
 
@@ -333,62 +322,6 @@ export function SettingsPage() {
                         {t.settingsChange}
                       </button>
                     </div>
-                  </div>
-
-                  {/* Phone Verification card */}
-                  <div className="rounded-3xl border border-slate-200/80 bg-linear-to-br from-white via-white to-slate-50 p-5 shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/80 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 dark:ring-white/10">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className={`text-sm font-semibold ${strongText}`}>
-                          {t.settingsPhoneVerify}
-                        </p>
-                        <p className={`mt-1 text-sm leading-6 ${mutedText}`}>
-                          {t.settingsPhoneVerifyDesc}
-                        </p>
-                      </div>
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
-                        <Phone size={18} />
-                      </div>
-                    </div>
-
-                    <div className="mt-4 rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 dark:border-slate-700/80 dark:bg-slate-900/60">
-                      <p
-                        className={`text-xs font-semibold uppercase tracking-[0.18em] ${mutedText}`}
-                      >
-                        Trạng thái
-                      </p>
-                      {user?.isPhoneVerified && user.phone ? (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-teal-500" />
-                          <p
-                            className={`text-sm font-semibold text-teal-600 dark:text-teal-400`}
-                          >
-                            {t.settingsPhoneVerifyLinked} — {user.phone}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="mt-2 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-amber-400" />
-                          <p
-                            className={`text-sm font-semibold text-amber-600 dark:text-amber-400`}
-                          >
-                            {t.settingsPhoneVerifyNotLinked}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {!user?.isPhoneVerified && (
-                      <div className="mt-5 flex items-center justify-end">
-                        <button
-                          type="button"
-                          onClick={() => setIsPhoneModalOpen(true)}
-                          className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:text-teal-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-teal-500 dark:hover:text-teal-300"
-                        >
-                          {t.settingsPhoneVerifyBtn}
-                        </button>
-                      </div>
-                    )}
                   </div>
 
                   <div className="rounded-3xl border border-slate-200/80 bg-linear-to-br from-teal-50 via-white to-white p-5 shadow-sm ring-1 ring-slate-900/5 dark:border-slate-700/80 dark:from-teal-500/10 dark:via-slate-900 dark:to-slate-900 dark:ring-white/10">
@@ -508,7 +441,7 @@ export function SettingsPage() {
               </div>
 
               <div className="mt-6 space-y-3">
-                {ACTIVITY_LOGS.map((log, index) => (
+                {ACTIVITY_LOGS.map((log: ActivityLog, index: number) => (
                   <div
                     key={log.id}
                     className="rounded-2xl border border-slate-200/80 bg-slate-50/75 px-4 py-4 dark:border-slate-700/80 dark:bg-slate-900/45"
@@ -706,18 +639,38 @@ export function SettingsPage() {
               </div>
             </div>
           )}
+
+          {activeTab === "test" && (
+            <div className={cardClass}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p
+                    className={`text-xs font-semibold uppercase tracking-[0.18em] ${mutedText}`}
+                  >
+                    Test
+                  </p>
+                  <h3 className={`mt-2 text-lg font-semibold ${strongText}`}>
+                    Phone OTP Test
+                  </h3>
+                  <p className={`mt-2 text-sm leading-6 ${mutedText}`}>
+                    Test chức năng gửi và xác minh OTP qua điện thoại
+                  </p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">
+                  <ShieldCheck size={22} />
+                </div>
+              </div>
+
+              <div className="mt-6"></div>
+            </div>
+          )}
         </div>
       </section>
       <ChangePasswordModal
         isOpen={isPasswordModalOpen}
         onClose={() => setIsPasswordModalOpen(false)}
         onSuccess={handlePasswordSuccess}
-        onSubmit={handlePasswordChange}
-      />
-      <PhoneVerificationModal
-        isOpen={isPhoneModalOpen}
-        onClose={() => setIsPhoneModalOpen(false)}
-        onSuccess={handlePhoneVerifySuccess}
+        isPasswordSet={isPasswordSet}
       />
     </div>
   );

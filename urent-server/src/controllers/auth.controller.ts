@@ -1,5 +1,7 @@
+import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { admin, isFirebaseAdminInitialized } from '../config/firebase';
+import { env } from '../config/env';
 import { SettingsModel } from '../models/settings.model';
 import { UserModel } from '../models/user.model';
 import { comparePassword, hashPassword } from '../utils/hash';
@@ -231,7 +233,7 @@ export const login = async (req: Request, res: Response) => {
   }
 
   if (!user.password || isGoogleOnlyAccount(user.authProviders, user.username)) {
-    await issueResetToken(user.email);
+    await issueResetToken(user.email, true);
     return sendSuccess(res, {
       email: user.email,
       message: 'This account does not have a password yet. OTP has been sent to your email to create one',
@@ -293,7 +295,7 @@ export const checkLoginIdentity = async (req: Request, res: Response) => {
   const requiresPasswordSetup = !user.password || isGoogleOnlyAccount(user.authProviders, user.username);
 
   if (requiresPasswordSetup) {
-    await issueResetToken(user.email);
+    await issueResetToken(user.email, true);
   }
 
   return sendSuccess(res, {
@@ -312,26 +314,45 @@ export const verifyAuthOtp = async (req: Request, res: Response) => {
     otp: string;
   };
 
-  if (purpose === 'reset password') {
+  if (purpose === 'reset password' || purpose === 'create password') {
     const user = await verifyResetOtp(normalizeEmail(email), otp);
     if (!user) {
-      throw new AppError(400, 'INVALID_OTP', 'Invalid or expired reset OTP');
+      throw new AppError(400, 'INVALID_OTP', `Invalid or expired ${purpose === 'create password' ? 'create password' : 'reset'} OTP`);
     }
-    return sendSuccess(res, { message: 'Reset OTP verified successfully' });
+
+    const token = crypto.randomUUID();
+    user.resetToken = token;
+    await user.save();
+
+    return sendSuccess(res, { 
+      message: `${purpose === 'create password' ? 'Create password' : 'Reset'} OTP verified successfully`,
+      token
+    });
   }
 
-  return verifyOtpWithPurpose(req, res, purpose);
+  return verifyOtpWithPurpose(req, res, purpose as AuthOtpPurpose);
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body as { email: string };
-  const user = await issueResetToken(normalizeEmail(email));
+  const normalizedEmail = normalizeEmail(email);
+  
+  const userRecord = await UserModel.findOne({ email: normalizedEmail });
+  const isCreatePassword = userRecord 
+    ? (!userRecord.password || isGoogleOnlyAccount(userRecord.authProviders, userRecord.username)) 
+    : false;
+
+  const user = await issueResetToken(normalizedEmail, isCreatePassword);
 
   if (!user) {
     throw new AppError(404, 'USER_NOT_FOUND', 'Email not found');
   }
 
-  return sendSuccess(res, { message: 'Reset password OTP sent to your email' });
+  return sendSuccess(res, { 
+    message: isCreatePassword 
+      ? 'Create password OTP sent to your email' 
+      : 'Reset password OTP sent to your email' 
+  });
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
@@ -345,9 +366,12 @@ export const resetPassword = async (req: Request, res: Response) => {
   const resetToken = token ?? otp;
   const user = await UserModel.findOne({ email: normalizeEmail(email) });
 
+  if (!resetToken || resetToken.length <= 6) {
+    throw new AppError(400, 'UNVERIFIED_OTP', 'Bạn phải xác minh OTP trước khi đổi mật khẩu');
+  }
+
   if (
     !user ||
-    !resetToken ||
     user.resetToken !== resetToken ||
     !user.resetTokenExpiresAt ||
     user.resetTokenExpiresAt.getTime() < Date.now()
@@ -399,6 +423,55 @@ export const getMe = async (req: Request, res: Response) => {
   }
 
   return sendSuccess(res, user);
+};
+
+const buildFirebaseIdentityToolkitUrl = (path: string) => {
+  if (!env.firebaseApiKey) {
+    throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase API key is not configured');
+  }
+
+  return `https://identitytoolkit.googleapis.com/v1/${path}?key=${encodeURIComponent(env.firebaseApiKey)}`;
+};
+
+const fetchFirebaseIdentityToolkit = async <T>(path: string, body: unknown) => {
+  const url = buildFirebaseIdentityToolkitUrl(path);
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = (await response.json()) as {
+    error?: { message?: string; errors?: Array<{ message?: string }> };
+  } & T;
+
+  if (!response.ok) {
+    const errorMessage =
+      data.error?.message ||
+      data.error?.errors?.map((error) => error.message).filter(Boolean).join(', ') ||
+      'Firebase Identity Toolkit request failed';
+
+    throw new AppError(502, 'FIREBASE_IDENTITY_TOOLKIT_ERROR', errorMessage);
+  }
+
+  return data;
+};
+
+const getFirebaseCustomIdTokenForUser = async (userId: string, email: string, displayName?: string) => {
+  const firebaseUid = await ensureFirebaseAuthUser(userId, normalizeEmail(email), displayName);
+  const customToken = await admin.auth().createCustomToken(firebaseUid);
+  const result = await fetchFirebaseIdentityToolkit<{ idToken?: string }>('accounts:signInWithCustomToken', {
+    token: customToken,
+    returnSecureToken: true
+  });
+
+  if (!result.idToken) {
+    throw new AppError(502, 'FIREBASE_IDENTITY_TOOLKIT_ERROR', 'Failed to sign in with Firebase custom token');
+  }
+
+  return result.idToken;
 };
 
 export const getFirebaseCustomToken = async (req: Request, res: Response) => {

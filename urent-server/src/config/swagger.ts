@@ -169,7 +169,6 @@ const options: swaggerJsdoc.Options = {
             bio:             { type: 'string', maxLength: 200, nullable: true },
             avatarUrl:       { type: 'string', nullable: true },
             phone:           { type: 'string', nullable: true },
-            isPhoneVerified: { type: 'boolean' },
             isEmailVerified: { type: 'boolean' },
             createdAt:       { type: 'string', format: 'date-time' },
             updatedAt:       { type: 'string', format: 'date-time' }
@@ -181,23 +180,9 @@ const options: swaggerJsdoc.Options = {
           properties: {
             displayName:     { type: 'string', minLength: 1, maxLength: 100 },
             bio:             { type: 'string', maxLength: 200 },
-            phone: {
-              type: 'string', minLength: 7, maxLength: 20,
-              description: 'Lưu số điện thoại trực tiếp — `isPhoneVerified` sẽ bị reset về `false`. Dùng `POST /api/v1/profile/verify-phone` để lưu sau khi xác minh qua Firebase SMS OTP.'
-            },
+            phone:           { type: 'string', minLength: 7, maxLength: 20 },
             currentPassword: { type: 'string', minLength: 6 },
             newPassword:     { type: 'string', minLength: 6 }
-          }
-        },
-
-        VerifyPhoneBody: {
-          type: 'object',
-          required: ['idToken'],
-          properties: {
-            idToken: {
-              type: 'string',
-              description: 'Firebase ID token sau khi xác minh số điện thoại qua SMS OTP. Token phải chứa `phone_number` claim.'
-            }
           }
         },
 
@@ -403,6 +388,94 @@ const options: swaggerJsdoc.Options = {
           properties: {
             success: { type: 'boolean', example: true },
             data:    { $ref: '#/components/schemas/Message' },
+            meta:    { nullable: true, example: null }
+          }
+        },
+
+        // ─── Notifications ─────────────────────────────────────────────────────
+
+        /** Notification model */
+        Notification: {
+          type: 'object',
+          properties: {
+            _id:         { type: 'string', example: '507f1f77bcf86cd799439011' },
+            userId:      { type: 'string', example: '507f1f77bcf86cd799439011' },
+            title:       { type: 'string', example: 'Đơn hàng mới' },
+            description: { type: 'string', example: 'Bạn có đơn hàng mới từ Nguyễn Văn A' },
+            type:        { type: 'string', enum: ['order', 'message', 'promotion', 'system'], example: 'order' },
+            time:        { type: 'string', example: '2 giờ trước' },
+            read:        { type: 'boolean', example: false },
+            readAt:      { type: 'string', format: 'date-time', nullable: true },
+            activityLogId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            eventKey:    { type: 'string', example: 'evt_507f1f77bcf86cd799439011' },
+            createdAt:   { type: 'string', format: 'date-time' },
+            updatedAt:   { type: 'string', format: 'date-time' }
+          }
+        },
+
+        /** Response bọc bởi sendSuccess cho danh sách notifications */
+        NotificationListResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            data:    { type: 'array', items: { $ref: '#/components/schemas/Notification' } },
+            meta:    {
+              type: 'object',
+              properties: {
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page:       { type: 'integer', example: 1 },
+                    limit:      { type: 'integer', example: 10 },
+                    total:      { type: 'integer', example: 25 },
+                    totalPages: { type: 'integer', example: 3 },
+                    hasNext:    { type: 'boolean', example: true },
+                    hasPrev:    { type: 'boolean', example: false }
+                  }
+                }
+              }
+            }
+          }
+        },
+
+        /** Response bọc bởi sendSuccess cho một notification */
+        NotificationResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            data:    { $ref: '#/components/schemas/Notification' },
+            meta:    { nullable: true, example: null }
+          }
+        },
+
+        // ─── Orders ──────────────────────────────────────────────────────────
+
+        /** Order model */
+        Order: {
+          type: 'object',
+          properties: {
+            _id:         { type: 'string', example: '507f1f77bcf86cd799439011' },
+            orderCode:   { type: 'string', example: 'ORD-1234567890-ABCDE' },
+            productId:   { type: 'string', example: '507f1f77bcf86cd799439011' },
+            productName: { type: 'string', example: 'Máy ảnh Canon EOS R5' },
+            customerId:  { type: 'string', example: '507f1f77bcf86cd799439011' },
+            customerName: { type: 'string', example: 'Nguyễn Văn A' },
+            startDate:   { type: 'string', format: 'date-time' },
+            endDate:     { type: 'string', format: 'date-time' },
+            totalPrice:  { type: 'number', example: 1500000 },
+            status:      { type: 'string', enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], example: 'pending' },
+            image:       { type: 'string', nullable: true },
+            createdAt:   { type: 'string', format: 'date-time' },
+            updatedAt:   { type: 'string', format: 'date-time' }
+          }
+        },
+
+        /** Response bọc bởi sendSuccess cho một order */
+        OrderResponse: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', example: true },
+            data:    { $ref: '#/components/schemas/Order' },
             meta:    { nullable: true, example: null }
           }
         }
