@@ -15,6 +15,7 @@
     "build": "tsc -b && vite build",
     "build:vercel": "npm run build",
     "lint": "eslint .",
+    "test": "vitest",
     "preview": "vite preview",
     "preview:host": "vite preview --host"
   },
@@ -47,6 +48,7 @@
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
-    "vite": "^6.4.2"
+    "vite": "^6.4.2",
+    "vitest": "^4.1.5"
   }
 }

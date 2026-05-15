@@ -32,16 +32,19 @@ export function ForgotPasswordPage() {
     setIsSubmitting(true);
 
     try {
-      await forgotPassword({ email: email.trim() });
+      const result = await forgotPassword({ email: email.trim() });
+      const isCreatePassword = result.message.toLowerCase().includes("create") || result.message.toLowerCase().includes("tạo");
+
       showToast({
-        title: t.forgotSuccessToast,
-        description: t.forgotSuccessToast,
+        title: result.message,
+        description: result.message,
         variant: "success",
       });
       navigate(APP_ROUTES.authOtp, {
         state: {
           email: email.trim(),
-          purpose: "reset password",
+          purpose: isCreatePassword ? "create password" : "reset password",
+          flowVariant: isCreatePassword ? "setup-password" : "default",
         },
       });
     } catch (error: unknown) {

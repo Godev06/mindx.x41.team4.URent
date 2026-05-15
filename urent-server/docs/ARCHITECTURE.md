@@ -100,11 +100,10 @@ Hệ thống hỗ trợ đồng thời hai phương thức xác thực.
 3. Mọi request tiếp theo gửi `Authorization: Bearer <jwt>` trong header.
 4. `authGuard` middleware xác minh JWT bằng `JWT_SECRET`.
 
-### 5b. Firebase (Google Sign-In / Phone OTP)
+### 5b. Firebase (Google Sign-In)
 
 1. Client thực hiện Google Sign-In trực tiếp qua Firebase Web SDK → nhận **Firebase ID token**.
 2. Client gửi ID token đến `authGuard`; server xác minh qua `admin.auth().verifyIdToken()`.
-3. **Phone OTP:** JWT users cần Firebase session để link số điện thoại. Server cấp **Firebase Custom Token** qua `GET /api/auth/firebase/custom-token`. Client dùng token này để `signInWithCustomToken()` trước khi bắt đầu OTP flow.
 
 ### Luồng xác thực tổng quát
 
@@ -139,18 +138,16 @@ authGuard middleware
 
 ### Auth — `/api/auth`
 
-| Method | Path                     | Auth | Mô tả                                             |
-| :----- | :----------------------- | :--- | :------------------------------------------------ |
-| POST   | `/register`              | ✗    | Đăng ký, gửi OTP email                            |
-| POST   | `/register/verify-otp`   | ✗    | Xác nhận OTP đăng ký → trả JWT                    |
-| POST   | `/login`                 | ✗    | Đăng nhập, gửi OTP email (nếu bật 2FA)            |
-| POST   | `/google`                | ✗    | Đăng nhập Google bằng Firebase ID token → trả JWT |
-| POST   | `/login/verify-otp`      | ✗    | Xác nhận OTP đăng nhập → trả JWT                  |
-| POST   | `/verify-otp`            | ✗    | Xác nhận OTP chung (forgot password, v.v.)        |
-| POST   | `/forgot-password`       | ✗    | Gửi link reset mật khẩu qua email                 |
-| POST   | `/reset-password`        | ✗    | Đặt lại mật khẩu bằng reset token                 |
-| GET    | `/me`                    | ✔    | Lấy thông tin người dùng hiện tại                 |
-| GET    | `/firebase/custom-token` | ✔    | Cấp Firebase Custom Token cho JWT users           |
+| Method | Path                   | Auth | Mô tả                                             |
+| :----- | :--------------------- | :--- | :------------------------------------------------ |
+| POST   | `/register`            | ✗    | Đăng ký, gửi OTP email                            |
+| POST   | `/register/verify-otp` | ✗    | Xác nhận OTP đăng ký → trả JWT                    |
+| POST   | `/login`               | ✗    | Đăng nhập, gửi OTP email (nếu bật 2FA)            |
+| POST   | `/google`              | ✗    | Đăng nhập Google bằng Firebase ID token → trả JWT |
+| POST   | `/verify-otp`          | ✗    | Xác nhận OTP chung (forgot password, v.v.)        |
+| POST   | `/forgot-password`     | ✗    | Gửi link reset mật khẩu qua email                 |
+| POST   | `/reset-password`      | ✗    | Đặt lại mật khẩu bằng reset token                 |
+| GET    | `/me`                  | ✔    | Lấy thông tin người dùng hiện tại                 |
 
 ### Profile — `/api/profile`
 

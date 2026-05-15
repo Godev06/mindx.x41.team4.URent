@@ -13,6 +13,8 @@ import {
   validatePassword,
   validatePhone,
 } from "../../shared/utils/validation";
+import { SocialLogin } from "../components/SocialLogin";
+import { PasswordInput } from "../components/PasswordInput";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { authUi } from "../styles";
 import { useI18n } from "../../shared/context/LanguageContext";
@@ -68,7 +70,7 @@ export function LoginPage() {
       replace: true,
       state: {
         email: setupEmail,
-        purpose: "reset password",
+        purpose: "create password",
         flowVariant: "setup-password",
       },
     });
@@ -299,22 +301,17 @@ export function LoginPage() {
             <>
               <label className={authUi.label}>
                 <span>{t.loginPwdLabel}</span>
-                <div className={authUi.inputIconWrapper}>
-                  <Lock className={authUi.inputIconClass} size={18} />
-                  <input
-                    className={authUi.inputIcon}
-                    type="password"
-                    autoComplete="current-password"
-                    value={form.password}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        password: event.target.value,
-                      }))
-                    }
-                    placeholder={t.loginPwdPlaceholder}
-                  />
-                </div>
+                <PasswordInput
+                  autoComplete="current-password"
+                  value={form.password}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      password: event.target.value,
+                    }))
+                  }
+                  placeholder={t.loginPwdPlaceholder}
+                />
               </label>
               <button
                 type="button"

@@ -15,6 +15,7 @@ import { useAuth } from "../../auth/hooks/useAuth";
 import { SidebarItem } from "../../shared/components/SidebarItem";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { getAvatarStyle } from "../../shared/utils/avatar";
+import { useNotifications, useUnreadCount } from "../../notifications/hooks/useNotifications";
 import { MAIN_NAV_ITEMS } from "../constants/navItems";
 
 interface ProfileMenuItem {
@@ -34,6 +35,8 @@ export function AppHeader() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const { notifications } = useNotifications({ limit: 3 });
+  const { unreadCount } = useUnreadCount();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -113,12 +116,6 @@ export function AppHeader() {
   const supportsSearch = ["/", "/orders", "/inventory", "/products"].some(
     (p) => (p === "/" ? pathname === "/" : pathname.startsWith(p)),
   );
-  const unreadCount = 3;
-  const notifItems = [
-    { id: 1, title: t.headerNotif1Title, time: t.headerNotif1Time },
-    { id: 2, title: t.headerNotif2Title, time: t.headerNotif2Time },
-    { id: 3, title: t.headerNotif3Title, time: t.headerNotif3Time },
-  ];
   const handleNotificationClick = () => {
     if (window.matchMedia("(max-width: 1023px)").matches) {
       setIsNotifOpen(false);
@@ -229,7 +226,9 @@ export function AppHeader() {
                     onClick={handleNotificationClick}
                   >
                     <Bell size={20} strokeWidth={2} />
-                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-[#0b1220]" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-2 right-2 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-[#0b1220]" />
+                    )}
                   </button>
 
                   {isNotifOpen && (
@@ -251,9 +250,9 @@ export function AppHeader() {
                       </div>
 
                       <div className="max-h-80 space-y-2 overflow-y-auto p-2.5">
-                        {notifItems.map((item, index) => (
+                        {notifications.slice(0, 3).map((notification) => (
                           <button
-                            key={item.id}
+                            key={notification._id}
                             type="button"
                             className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-left transition hover:border-teal-200 hover:bg-white hover:shadow-sm dark:border-white/8 dark:bg-white/4 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
                           >
@@ -266,9 +265,9 @@ export function AppHeader() {
                                   <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <p className="line-clamp-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                        {item.title}
+                                        {notification.title}
                                       </p>
-                                      {index === 0 ? (
+                                      {!notification.read ? (
                                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
                                           {t.headerNotificationsBadge}
                                         </span>
@@ -276,12 +275,12 @@ export function AppHeader() {
                                     </div>
                                   </div>
                                   <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                                    {item.time}
+                                    {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </div>
                                 <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                                  <span>{t.headerNotificationsHint}</span>
+                                  <span className={`h-2 w-2 rounded-full ${notification.read ? 'bg-gray-400' : 'bg-emerald-400'}`} />
+                                  <span>{notification.read ? 'Đã đọc' : t.headerNotificationsHint}</span>
                                 </div>
                               </div>
                             </div>

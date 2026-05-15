@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { UserModel } from '../models/user.model';
 import { deleteImage, uploadImage } from '../services/cloudinary.service';
-import { UpdateProfileInput, VerifyPhoneInput } from '../validators/profile.validator';
+import { UpdateProfileInput } from '../validators/profile.validator';
 import { createActivityOnly } from '../services/activity-notification.service';
 import { comparePassword, hashPassword } from '../utils/hash';
+import { sendPasswordCreatedEmail, sendPasswordChangedEmail } from '../services/email.service';
 import { admin, isFirebaseAdminInitialized } from '../config/firebase';
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
@@ -31,32 +32,6 @@ const getExpectedFirebaseUidForUser = async (userId: string, email: string) => {
   }
 };
 
-type VerifyPhoneGuardInput = {
-  decodedUid: string;
-  expectedFirebaseUid: string;
-  hasExistingPhoneOwner: boolean;
-};
-
-type VerifyPhoneGuardResult =
-  | { ok: true }
-  | { ok: false; status: 403 | 409; message: string };
-
-export const evaluateVerifyPhoneGuard = ({
-  decodedUid,
-  expectedFirebaseUid,
-  hasExistingPhoneOwner
-}: VerifyPhoneGuardInput): VerifyPhoneGuardResult => {
-  if (decodedUid !== expectedFirebaseUid) {
-    return { ok: false, status: 403, message: 'Firebase token does not belong to the current user' };
-  }
-
-  if (hasExistingPhoneOwner) {
-    return { ok: false, status: 409, message: 'Phone number is already linked to another account' };
-  }
-
-  return { ok: true };
-};
-
 // Fields excluded from all profile responses
 const EXCLUDED_FIELDS =
   '-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt';
@@ -75,16 +50,24 @@ export const updateProfile = async (req: Request, res: Response) => {
   const user = await UserModel.findById(userId);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  // Handle password change if requested
-  if (currentPassword && newPassword) {
-    if (!user.password) {
-      return res.status(400).json({ message: 'Password has not been set for this account yet' });
-    }
+  let isPasswordCreation = false;
 
-    const isMatch = await comparePassword(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
+  // Handle password change if requested
+  if (newPassword) {
+    // If password is already set, require current password verification
+    if (user.password) {
+      if (!currentPassword) {
+        return res.status(400).json({ message: 'Current password is required' });
+      }
+      const isMatch = await comparePassword(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+    } else {
+      // This is a password creation (first time setting password)
+      isPasswordCreation = true;
     }
+    
     user.password = await hashPassword(newPassword);
     user.authProviders = Array.from(new Set([...(user.authProviders ?? []), 'local']));
   }
@@ -93,9 +76,7 @@ export const updateProfile = async (req: Request, res: Response) => {
   if (displayName) user.displayName = displayName;
   if (bio !== undefined) user.bio = bio;
   if (phone) {
-    // Direct update without Firebase verification — mark as unverified
     user.phone = phone;
-    user.isPhoneVerified = false;
   }
 
   await user.save();
@@ -104,11 +85,28 @@ export const updateProfile = async (req: Request, res: Response) => {
     await createActivityOnly({
       userId,
       type: 'update',
-      action: 'Profile updated',
-      description: 'User updated profile information'
+      action: isPasswordCreation ? 'Password created' : newPassword ? 'Password changed' : 'Profile updated',
+      description: isPasswordCreation 
+        ? 'User created password for their account' 
+        : newPassword 
+          ? 'User changed their password' 
+          : 'User updated profile information'
     });
   } catch {
     // Non-fatal: activity logging failure should not block profile update
+  }
+
+  // Send password notification email
+  if (newPassword) {
+    try {
+      if (isPasswordCreation) {
+        await sendPasswordCreatedEmail(user.email, user.displayName);
+      } else {
+        await sendPasswordChangedEmail(user.email, user.displayName);
+      }
+    } catch {
+      // Non-fatal: email sending failure should not block profile update
+    }
   }
 
   const updatedUser = await UserModel.findById(userId).select(EXCLUDED_FIELDS);
@@ -152,66 +150,4 @@ export const uploadAvatar = async (req: Request, res: Response) => {
 
   const updated = await UserModel.findById(userId).select(EXCLUDED_FIELDS);
   return res.json({ avatarUrl: url, publicId, user: updated });
-};
-
-export const verifyPhone = async (req: Request, res: Response) => {
-  const userId = req.user?.sub;
-  if (!userId) return res.status(401).json({ message: 'Unauthorized' });
-
-  if (!isFirebaseAdminInitialized()) {
-    return res.status(503).json({ message: 'Firebase phone verification is not configured' });
-  }
-
-  const { idToken } = req.body as VerifyPhoneInput;
-
-  const user = await UserModel.findById(userId);
-  if (!user) return res.status(404).json({ message: 'User not found' });
-
-  let decodedToken: import('firebase-admin/auth').DecodedIdToken;
-  try {
-    decodedToken = await admin.auth().verifyIdToken(idToken);
-  } catch {
-    return res.status(401).json({ message: 'Invalid or expired Firebase ID token' });
-  }
-
-  const phoneNumber = decodedToken.phone_number;
-  if (!phoneNumber) {
-    return res.status(400).json({ message: 'Token does not contain a verified phone number' });
-  }
-
-  const expectedFirebaseUid = await getExpectedFirebaseUidForUser(String(user._id), user.email);
-  if (decodedToken.uid !== expectedFirebaseUid) {
-    return res.status(403).json({ message: 'Firebase token does not belong to the current user' });
-  }
-
-  const existingPhoneOwner = await UserModel.findOne({
-    _id: { $ne: user._id },
-    phone: phoneNumber
-  }).select('_id');
-  const guardResult = evaluateVerifyPhoneGuard({
-    decodedUid: decodedToken.uid,
-    expectedFirebaseUid,
-    hasExistingPhoneOwner: Boolean(existingPhoneOwner)
-  });
-  if (!guardResult.ok) {
-    return res.status(guardResult.status).json({ message: guardResult.message });
-  }
-
-  user.phone = phoneNumber;
-  user.isPhoneVerified = true;
-  await user.save();
-
-  try {
-    await createActivityOnly({
-      userId,
-      type: 'update',
-      action: 'Phone verified',
-      description: `User verified phone number ${phoneNumber}`
-    });
-  } catch {
-    // Non-fatal
-  }
-
-  const updatedUser = await UserModel.findById(userId).select(EXCLUDED_FIELDS);
-  return res.json(updatedUser);
 };

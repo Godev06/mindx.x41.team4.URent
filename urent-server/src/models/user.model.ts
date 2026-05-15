@@ -18,7 +18,6 @@ export interface UserDocument extends mongoose.Document {
   bio?: string;
   avatarUrl?: string;
   phone?: string;
-  isPhoneVerified: boolean;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -37,8 +36,7 @@ const userSchema = new Schema<UserDocument>(
     username: { type: String, unique: true, sparse: true, trim: true },
     bio: { type: String, maxlength: 200 },
     avatarUrl: { type: String },
-    phone: { type: String, trim: true, unique: true, sparse: true },
-    isPhoneVerified: { type: Boolean, default: false }
+    phone: { type: String, trim: true, unique: true, sparse: true }
   },
   { timestamps: true }
 );

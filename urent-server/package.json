@@ -10,7 +10,6 @@
     "dev:once": "tsx src/server.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "tsx --test src/**/*.test.ts",
-    "check:phone-duplicates": "tsx src/scripts/check-phone-duplicates.ts",
     "check": "npm run typecheck",
     "build": "tsc",
     "build:vercel": "npm run typecheck && npm run build",

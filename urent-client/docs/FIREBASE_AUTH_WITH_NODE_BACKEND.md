@@ -1,6 +1,6 @@
 # Firebase Authentication với Node.js Backend (URent)
 
-Tài liệu mô tả luồng xác thực Dual-Auth: JWT (email/password + OTP) và Firebase (Google Sign-In / Phone OTP).
+Tài liệu mô tả luồng xác thực Dual-Auth: JWT (email/password + OTP) và Firebase (Google Sign-In).
 
 ---
 
@@ -10,7 +10,6 @@ Tài liệu mô tả luồng xác thực Dual-Auth: JWT (email/password + OTP) v
 | :-------------- | :--------------------------------------------------------------------- |
 | JWT             | Register → OTP email → JWT → `Authorization: Bearer <jwt>`             |
 | Firebase Google | Google Sign-In (Firebase SDK) → ID token → backend verify → JWT nội bộ |
-| Firebase Phone  | JWT user lấy Custom Token → `signInWithCustomToken()` → OTP phone      |
 
 Backend chấp nhận **cả hai loại token** trong header `Authorization: Bearer <token>`. `authGuard` middleware tự phân biệt và xác minh.
 
@@ -120,18 +119,7 @@ npm run dev
 
 ---
 
-## 5. Phone OTP (Firebase Custom Token)
-
-JWT users cần Firebase session để xác thực số điện thoại:
-
-1. Client gọi `GET /api/auth/firebase/custom-token` (kèm JWT).
-2. Server tạo Firebase Custom Token và trả về.
-3. Client gọi `signInWithCustomToken(auth, customToken)`.
-4. Client dùng Firebase session để bắt đầu Phone OTP flow.
-
----
-
-## 6. Bảo mật
+## 5. Bảo mật
 
 - Dùng HTTPS trong production.
 - Giới hạn CORS chỉ cho domain trong `CLIENT_URLS`.
@@ -140,10 +128,9 @@ JWT users cần Firebase session để xác thực số điện thoại:
 
 ---
 
-## 7. Checklist kiểm tra
+## 6. Checklist kiểm tra
 
 - [ ] Firebase login thành công trên frontend
 - [ ] `GET /api/auth/me` trả về 200 với dữ liệu user
 - [ ] Các route `/api/v1/*` chấp nhận Firebase Bearer token
 - [ ] Luồng JWT đăng ký/đăng nhập vẫn hoạt động bình thường
-- [ ] Phone OTP flow hoạt động sau khi lấy Custom Token

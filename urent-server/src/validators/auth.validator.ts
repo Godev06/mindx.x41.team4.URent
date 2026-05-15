@@ -38,7 +38,7 @@ export const otpSchema = z.object({
 });
 
 export const verifyOtpSchema = otpSchema.extend({
-  purpose: z.enum(['register', 'login', 'reset password'])
+  purpose: z.enum(['register', 'login', 'reset password', 'create password'])
 });
 
 export const forgotPasswordSchema = z.object({

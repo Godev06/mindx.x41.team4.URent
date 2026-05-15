@@ -100,7 +100,6 @@ export const mapAuthUser = (value: unknown): AuthUser | null => {
       )?.toString() ?? email,
     bio: typeof userRecord.bio === "string" ? userRecord.bio : null,
     phone: typeof userRecord.phone === "string" ? userRecord.phone : null,
-    isPhoneVerified: userRecord.isPhoneVerified === true,
     avatarUrl:
       avatarCandidates.find(
         (candidate) => typeof candidate === "string" && candidate.trim(),

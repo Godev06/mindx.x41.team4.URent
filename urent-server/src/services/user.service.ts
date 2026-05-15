@@ -119,7 +119,7 @@ export const createUserWithOtp = async (email: string, password: string, usernam
   return user;
 };
 
-export const issueResetToken = async (email: string) => {
+export const issueResetToken = async (email: string, isCreatePassword?: boolean) => {
   const normalizedEmail = email.trim().toLowerCase();
   const user = await UserModel.findOne({ email: normalizedEmail });
   if (!user) {
@@ -132,8 +132,9 @@ export const issueResetToken = async (email: string) => {
   user.resetTokenExpiresAt = resetExpiry();
   await user.save();
 
-  await sendOtpEmail(normalizedEmail, token, 'reset password');
-  console.log(`[auth] reset OTP generated for ${normalizedEmail}`);
+  const purpose: OtpPurpose = isCreatePassword ? 'create password' : 'reset password';
+  await sendOtpEmail(normalizedEmail, token, purpose);
+  console.log(`[auth] ${purpose} OTP generated for ${normalizedEmail}`);
   return user;
 };
 

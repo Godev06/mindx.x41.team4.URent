@@ -4,7 +4,6 @@ export interface AuthUser {
   displayName: string;
   bio: string | null;
   phone: string | null;
-  isPhoneVerified: boolean;
   avatarUrl: string | null;
   createdAt: string | null;
 }
@@ -16,7 +15,7 @@ export interface RegisterPayload {
   password: string;
 }
 
-export type OtpPurpose = "register" | "login" | "reset password";
+export type OtpPurpose = "register" | "login" | "reset password" | "create password";
 
 export interface VerifyOtpPayload {
   email: string;

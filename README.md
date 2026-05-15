@@ -19,7 +19,7 @@ mindx.x41.team4.URent/
 
 - **Node.js** >= 20
 - **MongoDB** Atlas (hoặc local)
-- **Firebase** authentication (google, phone)
+- **Firebase** authentication (google)
 - **Cloudinary** account (upload avatar)
 - **SMTP** server (gửi email OTP)
 
@@ -87,7 +87,6 @@ Client chạy tại `http://localhost:5173`, Server tại `http://localhost:5003
 ## Tính năng Chính
 
 - Đăng ký / Đăng nhập (Email+OTP, Google OAuth)
-- Xác minh số điện thoại (Firebase Phone OTP)
 - Đăng sản phẩm cho thuê, quản lý kho hàng
 - Nhắn tin realtime giữa người dùng (Socket.io)
 - Thông báo hệ thống
