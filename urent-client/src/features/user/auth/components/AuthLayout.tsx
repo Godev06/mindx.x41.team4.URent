@@ -36,6 +36,10 @@ export function AuthLayout({
 
         setHealthOk(result.ok);
         setHealthMessage(result.message);
+        console.log(
+          `%c[System Status] API is ${result.ok ? "ONLINE" : "DEGRADED"}`,
+          `color: ${result.ok ? "#10b981" : "#f59e0b"}; font-weight: bold;`
+        );
       })
       .catch((error: unknown) => {
         if (!active) {
@@ -43,7 +47,12 @@ export function AuthLayout({
         }
 
         setHealthOk(false);
-        setHealthMessage(normalizeApiError(error).message);
+        const msg = normalizeApiError(error).message;
+        setHealthMessage(msg);
+        console.log(
+          `%c[System Status] API is OFFLINE: ${msg}`,
+          "color: #ef4444; font-weight: bold;"
+        );
       });
 
     return () => {
@@ -83,17 +92,29 @@ export function AuthLayout({
               </p>
             </div>
 
-            <div
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${theme === "dark"
-                  ? "border border-slate-700 bg-slate-900/70 text-slate-300"
-                  : "border border-slate-200 bg-white text-slate-600 shadow-sm"
+            {/* Vùng ẩn trạng thái: Trở nên tàng hình với user thường (opacity-0), chỉ dev biết vị trí rê chuột vào mới hiện lên */}
+            <div className="w-fit">
+              <div
+                className={`group inline-flex cursor-default items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all duration-500 opacity-0 hover:opacity-100 ${
+                  theme === "dark"
+                    ? "bg-slate-800/40 text-slate-400"
+                    : "bg-white/60 text-slate-500 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
                 }`}
-            >
-              <span
-                className={`h-2 w-2 rounded-full ${healthOk ? "bg-emerald-400" : "bg-amber-400"
-                  }`}
-              />
-              {healthOk ? t.backendHealthy : healthMessage}
+              >
+                <div className="relative flex h-2 w-2 items-center justify-center">
+                  {healthOk && (
+                    <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-emerald-400 opacity-20 duration-1000 group-hover:opacity-40" />
+                  )}
+                  <span
+                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
+                      healthOk ? "bg-emerald-500" : "bg-amber-500"
+                    }`}
+                  />
+                </div>
+                <span className="tracking-wide select-none">
+                  {healthOk ? t.backendHealthy : healthMessage}
+                </span>
+              </div>
             </div>
           </section>
 

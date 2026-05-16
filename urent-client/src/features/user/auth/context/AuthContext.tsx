@@ -152,7 +152,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const result = await authService.login(payload);
 
         if ("token" in result) {
-          const hydratedSession = await hydrateUserFromSession(result);
+          const hydratedSession = await hydrateUserFromSession(result as AuthSession);
           authFlowStorage.clearPendingLoginEmail();
           authFlowStorage.clearPendingResetEmail();
           setToken(hydratedSession.token);
@@ -184,7 +184,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
 
         if ("token" in result && payload.purpose === "login") {
-          const hydratedSession = await hydrateUserFromSession(result);
+          const hydratedSession = await hydrateUserFromSession(result as AuthSession);
           setToken(hydratedSession.token);
           setUser(hydratedSession.user);
           return hydratedSession;
