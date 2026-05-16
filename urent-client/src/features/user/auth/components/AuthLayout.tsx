@@ -19,10 +19,10 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   const { t } = useI18n();
   const { theme } = useTheme();
-  // const [healthMessage, setHealthMessage] = useState(
-  //   "Đang kiểm tra backend...",
-  // );
-  // const [healthOk, setHealthOk] = useState(false);
+  const [healthMessage, setHealthMessage] = useState(
+    "Đang kiểm tra backend...",
+  );
+  const [healthOk, setHealthOk] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -34,16 +34,16 @@ export function AuthLayout({
           return;
         }
 
-        // setHealthOk(result.ok);
-        // setHealthMessage(result.message);
+        setHealthOk(result.ok);
+        setHealthMessage(result.message);
       })
       .catch((error: unknown) => {
         if (!active) {
           return;
         }
 
-        // setHealthOk(false);
-        // setHealthMessage(normalizeApiError(error).message);
+        setHealthOk(false);
+        setHealthMessage(normalizeApiError(error).message);
       });
 
     return () => {
@@ -54,8 +54,8 @@ export function AuthLayout({
   return (
     <div
       className={`min-h-screen px-4 py-6 antialiased sm:px-6 lg:px-10 ${theme === "dark"
-        ? "bg-[#0a0c10] text-slate-200"
-        : "bg-slate-100 text-slate-700"
+          ? "bg-[#0a0c10] text-slate-200"
+          : "bg-slate-100 text-slate-700"
         }`}
     >
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-[90%] items-center sm:min-h-[calc(100vh-4rem)]">
@@ -83,27 +83,25 @@ export function AuthLayout({
               </p>
             </div>
 
-            {/* <div
-              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
-                theme === "dark"
+            <div
+              className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${theme === "dark"
                   ? "border border-slate-700 bg-slate-900/70 text-slate-300"
                   : "border border-slate-200 bg-white text-slate-600 shadow-sm"
-              }`}
+                }`}
             >
               <span
-                className={`h-2 w-2 rounded-full ${
-                  healthOk ? "bg-emerald-400" : "bg-amber-400"
-                }`}
+                className={`h-2 w-2 rounded-full ${healthOk ? "bg-emerald-400" : "bg-amber-400"
+                  }`}
               />
               {healthOk ? t.backendHealthy : healthMessage}
-            </div> */}
+            </div>
           </section>
 
           <section className="lg:col-span-6">
             <div
               className={`relative rounded-4xl p-px shadow-2xl ${theme === "dark"
-                ? "bg-linear-to-b from-slate-700 to-transparent"
-                : "bg-linear-to-b from-slate-300 to-transparent"
+                  ? "bg-linear-to-b from-slate-700 to-transparent"
+                  : "bg-linear-to-b from-slate-300 to-transparent"
                 }`}
             >
               <div
@@ -157,8 +155,8 @@ export function AuthLayout({
                 {footer ? (
                   <div
                     className={`mt-6 border-t pt-5 text-sm ${theme === "dark"
-                      ? "border-slate-800 text-slate-400"
-                      : "border-slate-200 text-slate-600"
+                        ? "border-slate-800 text-slate-400"
+                        : "border-slate-200 text-slate-600"
                       }`}
                   >
                     {footer}
