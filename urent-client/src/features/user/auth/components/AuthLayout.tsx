@@ -63,8 +63,8 @@ export function AuthLayout({
   return (
     <div
       className={`min-h-screen px-4 py-6 antialiased sm:px-6 lg:px-10 ${theme === "dark"
-          ? "bg-[#0a0c10] text-slate-200"
-          : "bg-slate-100 text-slate-700"
+        ? "bg-[#0a0c10] text-slate-200"
+        : "bg-slate-100 text-slate-700"
         }`}
     >
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-[90%] items-center sm:min-h-[calc(100vh-4rem)]">
@@ -95,20 +95,18 @@ export function AuthLayout({
             {/* Vùng ẩn trạng thái: Trở nên tàng hình với user thường (opacity-0), chỉ dev biết vị trí rê chuột vào mới hiện lên */}
             <div className="w-fit">
               <div
-                className={`group inline-flex cursor-default items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all duration-500 opacity-0 hover:opacity-100 ${
-                  theme === "dark"
-                    ? "bg-slate-800/40 text-slate-400"
-                    : "bg-white/60 text-slate-500 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
-                }`}
+                className={`group inline-flex cursor-default items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all duration-500 opacity-0 hover:opacity-100 ${theme === "dark"
+                  ? "bg-slate-800/40 text-slate-400"
+                  : "bg-white/60 text-slate-500 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                  }`}
               >
                 <div className="relative flex h-2 w-2 items-center justify-center">
                   {healthOk && (
                     <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-emerald-400 opacity-20 duration-1000 group-hover:opacity-40" />
                   )}
                   <span
-                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${
-                      healthOk ? "bg-emerald-500" : "bg-amber-500"
-                    }`}
+                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${healthOk ? "bg-emerald-500" : "bg-amber-500"
+                      }`}
                   />
                 </div>
                 <span className="tracking-wide select-none">
@@ -121,8 +119,8 @@ export function AuthLayout({
           <section className="lg:col-span-6">
             <div
               className={`relative rounded-4xl p-px shadow-2xl ${theme === "dark"
-                  ? "bg-linear-to-b from-slate-700 to-transparent"
-                  : "bg-linear-to-b from-slate-300 to-transparent"
+                ? "bg-linear-to-b from-slate-700 to-transparent"
+                : "bg-linear-to-b from-slate-300 to-transparent"
                 }`}
             >
               <div
@@ -176,8 +174,8 @@ export function AuthLayout({
                 {footer ? (
                   <div
                     className={`mt-6 border-t pt-5 text-sm ${theme === "dark"
-                        ? "border-slate-800 text-slate-400"
-                        : "border-slate-200 text-slate-600"
+                      ? "border-slate-800 text-slate-400"
+                      : "border-slate-200 text-slate-600"
                       }`}
                   >
                     {footer}
