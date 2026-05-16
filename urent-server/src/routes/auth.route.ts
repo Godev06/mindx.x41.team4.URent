@@ -7,6 +7,7 @@ import {
   login,
   register,
   resetPassword,
+  resendAuthOtp,
   verifyAuthOtp
 } from '../controllers/auth.controller';
 import { authGuard } from '../middlewares/auth.middleware';
@@ -18,6 +19,7 @@ import {
   otpSchema,
   registerSchema,
   resetPasswordSchema,
+  resendOtpSchema,
   verifyOtpSchema
 } from '../validators/auth.validator';
 
@@ -113,6 +115,8 @@ authRouter.post('/check-login-identity', validateBody(loginIdentitySchema), chec
  *         description: OTP không hợp lệ
  */
 authRouter.post('/verify-otp', validateBody(verifyOtpSchema), verifyAuthOtp);
+
+authRouter.post('/resend-otp', validateBody(resendOtpSchema), resendAuthOtp);
 
 /**
  * @openapi
