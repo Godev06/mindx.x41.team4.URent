@@ -1,9 +1,5 @@
 import axios from "axios";
-import {
-  API_REQUEST_TIMEOUT,
-  APP_ROUTES,
-  AUTH_SESSION_EXPIRED_EVENT,
-} from "../../features/user/auth/constants";
+import { API_REQUEST_TIMEOUT, AUTH_SESSION_EXPIRED_EVENT } from "../../features/user/auth/constants";
 import {
   clearStoredAuthToken,
   getStoredAuthToken,
@@ -34,13 +30,12 @@ apiClient.interceptors.response.use(
     const apiError = normalizeApiError(error);
 
     if (apiError.statusCode === 401) {
+      // Clear stored token and notify app that the session expired.
+      // Do NOT force a navigation to the login page here — let
+      // the app decide when to prompt the user to re-authenticate
+      // (e.g., when they try to access a protected route).
       clearStoredAuthToken();
       window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED_EVENT));
-
-      const currentPath = window.location.pathname;
-      if (currentPath !== APP_ROUTES.login) {
-        window.history.replaceState(null, "", APP_ROUTES.login);
-      }
     }
 
     return Promise.reject(apiError);

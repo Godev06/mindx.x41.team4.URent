@@ -68,6 +68,8 @@ export const translations = {
     settingsChangePassword: "Đổi mật khẩu",
     settingsChangePasswordDesc:
       "Cập nhật mật khẩu định kỳ để bảo mật tài khoản",
+    settingsSetPassword: "Tạo mật khẩu",
+    settingsSetPasswordDesc: "Tạo mật khẩu để có thể đăng nhập bằng email và mật khẩu",
     settingsSecurityPasswordHint: "Nên thay đổi sau mỗi 60-90 ngày.",
     settingsChange: "Đổi",
     settingsPhoneVerify: "Xác minh số điện thoại",
@@ -636,6 +638,8 @@ export const translations = {
     settingsChangePassword: "Change password",
     settingsChangePasswordDesc:
       "Update your password regularly to keep your account secure",
+    settingsSetPassword: "Set password",
+    settingsSetPasswordDesc: "Create a password so you can sign in with email and password",
     settingsSecurityPasswordHint: "Recommended every 60-90 days.",
     settingsChange: "Change",
     settingsPhoneVerify: "Phone verification",

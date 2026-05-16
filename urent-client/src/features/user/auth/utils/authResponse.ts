@@ -130,6 +130,7 @@ export const mapMutationResult = (
       typeof record?.requiresPasswordSetup === "boolean"
         ? record.requiresPasswordSetup
         : undefined,
+    token: extractToken(value) || undefined,
   };
 };
 

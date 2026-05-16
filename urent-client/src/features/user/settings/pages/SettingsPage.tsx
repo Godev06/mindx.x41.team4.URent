@@ -126,8 +126,6 @@ export function SettingsPage() {
     }
   };
 
-
-
   const handlePasswordSuccess = () => {
     showToast({
       title: t.settingsChangePassword,
@@ -308,8 +306,17 @@ export function SettingsPage() {
                       >
                         {t.settingsSecurityStatusLabel}
                       </p>
-                      <p className={`mt-2 text-sm font-semibold ${isPasswordSet ? "text-teal-600 dark:text-teal-400" : "text-red-600 dark:text-red-400"}`}>
-                        {isPasswordSet ? "Mật khẩu đã được đặt" : "Mật khẩu chưa được đặt"}
+                      <p
+                        className={`mt-2 text-sm font-semibold ${isPasswordSet ? "text-teal-600 dark:text-teal-400" : "text-red-600 dark:text-red-400"}`}
+                      >
+                        {isPasswordSet
+                          ? "Mật khẩu đã được đặt"
+                          : "Mật khẩu chưa được đặt"}
+                      </p>
+                      <p className={`mt-2 text-sm leading-6 ${mutedText}`}>
+                        {isPasswordSet
+                          ? t.settingsChangePasswordDesc
+                          : t.setupPasswordNoticeBody}
                       </p>
                     </div>
 
@@ -317,9 +324,15 @@ export function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setIsPasswordModalOpen(true)}
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:text-teal-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-teal-500 dark:hover:text-teal-300"
+                        className={
+                          isPasswordSet
+                            ? "rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-teal-300 hover:text-teal-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-teal-500 dark:hover:text-teal-300"
+                            : "rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg hover:bg-teal-700"
+                        }
                       >
-                        {t.settingsChange}
+                        {isPasswordSet
+                          ? t.settingsChange
+                          : t.settingsSetPassword}
                       </button>
                     </div>
                   </div>

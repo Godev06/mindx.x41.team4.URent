@@ -125,7 +125,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     const handleSessionExpired = () => {
-      logout({ redirectTo: APP_ROUTES.login, silent: false });
+      // When session expires, clear local session silently and stay on
+      // the current page (usually home). Prompting for login should
+      // happen only when the user attempts a protected action.
+      logout({ silent: true });
     };
 
     window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleSessionExpired);
@@ -180,7 +183,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           throw new Error("Phan hoi dang nhap khong chua token hop le.");
         }
 
-        if ("token" in result) {
+        if ("token" in result && payload.purpose === "login") {
           const hydratedSession = await hydrateUserFromSession(result);
           setToken(hydratedSession.token);
           setUser(hydratedSession.user);

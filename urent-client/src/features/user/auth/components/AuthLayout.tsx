@@ -53,11 +53,10 @@ export function AuthLayout({
 
   return (
     <div
-      className={`min-h-screen px-4 py-6 antialiased sm:px-6 lg:px-10 ${
-        theme === "dark"
-          ? "bg-[#0a0c10] text-slate-200"
-          : "bg-slate-100 text-slate-700"
-      }`}
+      className={`min-h-screen px-4 py-6 antialiased sm:px-6 lg:px-10 ${theme === "dark"
+        ? "bg-[#0a0c10] text-slate-200"
+        : "bg-slate-100 text-slate-700"
+        }`}
     >
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-[90%] items-center sm:min-h-[calc(100vh-4rem)]">
         <div className="grid w-full grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:items-center lg:gap-8">
@@ -67,9 +66,8 @@ export function AuthLayout({
                 {t.layoutBadge}
               </div>
               <h1
-                className={`text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl ${
-                  theme === "dark" ? "text-white" : "text-slate-900"
-                }`}
+                className={`text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl ${theme === "dark" ? "text-white" : "text-slate-900"
+                  }`}
               >
                 {t.layoutHeroLine1}
                 <br />
@@ -78,15 +76,14 @@ export function AuthLayout({
                 </span>
               </h1>
               <p
-                className={`max-w-lg text-sm leading-6 ${
-                  theme === "dark" ? "text-slate-400" : "text-slate-600"
-                }`}
+                className={`max-w-lg text-sm leading-6 ${theme === "dark" ? "text-slate-400" : "text-slate-600"
+                  }`}
               >
                 {t.layoutSubtitle}
               </p>
             </div>
 
-            <div
+            {/* <div
               className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
                 theme === "dark"
                   ? "border border-slate-700 bg-slate-900/70 text-slate-300"
@@ -99,26 +96,23 @@ export function AuthLayout({
                 }`}
               />
               {healthOk ? t.backendHealthy : healthMessage}
-            </div>
+            </div> */}
           </section>
 
           <section className="lg:col-span-6">
             <div
-              className={`relative rounded-4xl p-px shadow-2xl ${
-                theme === "dark"
-                  ? "bg-linear-to-b from-slate-700 to-transparent"
-                  : "bg-linear-to-b from-slate-300 to-transparent"
-              }`}
+              className={`relative rounded-4xl p-px shadow-2xl ${theme === "dark"
+                ? "bg-linear-to-b from-slate-700 to-transparent"
+                : "bg-linear-to-b from-slate-300 to-transparent"
+                }`}
             >
               <div
-                className={`relative overflow-hidden rounded-[31px] p-5 sm:p-6 md:p-8 ${
-                  theme === "dark" ? "bg-[#0d1117]" : "bg-white"
-                }`}
+                className={`relative overflow-hidden rounded-[31px] p-5 sm:p-6 md:p-8 ${theme === "dark" ? "bg-[#0d1117]" : "bg-white"
+                  }`}
               >
                 <div
-                  className={`absolute -right-24 -top-24 h-48 w-48 rounded-full bg-[#00bfa5] blur-3xl ${
-                    theme === "dark" ? "opacity-[0.05]" : "opacity-[0.08]"
-                  }`}
+                  className={`absolute -right-24 -top-24 h-48 w-48 rounded-full bg-[#00bfa5] blur-3xl ${theme === "dark" ? "opacity-[0.05]" : "opacity-[0.08]"
+                    }`}
                 />
 
                 <div className="mb-6 flex items-center justify-between">
@@ -129,15 +123,13 @@ export function AuthLayout({
                       </span>
                     </div>
                     <span
-                      className={`text-xl font-bold tracking-tight ${
-                        theme === "dark" ? "text-white" : "text-slate-900"
-                      }`}
+                      className={`text-xl font-bold tracking-tight ${theme === "dark" ? "text-white" : "text-slate-900"
+                        }`}
                     >
                       U-Rent{" "}
                       <span
-                        className={`font-normal ${
-                          theme === "dark" ? "text-slate-500" : "text-slate-400"
-                        }`}
+                        className={`font-normal ${theme === "dark" ? "text-slate-500" : "text-slate-400"
+                          }`}
                       >
                         Connect
                       </span>
@@ -147,16 +139,14 @@ export function AuthLayout({
 
                 <div className="mb-6">
                   <h2
-                    className={`mb-2 text-2xl font-bold ${
-                      theme === "dark" ? "text-white" : "text-slate-900"
-                    }`}
+                    className={`mb-2 text-2xl font-bold ${theme === "dark" ? "text-white" : "text-slate-900"
+                      }`}
                   >
                     {title}
                   </h2>
                   <p
-                    className={`text-sm ${
-                      theme === "dark" ? "text-slate-400" : "text-slate-600"
-                    }`}
+                    className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-600"
+                      }`}
                   >
                     {description}
                   </p>
@@ -166,11 +156,10 @@ export function AuthLayout({
 
                 {footer ? (
                   <div
-                    className={`mt-6 border-t pt-5 text-sm ${
-                      theme === "dark"
-                        ? "border-slate-800 text-slate-400"
-                        : "border-slate-200 text-slate-600"
-                    }`}
+                    className={`mt-6 border-t pt-5 text-sm ${theme === "dark"
+                      ? "border-slate-800 text-slate-400"
+                      : "border-slate-200 text-slate-600"
+                      }`}
                   >
                     {footer}
                   </div>

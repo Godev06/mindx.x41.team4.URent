@@ -23,6 +23,11 @@ export interface VerifyOtpPayload {
   purpose: OtpPurpose;
 }
 
+export interface ResendOtpPayload {
+  email: string;
+  purpose: OtpPurpose;
+}
+
 export interface LoginPayload {
   email?: string;
   phone?: string;
@@ -62,6 +67,7 @@ export interface MutationResult {
   requiresTwoFactor?: boolean;
   requiresPasswordSetup?: boolean;
   email?: string;
+  token?: string;
 }
 
 export interface AuthSession {

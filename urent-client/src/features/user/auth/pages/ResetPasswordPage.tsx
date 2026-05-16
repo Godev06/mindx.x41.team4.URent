@@ -10,6 +10,7 @@ import { authFlowStorage } from "../utils/flowStorage";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { authUi } from "../styles";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { PasswordInput } from "../components/PasswordInput";
 
 export function ResetPasswordPage() {
   const location = useLocation();
@@ -113,7 +114,7 @@ export function ResetPasswordPage() {
             className={authUi.input}
             type="email"
             value={form.email}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               setForm((current) => ({ ...current, email: event.target.value }))
             }
             placeholder="you@example.com"
@@ -125,7 +126,7 @@ export function ResetPasswordPage() {
             showLeftIcon={false}
             autoComplete="new-password"
             value={form.newPassword}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               setForm((current) => ({
                 ...current,
                 newPassword: event.target.value,
@@ -140,7 +141,7 @@ export function ResetPasswordPage() {
             showLeftIcon={false}
             autoComplete="new-password"
             value={form.confirmPassword}
-            onChange={(event) =>
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               setForm((current) => ({
                 ...current,
                 confirmPassword: event.target.value,

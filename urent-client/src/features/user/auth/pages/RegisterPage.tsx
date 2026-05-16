@@ -43,7 +43,7 @@ export function RegisterPage() {
     try {
       await loginWithGoogle();
       showToast({
-        title: t.registerSuccessToast,
+        title: t.loginSuccessToast,
         description: t.loginWithGoogle,
         variant: "success",
       });
