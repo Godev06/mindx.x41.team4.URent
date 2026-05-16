@@ -104,7 +104,7 @@ export function ChangePasswordModal({
       });
 
       // Extract the new verified UUID token from result
-      const token = ("token" in result && result.token) ? result.token : otp.trim();
+      const token = ("token" in result && result.token) ? String(result.token) : otp.trim();
       setVerifiedToken(token);
       setStep("password");
       setOtp("");

@@ -19,10 +19,10 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   const { t } = useI18n();
   const { theme } = useTheme();
-  const [healthMessage, setHealthMessage] = useState(
+  const [_healthMessage, setHealthMessage] = useState(
     "Đang kiểm tra backend...",
   );
-  const [healthOk, setHealthOk] = useState(false);
+  const [_healthOk, setHealthOk] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -101,16 +101,16 @@ export function AuthLayout({
                   }`}
               >
                 <div className="relative flex h-2 w-2 items-center justify-center">
-                  {healthOk && (
+                  {_healthOk && (
                     <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-emerald-400 opacity-20 duration-1000 group-hover:opacity-40" />
                   )}
                   <span
-                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${healthOk ? "bg-emerald-500" : "bg-amber-500"
+                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${_healthOk ? "bg-emerald-500" : "bg-amber-500"
                       }`}
                   />
                 </div>
                 <span className="tracking-wide select-none">
-                  {healthOk ? t.backendHealthy : healthMessage}
+                  {_healthOk ? t.backendHealthy : _healthMessage}
                 </span>
               </div>
             </div>

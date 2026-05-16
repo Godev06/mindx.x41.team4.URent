@@ -30,19 +30,24 @@ import {
 import { AuthContext } from "./AuthContextObject";
 
 async function hydrateUserFromSession(
-  session: AuthSession,
+  session: AuthSession | MutationResult,
 ): Promise<AuthSession> {
+  if (!session.token) {
+    throw new Error("Session token is missing");
+  }
+
   setStoredAuthToken(session.token);
 
-  if (session.user) {
-    return session;
+  if ("user" in session && session.user) {
+    return session as AuthSession;
   }
 
   const currentUser = await authService.getCurrentUser();
   return {
     ...session,
+    token: session.token,
     user: currentUser,
-  };
+  } as AuthSession;
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -152,7 +157,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const result = await authService.login(payload);
 
         if ("token" in result) {
-          const hydratedSession = await hydrateUserFromSession(result as AuthSession);
+          const hydratedSession = await hydrateUserFromSession(result);
           authFlowStorage.clearPendingLoginEmail();
           authFlowStorage.clearPendingResetEmail();
           setToken(hydratedSession.token);
@@ -184,7 +189,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
 
         if ("token" in result && payload.purpose === "login") {
-          const hydratedSession = await hydrateUserFromSession(result as AuthSession);
+          const hydratedSession = await hydrateUserFromSession(result);
           setToken(hydratedSession.token);
           setUser(hydratedSession.user);
           return hydratedSession;
