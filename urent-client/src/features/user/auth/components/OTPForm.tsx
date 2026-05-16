@@ -35,7 +35,9 @@ export function OTPForm({
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [countdown, setCountdown] = useState(
+    onResend ? RESEND_COUNTDOWN_SECONDS : 0,
+  );
 
   useEffect(() => {
     if (countdown <= 0) {
@@ -83,11 +85,8 @@ export function OTPForm({
       });
     } catch (error: unknown) {
       const apiError = normalizeApiError(error);
-      if (apiError.statusCode) {
-        setErrorMessage(verifyFailedMessage);
-        return;
-      }
-
+      // Prefer a server-provided error message when available, otherwise
+      // fall back to a purpose-specific generic message.
       setErrorMessage(apiError.message || verifyFailedMessage);
     } finally {
       setIsSubmitting(false);

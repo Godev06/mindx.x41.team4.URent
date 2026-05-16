@@ -20,23 +20,20 @@ const app = initializeApp(firebaseConfig);
 setLogLevel("error");
 
 // Initialize App Check to satisfy reCAPTCHA Enterprise requirement for Phone Auth.
-// In development: set VITE_APPCHECK_DEBUG_TOKEN=true to auto-generate a debug token
-// (register that token in Firebase Console > App Check > Apps > debug tokens).
 // In production: set VITE_RECAPTCHA_ENTERPRISE_KEY to your reCAPTCHA Enterprise site key.
+// In development: if you want App Check debug mode, set VITE_APPCHECK_DEBUG_TOKEN and also
+// configure App Check on Firebase Console with a valid provider.
 const recaptchaEnterpriseKey = import.meta.env.VITE_RECAPTCHA_ENTERPRISE_KEY as string | undefined;
+const debugToken = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN as string | undefined;
 
-if (import.meta.env.DEV) {
-  // Expose debug token so Firebase SDK prints it to the console on first run.
-  // Copy the token from console and register it in Firebase Console > App Check.
-  (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN =
-    import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true;
+if (import.meta.env.DEV && debugToken) {
+  // Expose the debug token only when it is explicitly configured.
+  (self as unknown as Record<string, unknown>).FIREBASE_APPCHECK_DEBUG_TOKEN = debugToken;
 }
 
-if (recaptchaEnterpriseKey || import.meta.env.DEV) {
+if (recaptchaEnterpriseKey) {
   initializeAppCheck(app, {
-    provider: new ReCaptchaEnterpriseProvider(
-      recaptchaEnterpriseKey ?? "placeholder-replaced-by-debug-token"
-    ),
+    provider: new ReCaptchaEnterpriseProvider(recaptchaEnterpriseKey),
     isTokenAutoRefreshEnabled: true,
   });
 }

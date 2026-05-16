@@ -10,6 +10,7 @@ import {
   createUserWithOtp,
   issueLoginOtp,
   issueResetToken,
+  issueOtp,
   verifyOtp,
   verifyResetOtp
 } from '../services/user.service';
@@ -324,13 +325,52 @@ export const verifyAuthOtp = async (req: Request, res: Response) => {
     user.resetToken = token;
     await user.save();
 
-    return sendSuccess(res, { 
+    return sendSuccess(res, {
       message: `${purpose === 'create password' ? 'Create password' : 'Reset'} OTP verified successfully`,
       token
     });
   }
 
   return verifyOtpWithPurpose(req, res, purpose as AuthOtpPurpose);
+};
+
+export const resendAuthOtp = async (req: Request, res: Response) => {
+  const { email, purpose } = req.body as {
+    email: string;
+    purpose: UnifiedOtpPurpose;
+  };
+
+  const normalizedEmail = normalizeEmail(email);
+  const user = await UserModel.findOne({ email: normalizedEmail });
+
+  if (!user) {
+    throw new AppError(404, 'USER_NOT_FOUND', 'Email not found');
+  }
+
+  if (purpose === 'register') {
+    if (user.isEmailVerified) {
+      throw new AppError(400, 'ALREADY_VERIFIED', 'Email is already verified');
+    }
+
+    await issueOtp(user, 'register');
+    return sendSuccess(res, { message: 'OTP has been resent to your email' });
+  }
+
+  if (purpose === 'login') {
+    const settings = await SettingsModel.findOne({ userId: user._id });
+    if (!settings?.twoFactorEnabled) {
+      throw new AppError(400, 'TWO_FACTOR_NOT_ENABLED', 'Two-factor login is not enabled for this account');
+    }
+
+    await issueLoginOtp(user);
+    return sendSuccess(res, { message: 'OTP has been resent to your email' });
+  }
+
+  const isCreatePassword = purpose === 'create password';
+  await issueResetToken(normalizedEmail, isCreatePassword);
+  return sendSuccess(res, {
+    message: `${isCreatePassword ? 'Create password' : 'Reset password'} OTP has been resent to your email`
+  });
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {

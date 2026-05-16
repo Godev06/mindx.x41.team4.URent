@@ -14,6 +14,7 @@ import type {
   MutationResult,
   RegisterPayload,
   ResetPasswordPayload,
+  ResendOtpPayload,
   VerifyOtpPayload,
   AuthSession,
   AuthUser,
@@ -91,6 +92,11 @@ export const authService = {
       mapAuthSession(response.data, "Dang nhap thanh cong.") ??
       mapMutationResult(response.data, "Xac minh OTP thanh cong.")
     );
+  },
+
+  async resendOtp(payload: ResendOtpPayload): Promise<MutationResult> {
+    const response = await apiClient.post<unknown>("/api/v1/auth/resend-otp", payload);
+    return mapMutationResult(response.data, "OTP da duoc gui lai.");
   },
 
   async forgotPassword(payload: ForgotPasswordPayload): Promise<MutationResult> {

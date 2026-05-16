@@ -3,7 +3,6 @@ import { Lock, X, Eye, EyeOff, ShieldCheck, Loader2 } from "lucide-react";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { normalizeApiError } from "../../../../lib/api/apiError";
-import { OTPForm } from "../../auth/components/OTPForm";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -26,11 +25,13 @@ export function ChangePasswordModal({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Step state: "sending_otp" | "otp" | "password"
-  const [step, setStep] = useState<"sending_otp" | "otp" | "password">("sending_otp");
+  const [step, setStep] = useState<"sending_otp" | "otp" | "password">(
+    "sending_otp",
+  );
   const [verifiedToken, setVerifiedToken] = useState("");
-  
+
   // For custom OTP form inside modal
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export function ChangePasswordModal({
       setConfirmPassword("");
       setError(null);
       setOtpError(null);
-      
+
       // Send OTP automatically when modal opens
       forgotPassword({ email: user.email })
         .then(() => setStep("otp"))
@@ -101,7 +102,7 @@ export function ChangePasswordModal({
         otp: otp.trim(),
         purpose: isPasswordSet ? "reset password" : "create password",
       });
-      
+
       // Extract the new verified UUID token from result
       const token = "token" in result ? result.token : otp.trim();
       setVerifiedToken(token);
@@ -109,7 +110,11 @@ export function ChangePasswordModal({
       setOtp("");
       setOtpError(null);
     } catch (err: unknown) {
-      setOtpError(normalizeApiError(err).message || (t.otpRegisterVerifyFail || "OTP verification failed"));
+      setOtpError(
+        normalizeApiError(err).message ||
+          t.otpRegisterVerifyFail ||
+          "OTP verification failed",
+      );
     } finally {
       setIsVerifyingOtp(false);
     }
@@ -125,7 +130,9 @@ export function ChangePasswordModal({
     }
 
     if (newPassword.length < 6) {
-      setError(t.authPasswordTooShort || "Password must be at least 6 characters");
+      setError(
+        t.authPasswordTooShort || "Password must be at least 6 characters",
+      );
       return;
     }
 
@@ -150,19 +157,21 @@ export function ChangePasswordModal({
     }
   };
 
-  const purposeTitle = isPasswordSet ? t.settingsChangePassword : "Tạo mật khẩu";
+  const purposeTitle = isPasswordSet
+    ? t.settingsChangePassword
+    : "Tạo mật khẩu";
   const stepTitle = step === "password" ? purposeTitle : "Xác minh OTP";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+      <div
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
-      
+
       <div className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-2xl ring-1 ring-slate-900/10 dark:border-slate-700 dark:bg-slate-900 dark:ring-white/10">
         <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-teal-500/10 blur-3xl" />
-        
+
         <div className="flex items-center justify-between border-b border-slate-100 p-6 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/20 dark:text-teal-400">
@@ -173,13 +182,13 @@ export function ChangePasswordModal({
                 {stepTitle}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {step === "password" 
-                  ? "Update your security credentials" 
+                {step === "password"
+                  ? "Update your security credentials"
                   : `Mã OTP đã được gửi đến ${user?.email}`}
               </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
           >
@@ -211,7 +220,9 @@ export function ChangePasswordModal({
                 <input
                   type="text"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onChange={(e) =>
+                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
                   maxLength={6}
                   className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-2xl font-bold tracking-widest outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   placeholder="000000"
@@ -315,7 +326,11 @@ export function ChangePasswordModal({
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-200 hover:text-teal-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-teal-400"
                   >
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    {showConfirmPassword ? (
+                      <EyeOff size={18} />
+                    ) : (
+                      <Eye size={18} />
+                    )}
                   </button>
                 </div>
               </div>

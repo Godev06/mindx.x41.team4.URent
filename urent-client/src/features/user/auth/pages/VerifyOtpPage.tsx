@@ -4,6 +4,7 @@ import { AuthLayout } from "../components/AuthLayout";
 import { OTPForm } from "../components/OTPForm";
 import { APP_ROUTES } from "../constants";
 import { authFlowStorage } from "../utils/flowStorage";
+import { authService } from "../services/authService";
 import { useToast } from "../../shared/hooks/useToast";
 import { useI18n } from "../../shared/context/LanguageContext";
 import type { OtpPurpose } from "../types";
@@ -37,7 +38,7 @@ export function VerifyOtpPage() {
   const purpose = routeState?.purpose;
   const isPasswordSetupFlow =
     purpose === "create password" ||
-    ((purpose === "reset password" || purpose === "create password") &&
+    (purpose === "reset password" &&
       routeState?.flowVariant === "setup-password");
   const email = useMemo(() => {
     if (!purpose) {
@@ -129,6 +130,9 @@ export function VerifyOtpPage() {
         email={email}
         purpose={purpose}
         onBack={onBack}
+        onResend={async () => {
+          await authService.resendOtp({ email, purpose });
+        }}
         onSuccess={({ otp, result }) => {
           if (purpose === "register") {
             showToast({

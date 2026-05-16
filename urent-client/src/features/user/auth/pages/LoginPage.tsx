@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Mail } from "lucide-react";
 import { APP_ROUTES } from "../constants";
 import { AuthLayout } from "../components/AuthLayout";
 import { AlertMessage } from "../../shared/components/AlertMessage";
@@ -13,7 +13,6 @@ import {
   validatePassword,
   validatePhone,
 } from "../../shared/utils/validation";
-import { SocialLogin } from "../components/SocialLogin";
 import { PasswordInput } from "../components/PasswordInput";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { authUi } from "../styles";
