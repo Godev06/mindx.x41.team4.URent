@@ -19,10 +19,10 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   const { t } = useI18n();
   const { theme } = useTheme();
-  const [healthMessage, setHealthMessage] = useState(
-    "Đang kiểm tra backend...",
-  );
-  const [healthOk, setHealthOk] = useState(false);
+  // const [healthMessage, setHealthMessage] = useState(
+  //   "Đang kiểm tra backend...",
+  // );
+  // const [healthOk, setHealthOk] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -34,16 +34,16 @@ export function AuthLayout({
           return;
         }
 
-        setHealthOk(result.ok);
-        setHealthMessage(result.message);
+        // setHealthOk(result.ok);
+        // setHealthMessage(result.message);
       })
       .catch((error: unknown) => {
         if (!active) {
           return;
         }
 
-        setHealthOk(false);
-        setHealthMessage(normalizeApiError(error).message);
+        // setHealthOk(false);
+        // setHealthMessage(normalizeApiError(error).message);
       });
 
     return () => {
