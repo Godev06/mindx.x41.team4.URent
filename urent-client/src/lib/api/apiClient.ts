@@ -7,7 +7,7 @@ import {
 import { normalizeApiError } from "./apiError";
 
 const baseURL =
-  import.meta.env.VITE_API_BASE_URL?.trim() || "http://localhost:5003";
+  (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL)?.trim() || "http://localhost:5003";
 
 export const apiClient = axios.create({
   baseURL,

@@ -5,7 +5,7 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../../../lib/firebase";
 import { APP_ROUTES, AUTH_SESSION_EXPIRED_EVENT } from "../constants";
@@ -52,7 +52,6 @@ async function hydrateUserFromSession(
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
-  const location = useLocation();
   const [token, setToken] = useState<string | null>(() => getStoredAuthToken());
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(
@@ -72,14 +71,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setUser(null);
       setIsInitializing(false);
 
-      if (!silent && location.pathname !== redirectTo) {
+      if (!silent && window.location.pathname !== redirectTo) {
         navigate(redirectTo, {
           replace: true,
-          state: { from: location.pathname },
+          state: { from: window.location.pathname },
         });
       }
     },
-    [location.pathname, navigate],
+    [navigate],
   );
 
   const refreshCurrentUser = useCallback(async () => {

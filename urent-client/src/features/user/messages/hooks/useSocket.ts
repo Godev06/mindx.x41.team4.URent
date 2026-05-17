@@ -3,7 +3,7 @@ import { io, type Socket } from "socket.io-client";
 import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
 
 const BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim() ||
+  ((import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL) as string | undefined)?.trim() ||
   "http://localhost:5003";
 
 function getSocketOrigin(baseUrl: string) {

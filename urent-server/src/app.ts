@@ -20,19 +20,43 @@ const normalizeOrigin = (value: string) => value.trim().replace(/\/$/, '');
 app.use(
 	cors({
 		origin(origin, callback) {
-			if (!origin || env.clientOrigins.includes(normalizeOrigin(origin))) {
-				callback(null, true);
-				return;
+			if (!origin) return callback(null, true);
+			
+			const normalized = normalizeOrigin(origin);
+			
+			// Tự động cấp quyền cho toàn bộ các link Preview của Cloudflare Pages và Localhost
+			if (
+				normalized.endsWith('.pages.dev') || 
+				normalized.includes('localhost') || 
+				normalized.includes('127.0.0.1') ||
+				env.clientOrigins.includes(normalized)
+			) {
+				return callback(null, true);
 			}
 
 			callback(new Error(`CORS blocked for origin: ${origin}`));
-		}
+		},
+		credentials: true,
+		methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+		allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 	})
 );
 app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
+
+app.get('/', (req, res) => {
+	console.log(`\x1b[32m[WELCOME]\x1b[0m \x1b[36m${req.method}\x1b[0m ${req.originalUrl}`);
+	res.json({
+		success: true,
+		message: "Welcome to URent API",
+		status: "running",
+		docs: "/api-docs",
+		timestamp: new Date().toISOString()
+	});
+});
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec));
 app.use('/api/v1/auth', authRouter);
@@ -42,4 +66,18 @@ app.use('/api/v1', productRouter);
 app.use('/api/v1', messageRouter);
 app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/orders', orderRouter);
+
+// 404 Fallback Middleware
+app.use((req, res, _next) => {
+	console.log(`\x1b[33m[404]\x1b[0m \x1b[36m${req.method}\x1b[0m ${req.originalUrl}`);
+	res.status(404).json({
+		success: false,
+		status: 404,
+		message: "Route not found",
+		method: req.method,
+		path: req.originalUrl,
+		timestamp: new Date().toISOString()
+	});
+});
+
 app.use(errorMiddleware);

@@ -5,31 +5,13 @@ import { UpdateProfileInput } from '../validators/profile.validator';
 import { createActivityOnly } from '../services/activity-notification.service';
 import { comparePassword, hashPassword } from '../utils/hash';
 import { sendPasswordCreatedEmail, sendPasswordChangedEmail } from '../services/email.service';
-import { admin, isFirebaseAdminInitialized } from '../config/firebase';
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
 
-const isFirebaseUserNotFoundError = (error: unknown) => {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code?: string }).code === 'auth/user-not-found'
-  );
-};
-
-const getExpectedFirebaseUidForUser = async (userId: string, email: string) => {
-  try {
-    const firebaseUser = await admin.auth().getUserByEmail(email);
-    return firebaseUser.uid;
-  } catch (error) {
-    if (!isFirebaseUserNotFoundError(error)) {
-      throw error;
-    }
-
-    // If the Firebase user has not been provisioned by email yet, fallback to deterministic UID.
-    return buildFirebaseUid(userId);
-  }
+// NOTE: firebase-admin is NOT compatible with Cloudflare Edge Runtime.
+// Returns deterministic UID stub instead of calling Firebase Admin SDK.
+const getExpectedFirebaseUidForUser = async (userId: string, _email: string) => {
+  return buildFirebaseUid(userId);
 };
 
 // Fields excluded from all profile responses

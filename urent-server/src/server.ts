@@ -1,4 +1,19 @@
+import 'dotenv/config';
 import http from 'http';
+import dns from 'node:dns';
+
+// Suppress DEP0169 DeprecationWarning (url.parse) from third-party libraries in Node 22+
+const originalEmit = process.emit;
+process.emit = function (name: any, data: any, ...args: any[]) {
+  if (name === 'warning' && typeof data === 'object' && data.name === 'DeprecationWarning' && data.message.includes('url.parse')) {
+    return false;
+  }
+  return originalEmit.apply(process, [name, data, ...args] as any);
+} as any;
+
+// Fix Node.js native fetch hanging on IPv6 when calling Google APIs (Firebase)
+dns.setDefaultResultOrder('ipv4first');
+
 import { app } from './app';
 import { connectDb } from './config/db';
 import { env } from './config/env';

@@ -1,39 +1,16 @@
-import admin from "firebase-admin";
-import { env } from "./env";
+// NOTE: firebase-admin is NOT compatible with Cloudflare Edge Runtime (uses native gRPC).
+// This file is intentionally left as a stub.
+// Firebase token verification is handled via REST API in src/utils/auth-token.ts.
 
-const initializeFirebase = () => {
-  if (admin.apps.length > 0) {
-    return;
-  }
-
-  try {
-    if (env.firebaseServiceAccountPath) {
-      const serviceAccount = require(env.firebaseServiceAccountPath);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      console.log("Firebase Admin initialized with service account file.");
-    } else if (
-      env.firebaseProjectId &&
-      env.firebaseClientEmail &&
-      env.firebasePrivateKey
-    ) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: env.firebaseProjectId,
-          clientEmail: env.firebaseClientEmail,
-          privateKey: env.firebasePrivateKey.replace(/\\n/g, "\n"),
-        }),
-      });
-      console.log("Firebase Admin initialized with environment variables.");
-    } else {
-      console.warn("Firebase Admin NOT initialized. Please provide service account credentials.");
-    }
-  } catch (error) {
-    console.error("Error initializing Firebase Admin:", error);
-  }
+export const initializeFirebase = () => {
+  // no-op on Edge
 };
 
-export const isFirebaseAdminInitialized = () => admin.apps.length > 0;
+export const isFirebaseAdminInitialized = () => false;
 
-export { admin, initializeFirebase };
+// Stub admin object - never actually called on Edge
+export const admin = {
+  auth: () => {
+    throw new Error('firebase-admin is not supported on Cloudflare Edge Runtime');
+  }
+} as any;
