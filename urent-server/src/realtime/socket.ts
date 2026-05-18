@@ -1,128 +1,144 @@
-import http from 'http';
-import { Server } from 'socket.io';
-import { env } from '../config/env';
+import type { Server as HttpServer, IncomingMessage } from 'http';
+import { WebSocket, WebSocketServer } from 'ws';
 import { getConversationAccessState } from '../services/message.service';
 import { verifyAccessToken } from '../utils/auth-token';
 import { resolveAppIdentity } from '../services/auth-identity.service';
 
-let io: Server | null = null;
+type RoomMap = Map<string, Set<WebSocket>>;
+const rooms: RoomMap = new Map();
 
-const roomForConversation = (conversationId: string) => `conversation:${conversationId}`;
+export const roomForConversation = (conversationId: string) => `conversation:${conversationId}`;
 
-export const initRealtime = (server: http.Server) => {
-  io = new Server(server, {
-    cors: {
-      origin: env.clientOrigins,
-      credentials: true
+const joinRoom = (ws: WebSocket, room: string) => {
+  if (!rooms.has(room)) {
+    rooms.set(room, new Set());
+  }
+  rooms.get(room)!.add(ws);
+};
+
+const leaveRoom = (ws: WebSocket, room: string) => {
+  if (rooms.has(room)) {
+    rooms.get(room)!.delete(ws);
+    if (rooms.get(room)!.size === 0) {
+      rooms.delete(room);
+    }
+  }
+};
+
+const handleWebSocketConnection = async (serverWs: WebSocket, token?: string) => {
+  if (!token) {
+    serverWs.send(JSON.stringify({ type: 'error', code: 'UNAUTHORIZED', message: 'Missing token' }));
+    serverWs.close(1008, 'Unauthorized');
+    return;
+  }
+
+  let userId: string;
+  try {
+    const identity = await verifyAccessToken(token);
+    const appIdentity = await resolveAppIdentity(identity);
+    userId = appIdentity.sub;
+  } catch {
+    serverWs.send(JSON.stringify({ type: 'error', code: 'UNAUTHORIZED', message: 'Invalid token' }));
+    serverWs.close(1008, 'Unauthorized');
+    return;
+  }
+
+  serverWs.on('message', async (raw) => {
+    try {
+      const data = JSON.parse(String(raw));
+
+      if (data.type === 'conversation.join') {
+        const { conversationId } = data.payload || {};
+        if (!conversationId) {
+          serverWs.send(JSON.stringify({ type: 'ack', id: data.id, success: false, error: { code: 'VALIDATION_ERROR' } }));
+          return;
+        }
+
+        const validId = /^[0-9a-fA-F]{24}$/.test(conversationId);
+        if (!validId) {
+          serverWs.send(JSON.stringify({ type: 'ack', id: data.id, success: false, error: { code: 'VALIDATION_ERROR' } }));
+          return;
+        }
+
+        const state = await getConversationAccessState(conversationId, userId);
+        if (!state.exists || !state.isMember) {
+          serverWs.send(JSON.stringify({ type: 'ack', id: data.id, success: false, error: { code: 'FORBIDDEN' } }));
+          return;
+        }
+
+        joinRoom(serverWs, roomForConversation(conversationId));
+        serverWs.send(JSON.stringify({ type: 'ack', id: data.id, success: true, data: { conversationId } }));
+      }
+
+      if (data.type === 'conversation.leave') {
+        const { conversationId } = data.payload || {};
+        if (conversationId) {
+          leaveRoom(serverWs, roomForConversation(conversationId));
+          serverWs.send(JSON.stringify({ type: 'ack', id: data.id, success: true }));
+        }
+      }
+    } catch (err) {
+      console.error('WebSocket message error:', err);
     }
   });
 
-  io.use(async (socket, next) => {
-    const rawAuth = socket.handshake.auth as { token?: string };
-    const authHeader = socket.handshake.headers.authorization;
-    const bearerToken = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
-      ? authHeader.slice(7)
-      : undefined;
+  serverWs.on('close', () => {
+    for (const [, clients] of rooms.entries()) {
+      if (clients.has(serverWs)) {
+        clients.delete(serverWs);
+      }
+    }
+  });
+};
 
-    const token = rawAuth?.token ?? bearerToken;
+export const attachWebSocketServer = (httpServer: HttpServer) => {
+  const wss = new WebSocketServer({ noServer: true });
 
-    if (!token) {
-      next(new Error('UNAUTHORIZED'));
+  httpServer.on('upgrade', (request: IncomingMessage, socket, head) => {
+    const host = request.headers.host ?? 'localhost';
+    const url = new URL(request.url ?? '/', `http://${host}`);
+
+    if (url.pathname !== '/ws') {
+      socket.destroy();
       return;
     }
 
-    try {
-      const identity = await verifyAccessToken(token);
-      const appIdentity = await resolveAppIdentity(identity);
-      socket.data.userId = appIdentity.sub;
-      socket.data.email = appIdentity.email;
-      next();
-    } catch {
-      next(new Error('UNAUTHORIZED'));
-    }
-  });
+    const token = url.searchParams.get('token') ?? undefined;
 
-  io.on('connection', (socket) => {
-    socket.on('conversation.join', async (payload: { conversationId?: string }, ack?: (data: unknown) => void) => {
-      const conversationId = payload?.conversationId;
-      const userId = socket.data.userId as string | undefined;
-
-      if (!conversationId || !userId) {
-        ack?.({ success: false, error: { code: 'VALIDATION_ERROR', message: 'conversationId is required' } });
-        return;
-      }
-
-      const validId = /^[0-9a-fA-F]{24}$/.test(conversationId);
-      if (!validId) {
-        ack?.({ success: false, error: { code: 'VALIDATION_ERROR', message: 'conversationId is invalid' } });
-        return;
-      }
-
-      const state = await getConversationAccessState(conversationId, userId);
-
-      if (!state.exists) {
-        ack?.({
-          success: false,
-          error: {
-            code: 'CONVERSATION_NOT_FOUND',
-            message: 'Conversation not found'
-          }
-        });
-        return;
-      }
-
-      if (!state.isMember) {
-        ack?.({
-          success: false,
-          error: {
-            code: 'FORBIDDEN_CONVERSATION_ACCESS',
-            message: 'You are not a member of this conversation'
-          }
-        });
-        return;
-      }
-
-      if (state.participantCount !== 2) {
-        ack?.({
-          success: false,
-          error: {
-            code: 'CONVERSATION_NOT_1V1',
-            message: 'Chi ho tro tin nhan cho hoi thoai 1v1'
-          }
-        });
-        return;
-      }
-
-      socket.join(roomForConversation(conversationId));
-      ack?.({ success: true, data: { conversationId } });
-    });
-
-    socket.on('conversation.leave', (payload: { conversationId?: string }, ack?: (data: unknown) => void) => {
-      const conversationId = payload?.conversationId;
-
-      if (!conversationId) {
-        ack?.({ success: false, error: { code: 'VALIDATION_ERROR', message: 'conversationId is required' } });
-        return;
-      }
-
-      socket.leave(roomForConversation(conversationId));
-      ack?.({ success: true, data: { conversationId } });
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      void handleWebSocketConnection(ws, token);
     });
   });
-
-  return io;
 };
 
 export const emitConversationMessageCreated = (conversationId: string, message: unknown) => {
-  io?.to(roomForConversation(conversationId)).emit('conversation.message.created', {
-    conversationId,
-    message
-  });
+  const room = roomForConversation(conversationId);
+  if (!rooms.has(room)) return;
+
+  const payload = JSON.stringify({ type: 'conversation.message.created', data: { conversationId, message } });
+  for (const client of rooms.get(room)!) {
+    try {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+      }
+    } catch {
+      // Ignore broken pipe
+    }
+  }
 };
 
 export const emitConversationReadUpdated = (conversationId: string, payload: { userId: string; lastReadAt: string }) => {
-  io?.to(roomForConversation(conversationId)).emit('conversation.read.updated', {
-    conversationId,
-    ...payload
-  });
+  const room = roomForConversation(conversationId);
+  if (!rooms.has(room)) return;
+
+  const msg = JSON.stringify({ type: 'conversation.read.updated', data: { conversationId, ...payload } });
+  for (const client of rooms.get(room)!) {
+    try {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(msg);
+      }
+    } catch {
+      // Ignore
+    }
+  }
 };

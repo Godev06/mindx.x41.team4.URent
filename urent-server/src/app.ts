@@ -24,9 +24,9 @@ app.use(
 			
 			const normalized = normalizeOrigin(origin);
 			
-			// Tự động cấp quyền cho toàn bộ các link Preview của Cloudflare Pages và Localhost
+			// Allow Vercel preview deployments and local development origins
 			if (
-				normalized.endsWith('.pages.dev') || 
+				normalized.endsWith('.vercel.app') || 
 				normalized.includes('localhost') || 
 				normalized.includes('127.0.0.1') ||
 				env.clientOrigins.includes(normalized)
@@ -45,6 +45,10 @@ app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 
 app.get('/health', (_req, res) => res.json({ ok: true }));
+
+app.post('/debug-post', (req, res) => {
+	res.json({ ok: true, bodyReceived: req.body });
+});
 
 app.get('/', (req, res) => {
 	console.log(`\x1b[32m[WELCOME]\x1b[0m \x1b[36m${req.method}\x1b[0m ${req.originalUrl}`);

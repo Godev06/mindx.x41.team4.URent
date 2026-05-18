@@ -1,5 +1,4 @@
-// NOTE: All values are lazy getters - evaluated at call time, NOT at module load time.
-// This is required for Cloudflare Workers where env vars are injected per-request.
+// Lazy getters so values are read when used (after dotenv loads in local dev).
 
 const normalizeOrigin = (value: string) => value.trim().replace(/\/$/, '');
 

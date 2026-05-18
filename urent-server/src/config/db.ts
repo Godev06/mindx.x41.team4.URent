@@ -5,6 +5,8 @@ import { env } from './env';
 const MONGO_OPTIONS = {
   serverSelectionTimeoutMS: 10000, // fail fast after 10s instead of hanging
   connectTimeoutMS: 10000,
+  socketTimeoutMS: 10000,
+  maxIdleTimeMS: 10000, // Keep idle connections for only 10s
 };
 
 export const connectDb = async () => {

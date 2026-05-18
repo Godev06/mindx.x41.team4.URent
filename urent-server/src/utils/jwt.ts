@@ -1,19 +1,12 @@
-// Edge-compatible JWT using native Web Crypto API.
-// Uses runtimeSecrets singleton to ensure consistent key across the entire bundle.
-import { runtimeSecrets } from '../config/runtime';
+import { env } from '../config/env';
 
 export interface JwtPayload {
   sub: string;
   email: string;
 }
 
-export function setJwtSecretKey(secret: string) {
-  runtimeSecrets.jwtSecret = secret;
-}
-
 function getSecret(): string {
-  // runtimeSecrets.jwtSecret is set synchronously in initApp() before any JWT operations
-  return runtimeSecrets.jwtSecret || process.env.JWT_SECRET || 'fallback-cf-secret';
+  return env.jwtSecret || process.env.JWT_SECRET || 'fallback-dev-secret';
 }
 
 function base64urlEncode(data: Uint8Array | ArrayBuffer): string {
@@ -50,7 +43,7 @@ function parseExpiry(expiry: string): number {
 export const signToken = async (payload: JwtPayload): Promise<string> => {
   const secret = getSecret();
   const now = Math.floor(Date.now() / 1000);
-  const expiresIn = parseExpiry(runtimeSecrets.jwtExpiresIn || '1d');
+  const expiresIn = parseExpiry(env.jwtExpiresIn || '1d');
 
   const header = { alg: 'HS256', typ: 'JWT' };
   const claims = { ...payload, iat: now, exp: now + expiresIn };
@@ -75,9 +68,12 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   const secret = getSecret();
 
   const key = await getHmacKey(secret);
-  const signatureBytes = base64urlDecode(encodedSignature);
+  const signatureBytes = new Uint8Array(base64urlDecode(encodedSignature));
   const isValid = await crypto.subtle.verify(
-    'HMAC', key, signatureBytes, new TextEncoder().encode(signingInput)
+    'HMAC',
+    key,
+    signatureBytes,
+    new TextEncoder().encode(signingInput)
   );
 
   if (!isValid) throw new Error('Invalid JWT signature');

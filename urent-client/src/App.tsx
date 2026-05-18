@@ -56,8 +56,9 @@ export default function App() {
         />
       </Route>
 
-      {/* Public routes — accessible without login */}
+      {/* Main Layout routes */}
       <Route element={<AppShell />}>
+        {/* Public routes — accessible without login */}
         <Route
           path={APP_ROUTES.home}
           element={<HomePage onProductClick={handleProductClick} />}
@@ -72,11 +73,9 @@ export default function App() {
           }
         />
         <Route path="/product/:id" element={<ProductRoute />} />
-      </Route>
 
-      {/* Protected routes — require login */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<AppShell />}>
+        {/* Protected routes — require login */}
+        <Route element={<ProtectedRoute />}>
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:orderId" element={<OrderDetailPage />} />
           <Route path="/inventory" element={<InventoryPage />} />

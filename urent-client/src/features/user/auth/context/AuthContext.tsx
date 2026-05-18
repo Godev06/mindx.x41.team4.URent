@@ -3,6 +3,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   type PropsWithChildren,
 } from "react";
 import { useNavigate } from "react-router-dom";
@@ -57,6 +58,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isInitializing, setIsInitializing] = useState(
     Boolean(getStoredAuthToken()),
   );
+  
+  // Track if we've already tried to initialize in this mount (React StrictMode safe)
+  const hasInitialized = useRef(false);
+  // Track pending refresh request to prevent concurrent duplicate requests
+  const refreshPromiseRef = useRef<Promise<AuthUser | null> | null>(null);
 
   const logout = useCallback(
     ({
@@ -91,15 +97,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return null;
     }
 
-    setIsInitializing(true);
-    try {
-      const currentUser = await authService.getCurrentUser();
-      setToken(activeToken);
-      setUser(currentUser);
-      return currentUser;
-    } finally {
-      setIsInitializing(false);
+    // Return the existing promise if a refresh is already in progress
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
     }
+
+    setIsInitializing(true);
+    
+    refreshPromiseRef.current = (async () => {
+      try {
+        const currentUser = await authService.getCurrentUser();
+        setToken(activeToken);
+        setUser(currentUser);
+        return currentUser;
+      } finally {
+        setIsInitializing(false);
+        refreshPromiseRef.current = null;
+      }
+    })();
+
+    return refreshPromiseRef.current;
   }, []);
 
   const clearPendingEmailByPurpose = useCallback((purpose: OtpPurpose) => {
@@ -121,9 +138,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsInitializing(false);
       return;
     }
+    
+    // Prevent double-fetching in React StrictMode
+    if (hasInitialized.current) {
+      return;
+    }
+    hasInitialized.current = true;
 
-    void refreshCurrentUser().catch(() => {
-      logout({ silent: true });
+    void refreshCurrentUser().catch((error) => {
+      console.error("AuthContext: refreshCurrentUser failed:", error);
+      // Only log out if it's a 401 Unauthorized. Ignore network errors/timeouts to prevent random logouts.
+      if (
+        (error && typeof error === "object" && "statusCode" in error && error.statusCode === 401) ||
+        (error && typeof error === "object" && "response" in error && (error as any).response?.status === 401)
+      ) {
+        logout({ silent: true });
+      } else {
+        setIsInitializing(false);
+      }
     });
   }, [logout, refreshCurrentUser, token]);
 

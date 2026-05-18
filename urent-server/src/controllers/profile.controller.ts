@@ -8,7 +8,6 @@ import { sendPasswordCreatedEmail, sendPasswordChangedEmail } from '../services/
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
 
-// NOTE: firebase-admin is NOT compatible with Cloudflare Edge Runtime.
 // Returns deterministic UID stub instead of calling Firebase Admin SDK.
 const getExpectedFirebaseUidForUser = async (userId: string, _email: string) => {
   return buildFirebaseUid(userId);

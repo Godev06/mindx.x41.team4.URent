@@ -1,16 +1,17 @@
-// NOTE: firebase-admin is NOT compatible with Cloudflare Edge Runtime (uses native gRPC).
-// This file is intentionally left as a stub.
-// Firebase token verification is handled via REST API in src/utils/auth-token.ts.
+import admin from 'firebase-admin';
+import { env } from './env';
 
 export const initializeFirebase = () => {
-  // no-op on Edge
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        projectId: env.firebaseProjectId,
+        clientEmail: env.firebaseClientEmail,
+        privateKey: env.firebasePrivateKey?.replace(/\\n/g, '\n')
+      })
+    });
+  }
 };
 
-export const isFirebaseAdminInitialized = () => false;
-
-// Stub admin object - never actually called on Edge
-export const admin = {
-  auth: () => {
-    throw new Error('firebase-admin is not supported on Cloudflare Edge Runtime');
-  }
-} as any;
+export const isFirebaseAdminInitialized = () => admin.apps.length > 0;
+export { admin };

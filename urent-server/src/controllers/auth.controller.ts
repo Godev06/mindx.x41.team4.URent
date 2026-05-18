@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { Request, Response } from 'express';
+import { admin } from '../config/firebase';
 import { env } from '../config/env';
 import { SettingsModel } from '../models/settings.model';
 import { UserModel } from '../models/user.model';
@@ -47,14 +48,26 @@ const buildTokenPayload = async (userId: string, email: string, message: string)
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
 
-// NOTE: firebase-admin (gRPC) is NOT compatible with Cloudflare Edge Runtime.
-// ensureFirebaseAuthUser is disabled on Edge — returns deterministic UID stub.
 const ensureFirebaseAuthUser = async (
   userId: string,
-  _email: string,
-  _displayName?: string
+  email: string,
+  displayName?: string
 ): Promise<string> => {
-  return buildFirebaseUid(userId);
+  const firebaseUid = buildFirebaseUid(userId);
+  try {
+    await admin.auth().getUser(firebaseUid);
+  } catch (error: any) {
+    if (error.code === 'auth/user-not-found') {
+      await admin.auth().createUser({
+        uid: firebaseUid,
+        email,
+        displayName,
+      });
+    } else {
+      throw error;
+    }
+  }
+  return firebaseUid;
 };
 
 const logActivity = async (params: {
@@ -487,7 +500,14 @@ const getFirebaseCustomIdTokenForUser = async (userId: string, email: string, di
   return result.idToken;
 };
 
-export const getFirebaseCustomToken = async (_req: Request, res: Response) => {
-  // firebase-admin createCustomToken is NOT supported on Cloudflare Edge Runtime.
-  throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase custom token is not available on Cloudflare Edge');
+export const getFirebaseCustomToken = async (req: Request, res: Response) => {
+  const userId = req.user?.sub;
+  const email = req.user?.email;
+
+  if (!userId || !email) {
+    throw new AppError(401, 'UNAUTHORIZED', 'Unauthorized');
+  }
+
+  const customToken = await getFirebaseCustomIdTokenForUser(userId, email, req.user?.displayName);
+  return sendSuccess(res, { token: customToken });
 };
