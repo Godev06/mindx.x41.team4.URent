@@ -9,8 +9,10 @@ import {
 import { HomePage } from "./features/user/home/pages/HomePage";
 import { ProductListingPage } from "./features/user/home/pages/ProductListingPage";
 import InventoryPage from "./features/user/inventory/pages/InventoryPage";
+
 import { OrderDetailPage } from "./features/user/orders/pages/OrderDetailPage";
 import { OrdersPage } from "./features/user/orders/pages/OrdersPage";
+
 import { MessagesPage } from "./features/user/messages/pages/MessagesPage";
 import { NotificationsPage } from "./features/user/notifications/pages/NotificationsPage";
 import { SettingsPage } from "./features/user/settings/pages/SettingsPage";
@@ -32,6 +34,10 @@ import { APP_ROUTES } from "./features/user/auth/constants";
 
 import { AdminDashboardPage } from "./features/admin/pages/AdminDashboardPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
+
+import { AdminOrdersPage } from "./features/admin/pages/AdminOrdersPage";
+import { AdminOrdersDetailPage } from "./features/admin/pages/AdminOrdersDetailPage";
+import { AdminLogsPage } from "./features/admin/pages/AdminLogsPage";
 
 function ProductRoute() {
   const { id } = useParams();
@@ -113,8 +119,12 @@ export default function App() {
         <Route path="/admin" element={<AdminDashboardPage />} />
 
         <Route path="/admin/users" element={<AdminUsersPage />} />
-      </Route>
+        <Route path="/admin/orders" element={<AdminOrdersPage />} />
 
+        <Route path="/admin/orders/:id" element={<AdminOrdersDetailPage />} />
+
+        <Route path="/admin/logs" element={<AdminLogsPage />} />
+      </Route>
       <Route path="*" element={<Navigate to={APP_ROUTES.home} replace />} />
     </Routes>
   );
