@@ -1,0 +1,128 @@
+import { ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ORDERS } from "../../dataset/orders";
+import { PRODUCTS } from "../../dataset/products";
+import { OrderCard } from "../components/OrderCard";
+import { useTheme } from "../../settings/hooks/useTheme";
+import { useI18n } from "../../shared/context/LanguageContext";
+
+export function OrdersPage() {
+  const { theme } = useTheme();
+  const { t } = useI18n();
+  const navigate = useNavigate();
+  const activeOrders = ORDERS.filter(
+    (item) =>
+      item.status === "pending" ||
+      item.status === "confirmed" ||
+      item.status === "shipped",
+  ).length;
+  const completedOrders = ORDERS.filter(
+    (item) => item.status === "delivered",
+  ).length;
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1
+          className={`text-2xl font-bold tracking-tight ${
+            theme === "dark" ? "text-slate-100" : "text-slate-900"
+          }`}
+        >
+          {t.ordersTitle}
+        </h1>
+        <p
+          className={`mt-1 text-sm ${
+            theme === "dark" ? "text-slate-400" : "text-slate-500"
+          }`}
+        >
+          {t.ordersDesc}
+        </p>
+      </div>
+
+      <section className="grid gap-4 sm:grid-cols-2">
+        <div
+          className={`rounded-2xl border p-4 shadow-sm ring-1 ${
+            theme === "dark"
+              ? "border-slate-700 bg-slate-900 ring-white/10"
+              : "border-slate-200/90 bg-white ring-slate-900/4"
+          }`}
+        >
+          <p
+            className={`text-xs font-medium ${
+              theme === "dark" ? "text-slate-400" : "text-slate-500"
+            }`}
+          >
+            {t.ordersActive}
+          </p>
+          <p
+            className={`mt-2 text-2xl font-bold ${
+              theme === "dark" ? "text-slate-100" : "text-slate-900"
+            }`}
+          >
+            {activeOrders}
+          </p>
+        </div>
+        <div
+          className={`rounded-2xl border p-4 shadow-sm ring-1 ${
+            theme === "dark"
+              ? "border-slate-700 bg-slate-900 ring-white/10"
+              : "border-slate-200/90 bg-white ring-slate-900/4"
+          }`}
+        >
+          <p
+            className={`text-xs font-medium ${
+              theme === "dark" ? "text-slate-400" : "text-slate-500"
+            }`}
+          >
+            {t.ordersDone}
+          </p>
+          <p
+            className={`mt-2 text-2xl font-bold ${
+              theme === "dark" ? "text-slate-100" : "text-slate-900"
+            }`}
+          >
+            {completedOrders}
+          </p>
+        </div>
+      </section>
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-slate-900">
+          {t.ordersRecent}
+        </h2>
+        <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+          {t.ordersQrHint}
+        </span>
+      </div>
+
+      <section className="space-y-4">
+        {ORDERS.map((order) => {
+          const product = PRODUCTS.find((p) => p.name === order.productName);
+          return (
+            <div key={order.id} className="space-y-2">
+              <OrderCard
+                order={order}
+                imageUrl={product?.imageUrl}
+                onClick={() =>
+                  navigate(`/orders/${encodeURIComponent(order.id)}`)
+                }
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(`/orders/${encodeURIComponent(order.id)}`)
+                  }
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500"
+                >
+                  {t.ordersViewDetail}
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+    </div>
+  );
+}
