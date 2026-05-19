@@ -109,7 +109,7 @@ export const getOrCreateOneToOneConversation = async (userId: string, peerUserId
   let conversation = await ConversationModel.findOne({
     conversationType: 'ONE_TO_ONE',
     pairKey
-  }).lean();
+  });
 
   if (!conversation) {
     try {
@@ -125,7 +125,7 @@ export const getOrCreateOneToOneConversation = async (userId: string, peerUserId
       conversation = await ConversationModel.findOne({
         conversationType: 'ONE_TO_ONE',
         pairKey
-      }).lean();
+      });
     }
   }
 
@@ -352,7 +352,7 @@ export const listConversations = async (userId: string, options: { cursor?: stri
   });
 
   const nextRow = rows[limit];
-  const nextCursor = hasMore && nextRow?.lastMessageAt ? encodeCursor(nextRow.lastMessageAt, nextRow._id) : null;
+  const nextCursor = hasMore && nextRow && nextRow.lastMessageAt ? encodeCursor(nextRow.lastMessageAt, nextRow._id) : null;
 
   return { items, nextCursor, hasMore, limit };
 };
@@ -409,7 +409,7 @@ export const listConversationMessages = async (
   }));
 
   const nextRow = rows[limit];
-  const nextCursor = hasMore ? encodeCursor(nextRow.createdAt, nextRow._id) : null;
+  const nextCursor = hasMore && nextRow ? encodeCursor(nextRow.createdAt, nextRow._id) : null;
 
   return { items, nextCursor, hasMore, limit };
 };
@@ -661,7 +661,7 @@ export const searchMessages = async (
   }));
 
   const nextRow = rows[limit];
-  const nextCursor = hasMore ? encodeCursor(nextRow.createdAt, nextRow._id) : null;
+  const nextCursor = hasMore && nextRow ? encodeCursor(nextRow.createdAt, nextRow._id) : null;
 
   return { items, nextCursor, hasMore, limit };
 };
