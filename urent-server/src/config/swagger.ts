@@ -485,8 +485,10 @@ const options: swaggerJsdoc.Options = {
   },
   apis: [
     typeof __dirname !== 'undefined' ? path.join(__dirname, '../routes/*.ts') : '',
-    typeof __dirname !== 'undefined' ? path.join(__dirname, '../routes/*.js') : ''
-  ]
+    typeof __dirname !== 'undefined' ? path.join(__dirname, '../routes/*.js') : '',
+    path.join(process.cwd(), 'src/routes/*.ts'),
+    path.join(process.cwd(), 'src/routes/*.js')
+  ].filter(Boolean)
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

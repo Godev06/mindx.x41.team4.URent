@@ -39,7 +39,16 @@ app.get('/', (req, res) => {
 	});
 });
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+const swaggerUiOptions = {
+	customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
+	customJs: [
+		'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
+		'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js'
+	],
+	customCss: '.swagger-ui .topbar { display: none }',
+};
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));
 app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec));
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/profile', profileRouter);
