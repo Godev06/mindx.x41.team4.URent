@@ -1,4 +1,8 @@
+<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
 import { useEffect, useState } from "react";
+=======
+﻿import { useEffect, useRef, useState } from "react";
+>>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
 import { useParams, useNavigate } from "react-router-dom";
 import { AtSign, MessageSquare, Search, UserPlus } from "lucide-react";
 import { normalizeApiError } from "../../../../lib/api/apiError";
@@ -68,7 +72,9 @@ export function MessagesPage() {
   const [isResolvingPeer, setIsResolvingPeer] = useState(false);
   const [resolvePeerError, setResolvePeerError] = useState<string | null>(null);
   const [supportsPeerLookup, setSupportsPeerLookup] = useState(true);
+  const joinedConversationIdsRef = useRef<Set<string>>(new Set());
 
+<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
   // Join/leave socket room when conversation changes or connection restores
   useEffect(() => {
     if (!conversationId || !isConnected) return;
@@ -81,19 +87,93 @@ export function MessagesPage() {
 
     setRealtimeError(null);
     joinCurrentConversation();
+=======
+  // Keep selected conversation state in sync with sidebar badge state.
+  useEffect(() => {
+    if (!conversationId) return;
+    setRealtimeError(null);
+>>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
     resetUnread(conversationId);
+  }, [conversationId, resetUnread]);
 
+<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
     return () => {
       leaveConversation(conversationId);
     };
+=======
+  // Subscribe socket rooms for all conversations so chat list receives realtime updates.
+  useEffect(() => {
+    if (!socket) return;
+
+    const joinedIds = joinedConversationIdsRef.current;
+    const desiredIds = new Set(
+      conversations.map((conversation) => conversation.id),
+    );
+
+    desiredIds.forEach((id) => {
+      if (joinedIds.has(id)) return;
+
+      joinConversation(id, () => {
+        if (id === conversationId) {
+          setRealtimeError(t.realtimeError);
+        }
+      });
+      joinedIds.add(id);
+    });
+
+    Array.from(joinedIds).forEach((id) => {
+      if (desiredIds.has(id)) return;
+      leaveConversation(id);
+      joinedIds.delete(id);
+    });
+>>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
   }, [
+    socket,
+    conversations,
     conversationId,
     isConnected,
     joinConversation,
     leaveConversation,
+<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
     resetUnread,
     t.messagesRealtimeError,
+=======
+    t.realtimeError,
+>>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
   ]);
+
+  // Rejoin all tracked conversation rooms when socket reconnects.
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReconnect = () => {
+      joinedConversationIdsRef.current.forEach((id) => {
+        joinConversation(id, () => {
+          if (id === conversationId) {
+            setRealtimeError(t.realtimeError);
+          }
+        });
+      });
+    };
+
+    socket.on("connect", handleReconnect);
+
+    return () => {
+      socket.off("connect", handleReconnect);
+    };
+  }, [socket, joinConversation, conversationId, t.realtimeError]);
+
+  // Leave all joined rooms when socket instance is disposed.
+  useEffect(() => {
+    if (!socket) return;
+
+    return () => {
+      joinedConversationIdsRef.current.forEach((id) => {
+        leaveConversation(id);
+      });
+      joinedConversationIdsRef.current.clear();
+    };
+  }, [socket, leaveConversation]);
 
   // Listen to socket events
   useEffect(() => {
