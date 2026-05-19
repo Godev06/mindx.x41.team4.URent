@@ -32,4 +32,4 @@ Thumbs.db
 *.sw?
 
 # Lock files (managed per-project, not at workspace root)
-package-lock.json
+# package-lock.json
