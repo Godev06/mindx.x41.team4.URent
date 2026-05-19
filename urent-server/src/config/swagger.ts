@@ -37,8 +37,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           nullable: true,
           properties: {
-            limit:      { type: 'integer', example: 20 },
-            hasMore:    { type: 'boolean', example: false },
+            limit: { type: 'integer', example: 20 },
+            hasMore: { type: 'boolean', example: false },
             nextCursor: { type: 'string', nullable: true, example: null }
           }
         },
@@ -52,9 +52,9 @@ const options: swaggerJsdoc.Options = {
               type: 'object',
               required: ['email', 'password', 'username'],
               properties: {
-                email:       { type: 'string', format: 'email', example: 'user@example.com' },
-                password:    { type: 'string', minLength: 6, example: 'secret123' },
-                username:    { type: 'string', minLength: 3, maxLength: 30, example: 'john_doe' },
+                email: { type: 'string', format: 'email', example: 'user@example.com' },
+                password: { type: 'string', minLength: 6, example: 'secret123' },
+                username: { type: 'string', minLength: 3, maxLength: 30, example: 'john_doe' },
                 displayName: { type: 'string', minLength: 1, maxLength: 100, example: 'John Doe' }
               }
             },
@@ -76,7 +76,7 @@ const options: swaggerJsdoc.Options = {
               type: 'object',
               required: ['password'],
               properties: {
-                email:    { type: 'string', format: 'email', example: 'user@example.com', description: 'Bắt buộc nếu không dùng phone' },
+                email: { type: 'string', format: 'email', example: 'user@example.com', description: 'Bắt buộc nếu không dùng phone' },
                 password: { type: 'string', minLength: 6, example: 'secret123' }
               }
             },
@@ -85,7 +85,7 @@ const options: swaggerJsdoc.Options = {
               type: 'object',
               required: ['phone', 'password'],
               properties: {
-                phone:    { type: 'string', minLength: 7, maxLength: 20, example: '0912345678', description: 'Số điện thoại đã xác minh' },
+                phone: { type: 'string', minLength: 7, maxLength: 20, example: '0912345678', description: 'Số điện thoại đã xác minh' },
                 password: { type: 'string', minLength: 6, example: 'secret123' }
               }
             },
@@ -106,7 +106,7 @@ const options: swaggerJsdoc.Options = {
           required: ['email', 'otp'],
           properties: {
             email: { type: 'string', format: 'email' },
-            otp:   { type: 'string', minLength: 6, maxLength: 6, example: '123456' }
+            otp: { type: 'string', minLength: 6, maxLength: 6, example: '123456' }
           }
         },
 
@@ -140,9 +140,9 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           required: ['email', 'newPassword'],
           properties: {
-            email:       { type: 'string', format: 'email' },
-            otp:         { type: 'string', minLength: 6, maxLength: 6, description: 'OTP reset mật khẩu' },
-            token:       { type: 'string', description: 'Alias cho otp' },
+            email: { type: 'string', format: 'email' },
+            otp: { type: 'string', minLength: 6, maxLength: 6, description: 'OTP reset mật khẩu' },
+            token: { type: 'string', description: 'Alias cho otp' },
             newPassword: { type: 'string', minLength: 6 }
           }
         },
@@ -151,7 +151,7 @@ const options: swaggerJsdoc.Options = {
         TokenResponse: {
           type: 'object',
           properties: {
-            token:   { type: 'string' },
+            token: { type: 'string' },
             message: { type: 'string' }
           }
         },
@@ -162,27 +162,27 @@ const options: swaggerJsdoc.Options = {
         User: {
           type: 'object',
           properties: {
-            _id:             { type: 'string', example: '664abc123def456789012345' },
-            email:           { type: 'string', format: 'email' },
-            username:        { type: 'string', nullable: true },
-            displayName:     { type: 'string', nullable: true },
-            bio:             { type: 'string', maxLength: 200, nullable: true },
-            avatarUrl:       { type: 'string', nullable: true },
-            phone:           { type: 'string', nullable: true },
+            _id: { type: 'string', example: '664abc123def456789012345' },
+            email: { type: 'string', format: 'email' },
+            username: { type: 'string', nullable: true },
+            displayName: { type: 'string', nullable: true },
+            bio: { type: 'string', maxLength: 200, nullable: true },
+            avatarUrl: { type: 'string', nullable: true },
+            phone: { type: 'string', nullable: true },
             isEmailVerified: { type: 'boolean' },
-            createdAt:       { type: 'string', format: 'date-time' },
-            updatedAt:       { type: 'string', format: 'date-time' }
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
           }
         },
 
         UpdateProfileBody: {
           type: 'object',
           properties: {
-            displayName:     { type: 'string', minLength: 1, maxLength: 100 },
-            bio:             { type: 'string', maxLength: 200 },
-            phone:           { type: 'string', minLength: 7, maxLength: 20 },
+            displayName: { type: 'string', minLength: 1, maxLength: 100 },
+            bio: { type: 'string', maxLength: 200 },
+            phone: { type: 'string', minLength: 7, maxLength: 20 },
             currentPassword: { type: 'string', minLength: 6 },
-            newPassword:     { type: 'string', minLength: 6 }
+            newPassword: { type: 'string', minLength: 6 }
           }
         },
 
@@ -191,15 +191,15 @@ const options: swaggerJsdoc.Options = {
         Settings: {
           type: 'object',
           properties: {
-            _id:                  { type: 'string' },
-            userId:               { type: 'string' },
-            theme:                { type: 'string', enum: ['light', 'dark'] },
-            language:             { type: 'string', enum: ['vi', 'en'] },
-            emailNotifications:   { type: 'boolean' },
-            screenNotifications:  { type: 'boolean' },
-            twoFactorEnabled:     { type: 'boolean' },
-            createdAt:            { type: 'string', format: 'date-time' },
-            updatedAt:            { type: 'string', format: 'date-time' }
+            _id: { type: 'string' },
+            userId: { type: 'string' },
+            theme: { type: 'string', enum: ['light', 'dark'] },
+            language: { type: 'string', enum: ['vi', 'en'] },
+            emailNotifications: { type: 'boolean' },
+            screenNotifications: { type: 'boolean' },
+            twoFactorEnabled: { type: 'boolean' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
           }
         },
 
@@ -217,33 +217,33 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             userId: { type: 'string', nullable: true },
-            name:   { type: 'string' },
+            name: { type: 'string' },
             avatar: { type: 'string' },
             rating: { type: 'number', minimum: 0, maximum: 5 },
-            trips:  { type: 'integer', minimum: 0 }
+            trips: { type: 'integer', minimum: 0 }
           }
         },
 
         Product: {
           type: 'object',
           properties: {
-            _id:         { type: 'string' },
-            name:        { type: 'string' },
-            category:    { type: 'string' },
-            price:       { type: 'number', minimum: 0 },
-            status:      { type: 'string', enum: ['Available', 'Active', 'Completed'] },
-            quantity:    { type: 'integer', minimum: 0 },
+            _id: { type: 'string' },
+            name: { type: 'string' },
+            category: { type: 'string' },
+            price: { type: 'number', minimum: 0 },
+            status: { type: 'string', enum: ['Available', 'Active', 'Completed'] },
+            quantity: { type: 'integer', minimum: 0 },
             stockStatus: { type: 'string', enum: ['In Stock', 'Low Stock', 'Out of Stock'] },
-            image:       { type: 'string' },
-            imageUrl:    { type: 'string', nullable: true },
-            rating:      { type: 'number', minimum: 0, maximum: 5, nullable: true },
-            reviews:     { type: 'integer', minimum: 0, nullable: true },
+            image: { type: 'string' },
+            imageUrl: { type: 'string', nullable: true },
+            rating: { type: 'number', minimum: 0, maximum: 5, nullable: true },
+            reviews: { type: 'integer', minimum: 0, nullable: true },
             description: { type: 'string', nullable: true },
-            specs:       { type: 'array', items: { type: 'string' }, nullable: true },
-            owner:       { $ref: '#/components/schemas/ProductOwner', nullable: true },
+            specs: { type: 'array', items: { type: 'string' }, nullable: true },
+            owner: { $ref: '#/components/schemas/ProductOwner', nullable: true },
             lastUpdated: { type: 'string', format: 'date-time' },
-            createdAt:   { type: 'string', format: 'date-time' },
-            updatedAt:   { type: 'string', format: 'date-time' }
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
           }
         },
 
@@ -252,8 +252,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { type: 'array', items: { $ref: '#/components/schemas/Product' } },
-            meta:    { $ref: '#/components/schemas/PaginationMeta' }
+            data: { type: 'array', items: { $ref: '#/components/schemas/Product' } },
+            meta: { $ref: '#/components/schemas/PaginationMeta' }
           }
         },
 
@@ -262,13 +262,13 @@ const options: swaggerJsdoc.Options = {
         Conversation: {
           type: 'object',
           properties: {
-            _id:              { type: 'string' },
+            _id: { type: 'string' },
             conversationType: { type: 'string', enum: ['ONE_TO_ONE'] },
-            pairKey:          { type: 'string', nullable: true },
-            lastMessage:      { type: 'string', nullable: true },
-            lastMessageAt:    { type: 'string', format: 'date-time', nullable: true },
-            createdAt:        { type: 'string', format: 'date-time' },
-            updatedAt:        { type: 'string', format: 'date-time' }
+            pairKey: { type: 'string', nullable: true },
+            lastMessage: { type: 'string', nullable: true },
+            lastMessageAt: { type: 'string', format: 'date-time', nullable: true },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
           }
         },
 
@@ -281,10 +281,10 @@ const options: swaggerJsdoc.Options = {
               type: 'object',
               description: 'Snapshot thông tin sản phẩm tại thời điểm gửi',
               properties: {
-                name:        { type: 'string' },
+                name: { type: 'string' },
                 pricePerDay: { type: 'number' },
-                imageUrl:    { type: 'string' },
-                category:    { type: 'string' }
+                imageUrl: { type: 'string' },
+                category: { type: 'string' }
               }
             }
           }
@@ -294,20 +294,20 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           required: ['latitude', 'longitude'],
           properties: {
-            latitude:  { type: 'number', minimum: -90,  maximum: 90  },
+            latitude: { type: 'number', minimum: -90, maximum: 90 },
             longitude: { type: 'number', minimum: -180, maximum: 180 },
-            address:   { type: 'string', nullable: true }
+            address: { type: 'string', nullable: true }
           }
         },
 
         Message: {
           type: 'object',
           properties: {
-            _id:            { type: 'string' },
+            _id: { type: 'string' },
             conversationId: { type: 'string' },
-            senderId:       { type: 'string' },
-            messageType:    { type: 'string', enum: ['TEXT', 'PRODUCT', 'LOCATION'] },
-            content:        { type: 'string', maxLength: 2000, nullable: true },
+            senderId: { type: 'string' },
+            messageType: { type: 'string', enum: ['TEXT', 'PRODUCT', 'LOCATION'] },
+            content: { type: 'string', maxLength: 2000, nullable: true },
             metadata: {
               nullable: true,
               oneOf: [
@@ -357,8 +357,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { $ref: '#/components/schemas/Conversation' },
-            meta:    { nullable: true, example: null }
+            data: { $ref: '#/components/schemas/Conversation' },
+            meta: { nullable: true, example: null }
           }
         },
 
@@ -367,8 +367,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { type: 'array', items: { $ref: '#/components/schemas/Conversation' } },
-            meta:    { $ref: '#/components/schemas/PaginationMeta' }
+            data: { type: 'array', items: { $ref: '#/components/schemas/Conversation' } },
+            meta: { $ref: '#/components/schemas/PaginationMeta' }
           }
         },
 
@@ -377,8 +377,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { type: 'array', items: { $ref: '#/components/schemas/Message' } },
-            meta:    { $ref: '#/components/schemas/PaginationMeta' }
+            data: { type: 'array', items: { $ref: '#/components/schemas/Message' } },
+            meta: { $ref: '#/components/schemas/PaginationMeta' }
           }
         },
 
@@ -387,8 +387,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { $ref: '#/components/schemas/Message' },
-            meta:    { nullable: true, example: null }
+            data: { $ref: '#/components/schemas/Message' },
+            meta: { nullable: true, example: null }
           }
         },
 
@@ -398,18 +398,18 @@ const options: swaggerJsdoc.Options = {
         Notification: {
           type: 'object',
           properties: {
-            _id:         { type: 'string', example: '507f1f77bcf86cd799439011' },
-            userId:      { type: 'string', example: '507f1f77bcf86cd799439011' },
-            title:       { type: 'string', example: 'Đơn hàng mới' },
+            _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            userId: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            title: { type: 'string', example: 'Đơn hàng mới' },
             description: { type: 'string', example: 'Bạn có đơn hàng mới từ Nguyễn Văn A' },
-            type:        { type: 'string', enum: ['order', 'message', 'promotion', 'system'], example: 'order' },
-            time:        { type: 'string', example: '2 giờ trước' },
-            read:        { type: 'boolean', example: false },
-            readAt:      { type: 'string', format: 'date-time', nullable: true },
+            type: { type: 'string', enum: ['order', 'message', 'promotion', 'system'], example: 'order' },
+            time: { type: 'string', example: '2 giờ trước' },
+            read: { type: 'boolean', example: false },
+            readAt: { type: 'string', format: 'date-time', nullable: true },
             activityLogId: { type: 'string', example: '507f1f77bcf86cd799439011' },
-            eventKey:    { type: 'string', example: 'evt_507f1f77bcf86cd799439011' },
-            createdAt:   { type: 'string', format: 'date-time' },
-            updatedAt:   { type: 'string', format: 'date-time' }
+            eventKey: { type: 'string', example: 'evt_507f1f77bcf86cd799439011' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
           }
         },
 
@@ -418,19 +418,19 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { type: 'array', items: { $ref: '#/components/schemas/Notification' } },
-            meta:    {
+            data: { type: 'array', items: { $ref: '#/components/schemas/Notification' } },
+            meta: {
               type: 'object',
               properties: {
                 pagination: {
                   type: 'object',
                   properties: {
-                    page:       { type: 'integer', example: 1 },
-                    limit:      { type: 'integer', example: 10 },
-                    total:      { type: 'integer', example: 25 },
+                    page: { type: 'integer', example: 1 },
+                    limit: { type: 'integer', example: 10 },
+                    total: { type: 'integer', example: 25 },
                     totalPages: { type: 'integer', example: 3 },
-                    hasNext:    { type: 'boolean', example: true },
-                    hasPrev:    { type: 'boolean', example: false }
+                    hasNext: { type: 'boolean', example: true },
+                    hasPrev: { type: 'boolean', example: false }
                   }
                 }
               }
@@ -443,8 +443,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { $ref: '#/components/schemas/Notification' },
-            meta:    { nullable: true, example: null }
+            data: { $ref: '#/components/schemas/Notification' },
+            meta: { nullable: true, example: null }
           }
         },
 
@@ -454,19 +454,19 @@ const options: swaggerJsdoc.Options = {
         Order: {
           type: 'object',
           properties: {
-            _id:         { type: 'string', example: '507f1f77bcf86cd799439011' },
-            orderCode:   { type: 'string', example: 'ORD-1234567890-ABCDE' },
-            productId:   { type: 'string', example: '507f1f77bcf86cd799439011' },
+            _id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+            orderCode: { type: 'string', example: 'ORD-1234567890-ABCDE' },
+            productId: { type: 'string', example: '507f1f77bcf86cd799439011' },
             productName: { type: 'string', example: 'Máy ảnh Canon EOS R5' },
-            customerId:  { type: 'string', example: '507f1f77bcf86cd799439011' },
+            customerId: { type: 'string', example: '507f1f77bcf86cd799439011' },
             customerName: { type: 'string', example: 'Nguyễn Văn A' },
-            startDate:   { type: 'string', format: 'date-time' },
-            endDate:     { type: 'string', format: 'date-time' },
-            totalPrice:  { type: 'number', example: 1500000 },
-            status:      { type: 'string', enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], example: 'pending' },
-            image:       { type: 'string', nullable: true },
-            createdAt:   { type: 'string', format: 'date-time' },
-            updatedAt:   { type: 'string', format: 'date-time' }
+            startDate: { type: 'string', format: 'date-time' },
+            endDate: { type: 'string', format: 'date-time' },
+            totalPrice: { type: 'number', example: 1500000 },
+            status: { type: 'string', enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'], example: 'pending' },
+            image: { type: 'string', nullable: true },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
           }
         },
 
@@ -475,8 +475,8 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             success: { type: 'boolean', example: true },
-            data:    { $ref: '#/components/schemas/Order' },
-            meta:    { nullable: true, example: null }
+            data: { $ref: '#/components/schemas/Order' },
+            meta: { nullable: true, example: null }
           }
         }
       }
