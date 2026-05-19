@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "main": "build/server.js",
   "engines": {
-    "node": "20.x"
+    "node": "20"
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:node": "tsx watch src/server.ts",
     "dev:once": "tsx src/server.ts",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
     "test": "tsx --test src/**/*.test.ts",
     "check": "npm run typecheck",
     "build": "tsc",
