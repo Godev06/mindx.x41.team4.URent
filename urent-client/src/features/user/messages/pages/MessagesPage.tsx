@@ -13,7 +13,7 @@ import { useConversations } from "../hooks/useConversations";
 import { useMessageSearch } from "../hooks/useMessageSearch";
 import { useMessages } from "../hooks/useMessages";
 import { useSocket } from "../hooks/useSocket";
-import type { ApiConversationParticipant, ApiMessage } from "../types";
+import type { ApiConversationParticipant } from "../types";
 import {
   CONVERSATION_PREFERENCE_CHANGED_EVENT,
   getConversationPreference,
@@ -57,7 +57,7 @@ export function MessagesPage() {
     error: searchError,
   } = useMessageSearch(conversationId, searchTerm);
 
-  const { socket, joinConversation, leaveConversation } = useSocket();
+  const { isConnected, joinConversation, leaveConversation } = useSocket();
   const [isCreatingByEmail, setIsCreatingByEmail] = useState(false);
   const [createByEmailError, setCreateByEmailError] = useState<string | null>(
     null,
@@ -69,9 +69,9 @@ export function MessagesPage() {
   const [resolvePeerError, setResolvePeerError] = useState<string | null>(null);
   const [supportsPeerLookup, setSupportsPeerLookup] = useState(true);
 
-  // Join/leave socket room when conversation changes
+  // Join/leave socket room when conversation changes or connection restores
   useEffect(() => {
-    if (!conversationId || !socket) return;
+    if (!conversationId || !isConnected) return;
 
     const joinCurrentConversation = () => {
       joinConversation(conversationId, () => {
@@ -81,33 +81,24 @@ export function MessagesPage() {
 
     setRealtimeError(null);
     joinCurrentConversation();
-    socket.on("connect", joinCurrentConversation);
     resetUnread(conversationId);
 
     return () => {
-      socket.off("connect", joinCurrentConversation);
       leaveConversation(conversationId);
     };
   }, [
     conversationId,
+    isConnected,
     joinConversation,
     leaveConversation,
     resetUnread,
-    socket,
     t.messagesRealtimeError,
   ]);
 
   // Listen to socket events
   useEffect(() => {
-    if (!socket) return;
-
-    const handleMessageCreated = ({
-      conversationId: convId,
-      message,
-    }: {
-      conversationId: string;
-      message: ApiMessage;
-    }) => {
+    const handleMessageCreated = (event: Event) => {
+      const { conversationId: convId, message } = (event as CustomEvent).detail;
       if (convId === conversationId) {
         prependMessage(message);
         if (message.senderId !== user?.id) {
@@ -126,30 +117,24 @@ export function MessagesPage() {
       updateLastMessage(convId, lastText, message.createdAt);
     };
 
-    const handleReadUpdated = ({
-      conversationId: convId,
-      userId,
-    }: {
-      conversationId: string;
-      userId: string;
-    }) => {
+    const handleReadUpdated = (event: Event) => {
+      const { conversationId: convId, userId } = (event as CustomEvent).detail;
       if (userId === user?.id) {
         resetUnread(convId);
       }
     };
 
-    socket.on("conversation.message.created", handleMessageCreated);
-    socket.on("conversation.read.updated", handleReadUpdated);
+    window.addEventListener("conversation.message.created", handleMessageCreated);
+    window.addEventListener("conversation.read.updated", handleReadUpdated);
 
     return () => {
-      socket.off("conversation.message.created", handleMessageCreated);
-      socket.off("conversation.read.updated", handleReadUpdated);
+      window.removeEventListener("conversation.message.created", handleMessageCreated);
+      window.removeEventListener("conversation.read.updated", handleReadUpdated);
     };
   }, [
     conversationId,
     markConversationAsRead,
     resetUnread,
-    socket,
     incrementUnread,
     prependMessage,
     updateLastMessage,

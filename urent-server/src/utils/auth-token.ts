@@ -1,6 +1,5 @@
-import { admin, isFirebaseAdminInitialized } from '../config/firebase';
-import type { DecodedIdToken } from 'firebase-admin/auth';
 import { verifyToken } from './jwt';
+import { env } from '../config/env';
 
 export interface AuthenticatedUser {
   sub: string;
@@ -10,40 +9,41 @@ export interface AuthenticatedUser {
   displayName?: string;
   avatarUrl?: string;
   phoneNumber?: string;
-  rawClaims?: DecodedIdToken;
+  rawClaims?: any;
 }
 
-const toFirebaseIdentity = (decodedToken: DecodedIdToken): AuthenticatedUser => {
-  const email = typeof decodedToken.email === 'string' ? decodedToken.email.trim().toLowerCase() : '';
+import { admin } from '../config/firebase';
 
-  return {
-    sub: decodedToken.uid,
-    email,
-    authProvider: 'firebase',
-    firebaseUid: decodedToken.uid,
-    displayName: decodedToken.name,
-    avatarUrl: decodedToken.picture,
-    phoneNumber: decodedToken.phone_number,
-    rawClaims: decodedToken
-  };
+const verifyFirebaseTokenAdmin = async (idToken: string): Promise<AuthenticatedUser> => {
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    return {
+      sub: decodedToken.uid,
+      email: typeof decodedToken.email === 'string' ? decodedToken.email.trim().toLowerCase() : '',
+      authProvider: 'firebase',
+      firebaseUid: decodedToken.uid,
+      displayName: decodedToken.name,
+      avatarUrl: decodedToken.picture,
+      phoneNumber: decodedToken.phone_number,
+      rawClaims: decodedToken
+    };
+  } catch (error) {
+    console.error('[Firebase] Token verification failed:', error);
+    throw error;
+  }
 };
 
 export const verifyAccessToken = async (token: string): Promise<AuthenticatedUser> => {
   try {
-    const payload = verifyToken(token);
+    const payload = await verifyToken(token);
     return {
       sub: payload.sub,
       email: payload.email,
       authProvider: 'jwt'
     };
   } catch {
-    // Fall through to Firebase verification.
+    // Fall through to Firebase verification using Admin SDK
   }
 
-  if (!isFirebaseAdminInitialized()) {
-    throw new Error('AUTH_TOKEN_INVALID');
-  }
-
-  const decodedToken = await admin.auth().verifyIdToken(token);
-  return toFirebaseIdentity(decodedToken);
+  return verifyFirebaseTokenAdmin(token);
 };

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { Request, Response } from 'express';
-import { admin, isFirebaseAdminInitialized } from '../config/firebase';
+import { admin } from '../config/firebase';
 import { env } from '../config/env';
 import { SettingsModel } from '../models/settings.model';
 import { UserModel } from '../models/user.model';
@@ -41,47 +41,33 @@ const isGoogleOnlyAccount = (authProviders: string[] | undefined, username?: str
   return providers.length === 0 && !username?.trim();
 };
 
-const buildTokenPayload = (userId: string, email: string, message: string) => ({
-  token: signToken({ sub: userId, email }),
+const buildTokenPayload = async (userId: string, email: string, message: string) => ({
+  token: await signToken({ sub: userId, email }),
   message
 });
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
-
-const isFirebaseUserNotFoundError = (error: unknown) =>
-  typeof error === 'object' &&
-  error !== null &&
-  'code' in error &&
-  (error as { code?: string }).code === 'auth/user-not-found';
 
 const ensureFirebaseAuthUser = async (
   userId: string,
   email: string,
   displayName?: string
 ): Promise<string> => {
-  const uid = buildFirebaseUid(userId);
-  const payload = {
-    email,
-    emailVerified: true,
-    ...(displayName ? { displayName } : {})
-  };
-
+  const firebaseUid = buildFirebaseUid(userId);
   try {
-    const existing = await admin.auth().getUserByEmail(email);
-    await admin.auth().updateUser(existing.uid, payload);
-    return existing.uid;
-  } catch (error) {
-    if (!isFirebaseUserNotFoundError(error)) throw error;
+    await admin.auth().getUser(firebaseUid);
+  } catch (error: any) {
+    if (error.code === 'auth/user-not-found') {
+      await admin.auth().createUser({
+        uid: firebaseUid,
+        email,
+        displayName,
+      });
+    } else {
+      throw error;
+    }
   }
-
-  try {
-    await admin.auth().updateUser(uid, payload);
-  } catch (error) {
-    if (!isFirebaseUserNotFoundError(error)) throw error;
-    await admin.auth().createUser({ uid, ...payload });
-  }
-
-  return uid;
+  return firebaseUid;
 };
 
 const logActivity = async (params: {
@@ -142,7 +128,7 @@ const handleGoogleAuth = async (req: Request, res: Response) => {
     throw new AppError(400, 'MISSING_ID_TOKEN', 'Missing Firebase ID token');
   }
 
-  if (!isFirebaseAdminInitialized()) {
+  if (!env.firebaseApiKey) {
     throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase auth is not configured');
   }
 
@@ -174,7 +160,7 @@ const handleGoogleAuth = async (req: Request, res: Response) => {
   });
 
   return sendSuccess(res, {
-    token: signToken({ sub: appIdentity.sub, email: appIdentity.email }),
+    token: await signToken({ sub: appIdentity.sub, email: appIdentity.email }),
     user,
     message: 'Login with Google successful'
   });
@@ -516,28 +502,12 @@ const getFirebaseCustomIdTokenForUser = async (userId: string, email: string, di
 
 export const getFirebaseCustomToken = async (req: Request, res: Response) => {
   const userId = req.user?.sub;
+  const email = req.user?.email;
 
-  if (!userId) {
+  if (!userId || !email) {
     throw new AppError(401, 'UNAUTHORIZED', 'Unauthorized');
   }
 
-  if (!isFirebaseAdminInitialized()) {
-    throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase phone verification is not configured');
-  }
-
-  const user = await UserModel.findById(userId).select('email displayName');
-
-  if (!user?.email) {
-    throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
-  }
-
-  const firebaseUid = await ensureFirebaseAuthUser(
-    String(user._id),
-    normalizeEmail(user.email),
-    user.displayName?.trim() || undefined
-  );
-
-  const token = await admin.auth().createCustomToken(firebaseUid);
-
-  return sendSuccess(res, { token });
+  const customToken = await getFirebaseCustomIdTokenForUser(userId, email, req.user?.displayName);
+  return sendSuccess(res, { token: customToken });
 };

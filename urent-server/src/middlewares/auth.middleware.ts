@@ -15,7 +15,7 @@ const isFirebaseTokenExpiredError = (error: unknown) => {
 export const authGuard = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return sendError(res, { code: 'UNAUTHORIZED', message: 'Unauthorized' }, 401);
+    return sendError(res, { code: 'UNAUTHORIZED', message: 'Unauthorized - No Bearer token' }, 401);
   }
 
   try {
@@ -24,10 +24,17 @@ export const authGuard = async (req: Request, res: Response, next: NextFunction)
     req.user = await resolveAppIdentity(identity);
     return next();
   } catch (error) {
+    // Log the real error for debugging
+    console.error('[authGuard] Token verification failed:', error instanceof Error ? error.message : String(error));
+    
     if (isFirebaseTokenExpiredError(error)) {
       return sendError(res, { code: 'TOKEN_EXPIRED', message: 'Firebase ID token has expired' }, 401);
     }
 
-    return sendError(res, { code: 'UNAUTHORIZED', message: 'Unauthorized' }, 401);
+    return sendError(res, { 
+      code: 'UNAUTHORIZED', 
+      message: 'Unauthorized',
+      details: error instanceof Error ? error.message : String(error)
+    } as any, 401);
   }
 };

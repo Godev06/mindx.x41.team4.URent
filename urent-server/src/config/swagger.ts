@@ -484,8 +484,8 @@ const options: swaggerJsdoc.Options = {
     security: [{ bearerAuth: [] }]
   },
   apis: [
-    path.join(__dirname, '../routes/*.ts'),
-    path.join(__dirname, '../routes/*.js')
+    typeof __dirname !== 'undefined' ? path.join(__dirname, '../routes/*.ts') : '',
+    typeof __dirname !== 'undefined' ? path.join(__dirname, '../routes/*.js') : ''
   ]
 };
 

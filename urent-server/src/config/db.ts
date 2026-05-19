@@ -2,28 +2,35 @@ import dns from 'node:dns';
 import mongoose from 'mongoose';
 import { env } from './env';
 
+const MONGO_OPTIONS = {
+  serverSelectionTimeoutMS: 10000, // fail fast after 10s instead of hanging
+  connectTimeoutMS: 10000,
+  socketTimeoutMS: 10000,
+  maxIdleTimeMS: 10000, // Keep idle connections for only 10s
+};
+
 export const connectDb = async () => {
   if (env.dnsServers.length > 0) {
-    dns.setServers(env.dnsServers);
+    try {
+      dns.setServers(env.dnsServers);
+    } catch (e) {
+      console.warn('dns.setServers is not supported in this environment');
+    }
   }
 
   const primaryUri = env.mongoUri || env.mongoUriFallback;
 
   try {
-    await mongoose.connect(primaryUri);
+    await mongoose.connect(primaryUri, MONGO_OPTIONS);
   } catch (error) {
-    const code = (error as { code?: string }).code;
     const syscall = (error as { syscall?: string }).syscall;
-    const isSrvDnsError = code === 'ECONNREFUSED' && syscall === 'querySrv';
+    // Catch any DNS-related error (ENOTFOUND, ECONNREFUSED, SERVFAIL, etc.)
+    const isDnsError = syscall === 'querySrv' || syscall === 'queryA' || syscall === 'queryAAAA';
 
-    if (isSrvDnsError && env.mongoUriFallback && env.mongoUri) {
+    if (isDnsError && env.mongoUriFallback && env.mongoUri) {
       console.warn('MongoDB SRV DNS lookup failed. Retrying with MONGO_URI_FALLBACK.');
-      await mongoose.connect(env.mongoUriFallback);
+      await mongoose.connect(env.mongoUriFallback, MONGO_OPTIONS);
       return;
-    }
-
-    if (isSrvDnsError) {
-      console.error('MongoDB SRV DNS lookup failed. Configure DNS_SERVERS or set MONGO_URI_FALLBACK (non-SRV URI).');
     }
 
     throw error;

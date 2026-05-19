@@ -3,9 +3,10 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   type PropsWithChildren,
 } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../../../lib/firebase";
 import { APP_ROUTES, AUTH_SESSION_EXPIRED_EVENT } from "../constants";
@@ -30,29 +31,38 @@ import {
 import { AuthContext } from "./AuthContextObject";
 
 async function hydrateUserFromSession(
-  session: AuthSession,
+  session: AuthSession | MutationResult,
 ): Promise<AuthSession> {
+  if (!session.token) {
+    throw new Error("Session token is missing");
+  }
+
   setStoredAuthToken(session.token);
 
-  if (session.user) {
-    return session;
+  if ("user" in session && session.user) {
+    return session as AuthSession;
   }
 
   const currentUser = await authService.getCurrentUser();
   return {
     ...session,
+    token: session.token,
     user: currentUser,
-  };
+  } as AuthSession;
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
-  const location = useLocation();
   const [token, setToken] = useState<string | null>(() => getStoredAuthToken());
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isInitializing, setIsInitializing] = useState(
     Boolean(getStoredAuthToken()),
   );
+  
+  // Track if we've already tried to initialize in this mount (React StrictMode safe)
+  const hasInitialized = useRef(false);
+  // Track pending refresh request to prevent concurrent duplicate requests
+  const refreshPromiseRef = useRef<Promise<AuthUser | null> | null>(null);
 
   const logout = useCallback(
     ({
@@ -67,14 +77,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setUser(null);
       setIsInitializing(false);
 
-      if (!silent && location.pathname !== redirectTo) {
+      if (!silent && window.location.pathname !== redirectTo) {
         navigate(redirectTo, {
           replace: true,
-          state: { from: location.pathname },
+          state: { from: window.location.pathname },
         });
       }
     },
-    [location.pathname, navigate],
+    [navigate],
   );
 
   const refreshCurrentUser = useCallback(async () => {
@@ -87,15 +97,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return null;
     }
 
-    setIsInitializing(true);
-    try {
-      const currentUser = await authService.getCurrentUser();
-      setToken(activeToken);
-      setUser(currentUser);
-      return currentUser;
-    } finally {
-      setIsInitializing(false);
+    // Return the existing promise if a refresh is already in progress
+    if (refreshPromiseRef.current) {
+      return refreshPromiseRef.current;
     }
+
+    setIsInitializing(true);
+    
+    refreshPromiseRef.current = (async () => {
+      try {
+        const currentUser = await authService.getCurrentUser();
+        setToken(activeToken);
+        setUser(currentUser);
+        return currentUser;
+      } finally {
+        setIsInitializing(false);
+        refreshPromiseRef.current = null;
+      }
+    })();
+
+    return refreshPromiseRef.current;
   }, []);
 
   const clearPendingEmailByPurpose = useCallback((purpose: OtpPurpose) => {
@@ -117,9 +138,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setIsInitializing(false);
       return;
     }
+    
+    // Prevent double-fetching in React StrictMode
+    if (hasInitialized.current) {
+      return;
+    }
+    hasInitialized.current = true;
 
-    void refreshCurrentUser().catch(() => {
-      logout({ silent: true });
+    void refreshCurrentUser().catch((error) => {
+      console.error("AuthContext: refreshCurrentUser failed:", error);
+      // Only log out if it's a 401 Unauthorized. Ignore network errors/timeouts to prevent random logouts.
+      if (
+        (error && typeof error === "object" && "statusCode" in error && error.statusCode === 401) ||
+        (error && typeof error === "object" && "response" in error && (error as any).response?.status === 401)
+      ) {
+        logout({ silent: true });
+      } else {
+        setIsInitializing(false);
+      }
     });
   }, [logout, refreshCurrentUser, token]);
 
@@ -152,7 +188,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const result = await authService.login(payload);
 
         if ("token" in result) {
-          const hydratedSession = await hydrateUserFromSession(result as AuthSession);
+          const hydratedSession = await hydrateUserFromSession(result);
           authFlowStorage.clearPendingLoginEmail();
           authFlowStorage.clearPendingResetEmail();
           setToken(hydratedSession.token);
@@ -184,7 +220,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
 
         if ("token" in result && payload.purpose === "login") {
-          const hydratedSession = await hydrateUserFromSession(result as AuthSession);
+          const hydratedSession = await hydrateUserFromSession(result);
           setToken(hydratedSession.token);
           setUser(hydratedSession.user);
           return hydratedSession;

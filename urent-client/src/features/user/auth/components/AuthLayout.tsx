@@ -1,7 +1,5 @@
-import { useEffect, useState, type PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 import { Link } from "react-router-dom";
-import { authService } from "../services/authService";
-import { normalizeApiError } from "../../../../lib/api/apiError";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { useTheme } from "../../settings/hooks/useTheme";
 
@@ -19,46 +17,6 @@ export function AuthLayout({
 }: AuthLayoutProps) {
   const { t } = useI18n();
   const { theme } = useTheme();
-  const [healthMessage, setHealthMessage] = useState(
-    "Đang kiểm tra backend...",
-  );
-  const [healthOk, setHealthOk] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-
-    void authService
-      .checkHealth()
-      .then((result) => {
-        if (!active) {
-          return;
-        }
-
-        setHealthOk(result.ok);
-        setHealthMessage(result.message);
-        console.log(
-          `%c[System Status] API is ${result.ok ? "ONLINE" : "DEGRADED"}`,
-          `color: ${result.ok ? "#10b981" : "#f59e0b"}; font-weight: bold;`
-        );
-      })
-      .catch((error: unknown) => {
-        if (!active) {
-          return;
-        }
-
-        setHealthOk(false);
-        const msg = normalizeApiError(error).message;
-        setHealthMessage(msg);
-        console.log(
-          `%c[System Status] API is OFFLINE: ${msg}`,
-          "color: #ef4444; font-weight: bold;"
-        );
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
 
   return (
     <div
@@ -92,28 +50,7 @@ export function AuthLayout({
               </p>
             </div>
 
-            {/* Vùng ẩn trạng thái: Trở nên tàng hình với user thường (opacity-0), chỉ dev biết vị trí rê chuột vào mới hiện lên */}
-            <div className="w-fit">
-              <div
-                className={`group inline-flex cursor-default items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium backdrop-blur-sm transition-all duration-500 opacity-0 hover:opacity-100 ${theme === "dark"
-                  ? "bg-slate-800/40 text-slate-400"
-                  : "bg-white/60 text-slate-500 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
-                  }`}
-              >
-                <div className="relative flex h-2 w-2 items-center justify-center">
-                  {healthOk && (
-                    <span className="absolute inline-flex h-4 w-4 animate-ping rounded-full bg-emerald-400 opacity-20 duration-1000 group-hover:opacity-40" />
-                  )}
-                  <span
-                    className={`relative inline-flex h-1.5 w-1.5 rounded-full ${healthOk ? "bg-emerald-500" : "bg-amber-500"
-                      }`}
-                  />
-                </div>
-                <span className="tracking-wide select-none">
-                  {healthOk ? t.backendHealthy : healthMessage}
-                </span>
-              </div>
-            </div>
+
           </section>
 
           <section className="lg:col-span-6">
