@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { Request, Response } from 'express';
-import { admin } from '../config/firebase';
+import { admin, isFirebaseAdminInitialized } from '../config/firebase';
 import { env } from '../config/env';
 import { SettingsModel } from '../models/settings.model';
 import { UserModel } from '../models/user.model';
@@ -54,6 +54,13 @@ const ensureFirebaseAuthUser = async (
   displayName?: string
 ): Promise<string> => {
   const firebaseUid = buildFirebaseUid(userId);
+  // If Firebase admin is not initialized (dev environment), just return a
+  // deterministic uid without calling the admin SDK so the backend remains
+  // functional for non-Firebase flows.
+  if (!isFirebaseAdminInitialized()) {
+    return firebaseUid;
+  }
+
   try {
     await admin.auth().getUser(firebaseUid);
   } catch (error: any) {
@@ -486,6 +493,10 @@ const fetchFirebaseIdentityToolkit = async <T>(path: string, body: unknown) => {
 };
 
 const getFirebaseCustomIdTokenForUser = async (userId: string, email: string, displayName?: string) => {
+  if (!isFirebaseAdminInitialized() || !env.firebaseApiKey) {
+    throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase admin is not configured');
+  }
+
   const firebaseUid = await ensureFirebaseAuthUser(userId, normalizeEmail(email), displayName);
   const customToken = await admin.auth().createCustomToken(firebaseUid);
   const result = await fetchFirebaseIdentityToolkit<{ idToken?: string }>('accounts:signInWithCustomToken', {

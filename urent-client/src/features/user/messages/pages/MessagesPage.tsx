@@ -1,8 +1,4 @@
-<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
-import { useEffect, useState } from "react";
-=======
-﻿import { useEffect, useRef, useState } from "react";
->>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AtSign, MessageSquare, Search, UserPlus } from "lucide-react";
 import { normalizeApiError } from "../../../../lib/api/apiError";
@@ -61,7 +57,7 @@ export function MessagesPage() {
     error: searchError,
   } = useMessageSearch(conversationId, searchTerm);
 
-  const { isConnected, joinConversation, leaveConversation } = useSocket();
+  const { socket, joinConversation, leaveConversation } = useSocket();
   const [isCreatingByEmail, setIsCreatingByEmail] = useState(false);
   const [createByEmailError, setCreateByEmailError] = useState<string | null>(
     null,
@@ -74,34 +70,12 @@ export function MessagesPage() {
   const [supportsPeerLookup, setSupportsPeerLookup] = useState(true);
   const joinedConversationIdsRef = useRef<Set<string>>(new Set());
 
-<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
-  // Join/leave socket room when conversation changes or connection restores
-  useEffect(() => {
-    if (!conversationId || !isConnected) return;
-
-    const joinCurrentConversation = () => {
-      joinConversation(conversationId, () => {
-        setRealtimeError(t.messagesRealtimeError);
-      });
-    };
-
-    setRealtimeError(null);
-    joinCurrentConversation();
-=======
-  // Keep selected conversation state in sync with sidebar badge state.
   useEffect(() => {
     if (!conversationId) return;
     setRealtimeError(null);
->>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
     resetUnread(conversationId);
   }, [conversationId, resetUnread]);
 
-<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
-    return () => {
-      leaveConversation(conversationId);
-    };
-=======
-  // Subscribe socket rooms for all conversations so chat list receives realtime updates.
   useEffect(() => {
     if (!socket) return;
 
@@ -115,7 +89,7 @@ export function MessagesPage() {
 
       joinConversation(id, () => {
         if (id === conversationId) {
-          setRealtimeError(t.realtimeError);
+          setRealtimeError(t.messagesRealtimeError);
         }
       });
       joinedIds.add(id);
@@ -126,20 +100,14 @@ export function MessagesPage() {
       leaveConversation(id);
       joinedIds.delete(id);
     });
->>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
   }, [
     socket,
     conversations,
     conversationId,
-    isConnected,
     joinConversation,
     leaveConversation,
-<<<<<<< HEAD:urent-client/src/features/user/messages/pages/MessagesPage.tsx
     resetUnread,
     t.messagesRealtimeError,
-=======
-    t.realtimeError,
->>>>>>> 21136e37f59cee37628f3ad87c2e8a29f27c18f3:urent-client/src/features/messages/pages/MessagesPage.tsx
   ]);
 
   // Rejoin all tracked conversation rooms when socket reconnects.
@@ -150,18 +118,18 @@ export function MessagesPage() {
       joinedConversationIdsRef.current.forEach((id) => {
         joinConversation(id, () => {
           if (id === conversationId) {
-            setRealtimeError(t.realtimeError);
+            setRealtimeError(t.messagesRealtimeError);
           }
         });
       });
     };
 
-    socket.on("connect", handleReconnect);
+    socket.addEventListener("open", handleReconnect);
 
     return () => {
-      socket.off("connect", handleReconnect);
+      socket.removeEventListener("open", handleReconnect);
     };
-  }, [socket, joinConversation, conversationId, t.realtimeError]);
+  }, [socket, joinConversation, conversationId, t.messagesRealtimeError]);
 
   // Leave all joined rooms when socket instance is disposed.
   useEffect(() => {
@@ -204,12 +172,21 @@ export function MessagesPage() {
       }
     };
 
-    window.addEventListener("conversation.message.created", handleMessageCreated);
+    window.addEventListener(
+      "conversation.message.created",
+      handleMessageCreated,
+    );
     window.addEventListener("conversation.read.updated", handleReadUpdated);
 
     return () => {
-      window.removeEventListener("conversation.message.created", handleMessageCreated);
-      window.removeEventListener("conversation.read.updated", handleReadUpdated);
+      window.removeEventListener(
+        "conversation.message.created",
+        handleMessageCreated,
+      );
+      window.removeEventListener(
+        "conversation.read.updated",
+        handleReadUpdated,
+      );
     };
   }, [
     conversationId,
@@ -372,10 +349,9 @@ export function MessagesPage() {
       setCreateByEmailError(null);
       setIsCreatingByEmail(true);
 
-      const conversation =
-        await messageService.getConversationPeerByEmail(normalizedSearch).then((peer) =>
-          messageService.createConversation(peer.userId),
-        );
+      const conversation = await messageService
+        .getConversationPeerByEmail(normalizedSearch)
+        .then((peer) => messageService.createConversation(peer.userId));
       refreshConversations();
       navigate(`/messages/${conversation.id}`);
       setSearchTerm("");

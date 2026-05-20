@@ -12,9 +12,13 @@ export interface AuthenticatedUser {
   rawClaims?: any;
 }
 
-import { admin } from '../config/firebase';
+import { admin, isFirebaseAdminInitialized } from '../config/firebase';
 
 const verifyFirebaseTokenAdmin = async (idToken: string): Promise<AuthenticatedUser> => {
+  if (!isFirebaseAdminInitialized()) {
+    throw new Error('FIREBASE_NOT_CONFIGURED');
+  }
+
   try {
     const decodedToken = await admin.auth().verifyIdToken(idToken);
     return {
