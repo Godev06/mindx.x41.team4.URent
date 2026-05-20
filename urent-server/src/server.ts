@@ -1,54 +1,37 @@
 import 'dotenv/config';
-import http from 'http';
 import dns from 'node:dns';
-
-// Suppress DEP0169 DeprecationWarning (url.parse) from third-party libraries in Node 22+
-const originalEmit = process.emit;
-process.emit = function (name: any, data: any, ...args: any[]) {
-  if (name === 'warning' && typeof data === 'object' && data.name === 'DeprecationWarning' && data.message.includes('url.parse')) {
-    return false;
-  }
-  return originalEmit.apply(process, [name, data, ...args] as any);
-} as any;
-
-// Fix Node.js native fetch hanging on IPv6 when calling Google APIs (Firebase)
-dns.setDefaultResultOrder('ipv4first');
-
 import { app } from './app';
 import { connectDb } from './config/db';
-import { env } from './config/env';
 import { initializeFirebase } from './config/firebase';
-import { attachWebSocketServer } from './realtime/socket';
 
-const start = async () => {
-  initializeFirebase();
-  await connectDb();
-  const server = http.createServer(app);
-  attachWebSocketServer(server);
+// Định hướng IPv4 để tránh treo Firebase trên Node 20+
+dns.setDefaultResultOrder('ipv4first');
 
-  server.listen(env.port, () => {
-    const e = '\x1b';
-    const reset  = `${e}[0m`;
-    const bold   = `${e}[1m`;
-    const dim    = `${e}[2m`;
-    const cyan   = `${e}[96m`;
-    const yellow = `${e}[93m`;
-    const blue   = `${e}[94m`;
-    const green  = `${e}[92m`;
+// Biến cờ hiệu để kiểm tra trạng thái khởi tạo kết nối
+let isInitialized = false;
 
-    console.log('');
-    console.log(`${bold}${cyan}  URent Server${reset}`);
-    console.log(`${dim}  ──────────────────────────────────────────${reset}`);
-    console.log(`  ${green}${bold}API   ${reset}  ${blue}${bold}http://localhost:${env.port}${reset}`);
-    console.log(`  ${yellow}${bold}Docs  ${reset}  ${blue}${bold}http://localhost:${env.port}/api-docs${reset}`);
-    console.log(`${dim}  ──────────────────────────────────────────${reset}`);
-    console.log('');
-  });
+const initializeServerless = async () => {
+  if (!isInitialized) {
+    try {
+      // Khởi tạo các dịch vụ bên thứ ba ngắn hạn
+      initializeFirebase();
+      
+      // Kết nối Database (Hãy đảm bảo hàm connectDb của bạn có cơ chế check 
+      // mongoose.connection.readyState để tránh kết nối trùng lặp)
+      await connectDb();
+      
+      isInitialized = true;
+    } catch (error) {
+      console.error('Lỗi khi khởi tạo Services trên Vercel:', error);
+    }
+  }
 };
 
-start().catch((error) => {
-  console.error(error);
-  process.exit(1);
+// Middleware chặn mọi request để đảm bảo DB và Firebase đã được kết nối trước khi chạy API
+app.use(async (req, res, next) => {
+  await initializeServerless();
+  next();
 });
 
+// Xuất bản app để Vercel tự động map routing thành Serverless Function
 export default app;
