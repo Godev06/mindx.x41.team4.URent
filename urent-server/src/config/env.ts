@@ -1,7 +1,5 @@
 // Lazy getters so values are read when used (after dotenv loads in local dev).
 
-const normalizeOrigin = (value: string) => value.trim().replace(/\/$/, '');
-
 export const env = {
   get port() { return Number(process.env.PORT ?? 5003); },
   get mongoUri() { return process.env.MONGO_URI ?? ''; },
@@ -11,21 +9,6 @@ export const env = {
   },
   get jwtSecret() { return process.env.JWT_SECRET ?? ''; },
   get jwtExpiresIn() { return process.env.JWT_EXPIRES_IN ?? '1d'; },
-  get clientOrigins() {
-    const origins = (process.env.CLIENT_URLS ?? process.env.CLIENT_URL ?? '')
-      .split(',')
-      .map(normalizeOrigin)
-      .filter(Boolean);
-    const port = Number(process.env.PORT ?? 5003);
-    const alwaysAllowed = [
-      `http://localhost:${port}`,
-      `http://127.0.0.1:${port}`
-    ].map(normalizeOrigin);
-    const defaultOrigins = [
-      'http://localhost:5173', 'http://localhost:5174', 'http://localhost:5003'
-    ].map(normalizeOrigin);
-    return Array.from(new Set([...(origins.length > 0 ? origins : defaultOrigins), ...alwaysAllowed]));
-  },
   get smtpHost() { return process.env.SMTP_HOST ?? ''; },
   get smtpPort() { return Number(process.env.SMTP_PORT ?? 587); },
   get smtpSecure() { return process.env.SMTP_SECURE === 'true'; },
