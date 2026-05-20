@@ -1,3 +1,4 @@
-// NOTE: This file is deprecated.
-// Vercel deployment entry point is located at root: /api/index.ts
-// Please do not use this file for Vercel deployment.
+import { app } from '../src/app';
+
+// Xuất mặc định app ra ngoài đúng tiêu chuẩn để Vercel không bắt lỗi "No exports found"
+export default app;
