@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
+import { connectDb } from './config/db';
 import { env } from './config/env';
 import { swaggerSpec } from './config/swagger';
 import { errorMiddleware } from './middlewares/error.middleware';
@@ -18,6 +19,28 @@ export const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
+
+let dbConnectionPromise: Promise<void> | null = null;
+
+const getDatabaseConnection = (): Promise<void> => {
+  if (!dbConnectionPromise) {
+    dbConnectionPromise = connectDb().catch((error) => {
+      dbConnectionPromise = null;
+      console.error('❌ Lỗi kết nối Database trên Serverless:', error);
+      throw error;
+    });
+  }
+  return dbConnectionPromise;
+};
+
+app.use(async (_req, _res, next) => {
+  try {
+    await getDatabaseConnection();
+    next();
+  } catch {
+    next(new Error('Không thể kết nối đến cơ sở dữ liệu.'));
+  }
+});
 
 // Các route kiểm tra hệ thống ở tầng gốc
 app.get('/health', (_req, res) => res.json({ ok: true, status: "healthy" }));
