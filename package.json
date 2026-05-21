@@ -2,6 +2,10 @@
   "name": "urent-workspace",
   "private": true,
   "version": "1.0.0",
+  "workspaces": [
+    "urent-client",
+    "urent-server"
+  ],
   "engines": {
     "node": ">=20"
   },
@@ -15,9 +19,11 @@
   },
   "devDependencies": {
     "@types/swagger-ui-express": "^4.1.8",
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "tsx": "^4.22.3"
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "firebase-admin": "^13.10.0",
     "swagger-ui-express": "^5.0.1"
