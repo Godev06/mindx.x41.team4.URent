@@ -5,8 +5,8 @@
 $ErrorActionPreference = "Continue"
 $Scope = "godev06s-projects"
 $RepoRoot = Split-Path $PSScriptRoot -Parent
-# Preview env on Vercel requires a Git branch in non-interactive mode (repo default: dev)
-$PreviewGitBranch = if ($env:VERCEL_PREVIEW_BRANCH) { $env:VERCEL_PREVIEW_BRANCH } else { "dev" }
+# Preview env must use a branch other than Production Branch (Vercel blocks preview-on-dev when prod=dev).
+$PreviewGitBranch = if ($env:VERCEL_PREVIEW_BRANCH) { $env:VERCEL_PREVIEW_BRANCH } else { "main" }
 
 $ProductionUrls = @{
   Api = "https://urent-api.vercel.app"
