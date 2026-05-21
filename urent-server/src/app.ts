@@ -20,18 +20,7 @@ export const app = express();
 
 const normalizeOrigin = (value: string) => value.trim().replace(/\/$/, "");
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || env.clientOrigins.includes(normalizeOrigin(origin))) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`CORS blocked for origin: ${origin}`));
-    },
-  }),
-);
+app.use(cors());
 
 app.use(express.json());
 
