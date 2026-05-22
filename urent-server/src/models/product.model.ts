@@ -1,46 +1,28 @@
 import mongoose, { Schema } from 'mongoose';
 
 const productStatusValues = ['Available', 'Active', 'Completed'] as const;
-const stockStatusValues = ['In Stock', 'Low Stock', 'Out of Stock'] as const;
-
 type ProductStatus = (typeof productStatusValues)[number];
-type StockStatus = (typeof stockStatusValues)[number];
-
-interface ProductOwner {
-  userId?: mongoose.Types.ObjectId;
-  name: string;
-  avatar: string;
-  rating: number;
-  trips: number;
-}
 
 export interface ProductDocument extends mongoose.Document {
   name: string;
   category: string;
   price: number;
   status: ProductStatus;
-  quantity: number;
-  stockStatus: StockStatus;
+  statusQuantities: {
+    available: number;
+    rented: number;
+    overdue: number;
+  };
+  isArchived: boolean;
   lastUpdated: Date;
   image: string;
   imageUrl?: string;
+  description?: string[];
+  condition?: string;
+  location?: string;
   rating?: number;
-  reviews?: number;
-  owner?: ProductOwner;
-  description?: string;
-  specs?: string[];
+  reviewsCount?: number;
 }
-
-const productOwnerSchema = new Schema<ProductOwner>(
-  {
-    userId: { type: Schema.Types.ObjectId, ref: 'User' },
-    name: { type: String, required: true, trim: true },
-    avatar: { type: String, required: true },
-    rating: { type: Number, required: true, min: 0, max: 5 },
-    trips: { type: Number, required: true, min: 0 }
-  },
-  { _id: false }
-);
 
 const productSchema = new Schema<ProductDocument>(
   {
@@ -48,16 +30,20 @@ const productSchema = new Schema<ProductDocument>(
     category: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
     status: { type: String, enum: productStatusValues, default: 'Available' },
-    quantity: { type: Number, required: true, min: 0, default: 0 },
-    stockStatus: { type: String, enum: stockStatusValues, default: 'In Stock' },
+    statusQuantities: {
+      available: { type: Number, default: 1, min: 0 },
+      rented: { type: Number, default: 0, min: 0 },
+      overdue: { type: Number, default: 0, min: 0 }
+    },
+    isArchived: { type: Boolean, default: false },
     lastUpdated: { type: Date, default: Date.now },
-    image: { type: String, required: true },
+    image: { type: String, required: true, default: 'https://via.placeholder.com/150' },
     imageUrl: { type: String },
-    rating: { type: Number, min: 0, max: 5 },
-    reviews: { type: Number, min: 0, default: 0 },
-    owner: { type: productOwnerSchema },
-    description: { type: String, trim: true, maxlength: 2000 },
-    specs: [{ type: String, trim: true }]
+    description: [{ type: String, trim: true }],
+    condition: { type: String, default: 'New' },
+    location: { type: String, trim: true, default: 'Chưa cập nhật vị trí' },
+    rating: { type: Number, default: 0, min: 0, max: 5 },
+    reviewsCount: { type: Number, default: 0, min: 0 }
   },
   { timestamps: true }
 );
