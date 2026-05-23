@@ -24,6 +24,11 @@ import { RegisterPage } from "./features/user/auth/pages/RegisterPage";
 import { ResetPasswordPage } from "./features/user/auth/pages/ResetPasswordPage";
 import { VerifyOtpPage } from "./features/user/auth/pages/VerifyOtpPage";
 import { APP_ROUTES } from "./features/user/auth/constants";
+import { AdminDashboardPage } from "./features/admin/pages/AdminDashboardPage";
+import { AdminLogsPage } from "./features/admin/pages/AdminLogsPage";
+import { AdminOrdersDetailPage } from "./features/admin/pages/AdminOrdersDetailPage";
+import { AdminOrdersPage } from "./features/admin/pages/AdminOrdersPage";
+import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 
 function ProductRoute() {
   const { id } = useParams();
@@ -90,6 +95,14 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path={APP_ROUTES.profile} element={<ProfilePage />} />
         </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute />}>
+        <Route path="/admin" element={<AdminDashboardPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/orders" element={<AdminOrdersPage />} />
+        <Route path="/admin/orders/:id" element={<AdminOrdersDetailPage />} />
+        <Route path="/admin/logs" element={<AdminLogsPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to={APP_ROUTES.home} replace />} />

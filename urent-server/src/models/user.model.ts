@@ -18,6 +18,7 @@ export interface UserDocument extends mongoose.Document {
   bio?: string;
   avatarUrl?: string;
   phone?: string;
+  trustScore?: number;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -36,7 +37,8 @@ const userSchema = new Schema<UserDocument>(
     username: { type: String, unique: true, sparse: true, trim: true },
     bio: { type: String, maxlength: 200 },
     avatarUrl: { type: String },
-    phone: { type: String, trim: true, unique: true, sparse: true }
+    phone: { type: String, trim: true, unique: true, sparse: true },
+    trustScore: { type: Number, enum: [100, 60, 40, 10], default: 100 }
   },
   { timestamps: true }
 );

@@ -8,11 +8,12 @@ import { swaggerSpec } from './config/swagger';
 import { errorMiddleware } from './middlewares/error.middleware';
 import { authRouter } from './routes/auth.route';
 import { messageRouter } from './routes/message.route';
+import { notificationRouter } from './routes/notification.route';
+import { orderRouter } from './routes/order.route';
 import { profileRouter } from './routes/profile.route';
 import { productRouter } from './routes/product.route';
 import { settingsRouter } from './routes/settings.route';
-import { notificationRouter } from './routes/notification.route';
-import { orderRouter } from './routes/order.route';
+import userRouter from './routes/user.route';
 
 export const app = express();
 
@@ -96,6 +97,7 @@ app.use('/api/v1', productRouter);
 app.use('/api/v1', messageRouter);
 app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/orders', orderRouter);
+app.use('/api/v1', userRouter);
 
 // 2. Middleware bẫy lỗi 404 Fallback cho tất cả các route không tồn tại công khai hơn
 app.use((req, res, _next) => {
