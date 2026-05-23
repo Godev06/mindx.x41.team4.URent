@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
 
 const BASE_URL =
-  ((import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL) as string | undefined)?.trim() ||
-  "http://localhost:5003";
+  (
+    (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL) as
+      | string
+      | undefined
+  )?.trim() || "";
 
 function getWebSocketUrl(baseUrl: string, token: string) {
   try {
@@ -40,7 +43,7 @@ export function useSocket() {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        
+
         // Handle acknowledgments for our custom events
         if (data.type === "ack" && data.id) {
           const cb = ackMap.current.get(data.id);
@@ -93,38 +96,46 @@ export function useSocket() {
       }
 
       const id = Math.random().toString(36).substring(7);
-      
-      ackMap.current.set(id, (ack: { success: boolean; error?: { code: string; message: string } }) => {
-        if (!ack.success && onError) {
-          onError(ack.error?.code ?? "UNKNOWN");
-        }
-      });
+
+      ackMap.current.set(
+        id,
+        (ack: {
+          success: boolean;
+          error?: { code: string; message: string };
+        }) => {
+          if (!ack.success && onError) {
+            onError(ack.error?.code ?? "UNKNOWN");
+          }
+        },
+      );
 
       socketRef.current.send(
         JSON.stringify({
           type: "conversation.join",
           id,
           payload: { conversationId },
-        })
+        }),
       );
     },
-    []
+    [],
   );
 
-  const leaveConversation = useCallback(
-    (conversationId: string) => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(
-          JSON.stringify({
-            type: "conversation.leave",
-            id: Math.random().toString(36).substring(7),
-            payload: { conversationId },
-          })
-        );
-      }
-    },
-    []
-  );
+  const leaveConversation = useCallback((conversationId: string) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(
+        JSON.stringify({
+          type: "conversation.leave",
+          id: Math.random().toString(36).substring(7),
+          payload: { conversationId },
+        }),
+      );
+    }
+  }, []);
 
-  return { socket: socketRef.current, isConnected, joinConversation, leaveConversation };
+  return {
+    socket: socketRef.current,
+    isConnected,
+    joinConversation,
+    leaveConversation,
+  };
 }
