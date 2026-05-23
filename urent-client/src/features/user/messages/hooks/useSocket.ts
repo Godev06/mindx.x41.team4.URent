@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
 
-const BASE_URL =
-  (
-    (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL) as
-      | string
-      | undefined
-  )?.trim() || "";
+const ENV_BASE_URL = (
+  (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL) as
+    | string
+    | undefined
+)?.trim();
+
+function getBaseUrlForWebSocket() {
+  // Prefer explicit env; if not set, fallback to current origin (works with Vercel rewrites)
+  return (
+    ENV_BASE_URL ||
+    (typeof window !== "undefined" ? window.location.origin : "")
+  );
+}
 
 function getWebSocketUrl(baseUrl: string, token: string) {
   try {
@@ -33,7 +40,7 @@ export function useSocket() {
 
     if (socketRef.current?.readyState === WebSocket.OPEN) return;
 
-    const wsUrl = getWebSocketUrl(BASE_URL, token);
+    const wsUrl = getWebSocketUrl(getBaseUrlForWebSocket(), token);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
