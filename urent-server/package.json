@@ -9,10 +9,10 @@
     "dev": "tsx watch src/server.ts",
     "dev:node": "tsx watch src/server.ts",
     "dev:once": "tsx src/server.ts",
-    "typecheck": "node ./node_modules/typescript/bin/tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "tsx --test src/**/*.test.ts",
     "check": "npm run typecheck",
-    "build": "node ./node_modules/typescript/bin/tsc",
+    "build": "tsc",
     "build:vercel": "npm run typecheck && npm run build",
     "vercel-build": "npm run build:vercel",
     "start": "node build/server.js",
@@ -42,8 +42,8 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
     "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/node": "^20.19.0",
@@ -53,6 +53,6 @@
     "@types/ws": "^8.18.1",
     "@vercel/node": "^4.0.0",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   }
 }
