@@ -6,14 +6,6 @@ import { initializeFirebase } from "./config/firebase";
 dns.setDefaultResultOrder("ipv4first");
 initializeFirebase();
 
-import "dotenv/config";
-import dns from "node:dns";
-import { app } from "./app";
-import { initializeFirebase } from "./config/firebase";
-
-dns.setDefaultResultOrder("ipv4first");
-initializeFirebase();
-
 const PORT = process.env.PORT || 8000;
 
 if (process.env.NODE_ENV !== "production") {
