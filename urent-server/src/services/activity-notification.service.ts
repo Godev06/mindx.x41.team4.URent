@@ -1,19 +1,26 @@
-import mongoose from 'mongoose';
-import { ActivityLogDocument, ActivityLogModel } from '../models/activity-log.model';
-import { NotificationDocument, NotificationModel } from '../models/notification.model';
+import mongoose from "mongoose";
+import {
+  ActivityLogDocument,
+  ActivityLogModel,
+} from "../models/activity-log.model";
+import {
+  NotificationDocument,
+  NotificationModel,
+} from "../models/notification.model";
 
 interface CreateLinkedActivityNotificationInput {
   userId?: string;
   activity: {
     action: string;
     description: string;
-    type: 'auth' | 'order' | 'message' | 'update';
+    // Must match enum values in activity-log.model.ts
+    type: "auth" | "update";
     timestamp?: Date;
   };
   notification: {
     title: string;
     description: string;
-    type: 'order' | 'message' | 'promotion' | 'system';
+    type: "order" | "message" | "promotion" | "system";
     read?: boolean;
     readAt?: Date;
   };
@@ -24,7 +31,8 @@ interface CreateActivityOnlyInput {
   userId?: string;
   action: string;
   description: string;
-  type: 'auth' | 'order' | 'message' | 'update';
+  // Must match enum values in activity-log.model.ts
+  type: "auth" | "update";
   timestamp?: Date;
   eventKey?: string;
 }
@@ -37,7 +45,7 @@ const toObjectId = (value?: string): mongoose.Types.ObjectId | undefined => {
 };
 
 export const createActivityOnly = async (
-  input: CreateActivityOnlyInput
+  input: CreateActivityOnlyInput,
 ): Promise<ActivityLogDocument> => {
   const userObjectId = toObjectId(input.userId);
 
@@ -47,15 +55,19 @@ export const createActivityOnly = async (
     description: input.description,
     type: input.type,
     timestamp: input.timestamp ?? new Date(),
-    eventKey: input.eventKey
+    eventKey: input.eventKey,
   });
 };
 
 export const createLinkedActivityNotification = async (
-  input: CreateLinkedActivityNotificationInput
-): Promise<{ activityLog: ActivityLogDocument; notification: NotificationDocument }> => {
+  input: CreateLinkedActivityNotificationInput,
+): Promise<{
+  activityLog: ActivityLogDocument;
+  notification: NotificationDocument;
+}> => {
   const userObjectId = toObjectId(input.userId);
-  const eventKey = input.eventKey ?? `evt_${new mongoose.Types.ObjectId().toString()}`;
+  const eventKey =
+    input.eventKey ?? `evt_${new mongoose.Types.ObjectId().toString()}`;
   const session = await mongoose.startSession();
 
   try {
@@ -71,10 +83,10 @@ export const createLinkedActivityNotification = async (
             description: input.activity.description,
             type: input.activity.type,
             timestamp: input.activity.timestamp ?? new Date(),
-            eventKey
-          }
+            eventKey,
+          },
         ],
-        { session }
+        { session },
       );
 
       const [notification] = await NotificationModel.create(
@@ -87,10 +99,10 @@ export const createLinkedActivityNotification = async (
             read: input.notification.read ?? false,
             readAt: input.notification.readAt,
             activityLogId: activity._id,
-            eventKey
-          }
+            eventKey,
+          },
         ],
-        { session }
+        { session },
       );
 
       activity.notificationId = notification._id as mongoose.Types.ObjectId;
@@ -101,12 +113,12 @@ export const createLinkedActivityNotification = async (
     });
 
     if (!createdActivity || !createdNotification) {
-      throw new Error('Failed to create linked activity and notification');
+      throw new Error("Failed to create linked activity and notification");
     }
 
     return {
       activityLog: createdActivity,
-      notification: createdNotification
+      notification: createdNotification,
     };
   } finally {
     await session.endSession();

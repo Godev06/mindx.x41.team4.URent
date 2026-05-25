@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response } from "express";
 import {
   deleteConversationParamsSchema,
   conversationPeerQuerySchema,
@@ -8,8 +8,8 @@ import {
   listMessagesQuerySchema,
   readConversationParamsSchema,
   searchMessagesQuerySchema,
-  sendMessageBodySchema
-} from '../validators/message.validator';
+  sendMessageBodySchema,
+} from "../validators/message.validator";
 import {
   deleteConversationForUser,
   getConversationPeerByEmail,
@@ -19,16 +19,19 @@ import {
   listConversations,
   markConversationAsRead,
   searchMessages,
-  sendConversationMessage
-} from '../services/message.service';
-import { AppError } from '../utils/app-error';
-import { sendSuccess } from '../utils/api-response';
-import { emitConversationMessageCreated, emitConversationReadUpdated } from '../realtime/socket';
+  sendConversationMessage,
+} from "../services/message.service";
+import { AppError } from "../utils/app-error";
+import { sendSuccess } from "../utils/api-response";
+import {
+  emitConversationMessageCreated,
+  emitConversationReadUpdated,
+} from "../realtime/socket";
 
 const requireUserId = (req: Request) => {
   const userId = req.user?.sub;
   if (!userId) {
-    throw new AppError(401, 'UNAUTHORIZED', 'Unauthorized');
+    throw new AppError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   return userId;
@@ -43,7 +46,7 @@ export const getConversations = async (req: Request, res: Response) => {
   return sendSuccess(res, result.items, {
     limit: result.limit,
     nextCursor: result.nextCursor,
-    hasMore: result.hasMore
+    hasMore: result.hasMore,
   });
 };
 
@@ -51,15 +54,15 @@ export const postConversation = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const body = createOneToOneConversationBodySchema.parse(req.body);
 
-  const conversation = await getOrCreateOneToOneConversation(userId, body.peerUserId);
+  const conversation = await getOrCreateOneToOneConversation(
+    userId,
+    body.peerUserId,
+  );
 
   return sendSuccess(res, conversation, undefined, 201);
 };
 
-export const getConversationPeerQuery = async (
-  req: Request,
-  res: Response
-) => {
+export const getConversationPeerQuery = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const query = conversationPeerQuerySchema.parse(req.query);
 
@@ -75,12 +78,16 @@ export const getConversationMessages = async (req: Request, res: Response) => {
   const params = listMessagesParamsSchema.parse(req.params);
   const query = listMessagesQuerySchema.parse(req.query);
 
-  const result = await listConversationMessages(userId, params.conversationId, query);
+  const result = await listConversationMessages(
+    userId,
+    params.conversationId,
+    query,
+  );
 
   return sendSuccess(res, result.items, {
     limit: result.limit,
     nextCursor: result.nextCursor,
-    hasMore: result.hasMore
+    hasMore: result.hasMore,
   });
 };
 
@@ -89,25 +96,42 @@ export const postConversationMessage = async (req: Request, res: Response) => {
   const params = listMessagesParamsSchema.parse(req.params);
   const body = sendMessageBodySchema.parse(req.body);
 
-  const message = await sendConversationMessage(userId, params.conversationId, {
-    messageType: body.messageType,
-    content: body.content,
-    metadata: body.metadata
-  });
+  try {
+    const message = await sendConversationMessage(
+      userId,
+      params.conversationId,
+      {
+        messageType: body.messageType,
+        content: body.content,
+        metadata: body.metadata,
+      },
+    );
 
-  emitConversationMessageCreated(params.conversationId, message);
+    emitConversationMessageCreated(params.conversationId, message);
 
-  return sendSuccess(res, message, undefined, 201);
+    return sendSuccess(res, message, undefined, 201);
+  } catch (error) {
+    console.error("[postConversationMessage] failed:", {
+      conversationId: params.conversationId,
+      userId,
+      messageType: body.messageType,
+      error: error instanceof Error ? (error.stack ?? error.message) : error,
+    });
+    throw error;
+  }
 };
 
 export const postConversationRead = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const params = readConversationParamsSchema.parse(req.params);
 
-  const readResult = await markConversationAsRead(userId, params.conversationId);
+  const readResult = await markConversationAsRead(
+    userId,
+    params.conversationId,
+  );
   emitConversationReadUpdated(params.conversationId, {
     userId,
-    lastReadAt: readResult.lastReadAt
+    lastReadAt: readResult.lastReadAt,
   });
 
   return sendSuccess(res, readResult);
@@ -131,6 +155,6 @@ export const getMessagesSearch = async (req: Request, res: Response) => {
   return sendSuccess(res, result.items, {
     limit: result.limit,
     nextCursor: result.nextCursor,
-    hasMore: result.hasMore
+    hasMore: result.hasMore,
   });
 };

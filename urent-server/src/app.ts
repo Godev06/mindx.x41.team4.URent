@@ -2,10 +2,11 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
-import { connectDb } from "./config/db";
-import { env } from "./config/env";
+import { connectDB } from "./config/db-lazy";
+
 import { swaggerSpec } from "./config/swagger";
 import { errorMiddleware } from "./middlewares/error.middleware";
+
 import { authRouter } from "./routes/auth.route";
 import { messageRouter } from "./routes/message.route";
 import { notificationRouter } from "./routes/notification.route";
@@ -26,22 +27,9 @@ app.use(
 app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 
-let dbConnectionPromise: Promise<void> | null = null;
-
-const getDatabaseConnection = (): Promise<void> => {
-  if (!dbConnectionPromise) {
-    dbConnectionPromise = connectDb().catch((error) => {
-      dbConnectionPromise = null;
-      console.error("❌ Lỗi kết nối Database trên Serverless:", error);
-      throw error;
-    });
-  }
-  return dbConnectionPromise;
-};
-
 app.use(async (_req, _res, next) => {
   try {
-    await getDatabaseConnection();
+    await connectDB();
     next();
   } catch {
     next(new Error("Không thể kết nối đến cơ sở dữ liệu."));
