@@ -1,145 +1,322 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
+import axios from "axios";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { notificationService } from "../services/notificationService";
-import type { ApiNotification } from "../types";
+import type { ApiNotification, ApiNotificationListMeta } from "../types";
 
-export function useNotifications(params?: {
+// ==========================================
+// 1. Types & Interfaces
+// ==========================================
+
+export interface UseNotificationsParams {
   page?: number;
   limit?: number;
   type?: 'order' | 'message' | 'promotion' | 'system';
   read?: boolean;
-}) {
-  const [notifications, setNotifications] = useState<ApiNotification[]>([]);
-  const [pagination, setPagination] = useState<{
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+}
 
-  const paramsKey = JSON.stringify(params ?? {});
+export interface NotificationsState {
+  data: ApiNotification[];
+  pagination: ApiNotificationListMeta['pagination'] | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export type NotificationsAction =
+  | { type: 'FETCH_START' }
+  | { type: 'FETCH_SUCCESS'; payload: { data: ApiNotification[]; pagination: ApiNotificationListMeta['pagination'] | null } }
+  | { type: 'FETCH_ERROR'; error: string }
+  | { type: 'MARK_READ'; payload: { notificationId: string; readAt: string } }
+  | { type: 'MARK_ALL_READ'; payload: { type?: 'order' | 'message' | 'promotion' | 'system'; readAt: string } }
+  | { type: 'DELETE'; payload: { notificationId: string } };
+
+export interface UseNotificationsReturn {
+  notifications: ApiNotification[];
+  data: ApiNotification[];
+  pagination: ApiNotificationListMeta['pagination'] | null;
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => () => void;
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAllAsRead: (type?: 'order' | 'message' | 'promotion' | 'system') => Promise<unknown>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+}
+
+export interface UnreadCountState {
+  unreadCount: number;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export type UnreadCountAction =
+  | { type: 'FETCH_START' }
+  | { type: 'FETCH_SUCCESS'; payload: number }
+  | { type: 'FETCH_ERROR'; error: string };
+
+export interface UseUnreadCountReturn {
+  unreadCount: number;
+  isLoading: boolean;
+  error: string | null;
+  refresh: () => () => void;
+}
+
+// ==========================================
+// 2. Helpers (Custom Value Comparison)
+// ==========================================
+
+function isDeepEqual(a: any, b: any): boolean {
+  if (Object.is(a, b)) return true;
+
+  if (typeof a !== 'object' || a === null || typeof b !== 'object' || b === null) {
+    return false;
+  }
+
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+
+  if (keysA.length !== keysB.length) return false;
+
+  for (const key of keysA) {
+    if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+    if (!isDeepEqual(a[key], b[key])) return false;
+  }
+
+  return true;
+}
+
+function useDeepCompareMemoize<T>(value: T): T {
+  const ref = useRef<T>(value);
+  if (!isDeepEqual(value, ref.current)) {
+    ref.current = value;
+  }
+  return ref.current;
+}
+
+// ==========================================
+// 3. Reducers
+// ==========================================
+
+function notificationsReducer(state: NotificationsState, action: NotificationsAction): NotificationsState {
+  switch (action.type) {
+    case 'FETCH_START':
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+    case 'FETCH_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        data: action.payload.data,
+        pagination: action.payload.pagination,
+      };
+    case 'FETCH_ERROR':
+      return {
+        ...state,
+        isLoading: false,
+        error: action.error,
+      };
+    case 'MARK_READ':
+      return {
+        ...state,
+        data: state.data.map(notification =>
+          notification._id === action.payload.notificationId
+            ? { ...notification, read: true, readAt: action.payload.readAt }
+            : notification
+        ),
+      };
+    case 'MARK_ALL_READ':
+      return {
+        ...state,
+        data: state.data.map(notification =>
+          !notification.read && (!action.payload.type || notification.type === action.payload.type)
+            ? { ...notification, read: true, readAt: action.payload.readAt }
+            : notification
+        ),
+      };
+    case 'DELETE':
+      return {
+        ...state,
+        data: state.data.filter(n => n._id !== action.payload.notificationId),
+      };
+    default:
+      return state;
+  }
+}
+
+function unreadCountReducer(state: UnreadCountState, action: UnreadCountAction): UnreadCountState {
+  switch (action.type) {
+    case 'FETCH_START':
+      return {
+        ...state,
+        isLoading: true,
+        error: null,
+      };
+    case 'FETCH_SUCCESS':
+      return {
+        ...state,
+        isLoading: false,
+        unreadCount: action.payload,
+      };
+    case 'FETCH_ERROR':
+      return {
+        ...state,
+        isLoading: false,
+        error: action.error,
+      };
+    default:
+      return state;
+  }
+}
+
+// ==========================================
+// 4. Custom Hooks
+// ==========================================
+
+export function useNotifications(params?: UseNotificationsParams): UseNotificationsReturn {
+  const memoizedParams = useDeepCompareMemoize(params);
+
+  const [state, dispatch] = useReducer(notificationsReducer, {
+    data: [],
+    pagination: null,
+    isLoading: true,
+    error: null,
+  });
 
   const refresh = useCallback(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
 
-    setIsLoading(true);
-    setError(null);
+    dispatch({ type: 'FETCH_START' });
 
     notificationService
-      .getNotifications(params)
+      .getNotifications(memoizedParams, { signal: abortController.signal })
       .then((res) => {
-        if (!cancelled) {
-          setNotifications(res.data);
-          setPagination(res.meta.pagination);
-        }
+        dispatch({
+          type: 'FETCH_SUCCESS',
+          payload: {
+            data: res.data,
+            pagination: res.meta?.pagination ?? null,
+          },
+        });
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setError(normalizeApiError(error).message);
+        if (
+          axios.isCancel(error) ||
+          (error instanceof Error && error.name === 'CanceledError') ||
+          (error as any)?.code === 'ERR_CANCELED'
+        ) {
+          return;
         }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        dispatch({
+          type: 'FETCH_ERROR',
+          error: normalizeApiError(error).message,
+        });
       });
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
-  }, [paramsKey]);
+  }, [memoizedParams]);
 
   useEffect(() => {
     return refresh();
   }, [refresh]);
 
-  const markAsRead = useCallback(async (notificationId: string) => {
+  const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
     try {
       await notificationService.markAsRead(notificationId);
-      setNotifications(prev =>
-        prev.map(notification =>
-          notification._id === notificationId
-            ? { ...notification, read: true, readAt: new Date().toISOString() }
-            : notification
-        )
-      );
+      dispatch({
+        type: 'MARK_READ',
+        payload: {
+          notificationId,
+          readAt: new Date().toISOString(),
+        },
+      });
     } catch (error) {
       throw normalizeApiError(error);
     }
   }, []);
 
-  const markAllAsRead = useCallback(async (type?: 'order' | 'message' | 'promotion' | 'system') => {
+  const markAllAsRead = useCallback(async (
+    type?: 'order' | 'message' | 'promotion' | 'system'
+  ): Promise<unknown> => {
     try {
       const result = await notificationService.markAllAsRead(type);
-      setNotifications(prev =>
-        prev.map(notification =>
-          !notification.read && (!type || notification.type === type)
-            ? { ...notification, read: true, readAt: new Date().toISOString() }
-            : notification
-        )
-      );
+      dispatch({
+        type: 'MARK_ALL_READ',
+        payload: {
+          type,
+          readAt: new Date().toISOString(),
+        },
+      });
       return result.data;
     } catch (error) {
       throw normalizeApiError(error);
     }
   }, []);
 
-  const deleteNotification = useCallback(async (notificationId: string) => {
+  const deleteNotification = useCallback(async (notificationId: string): Promise<void> => {
     try {
       await notificationService.deleteNotification(notificationId);
-      setNotifications(prev => prev.filter(n => n._id !== notificationId));
+      dispatch({
+        type: 'DELETE',
+        payload: { notificationId },
+      });
     } catch (error) {
       throw normalizeApiError(error);
     }
   }, []);
 
   return {
-    notifications,
-    pagination,
-    isLoading,
-    error,
+    notifications: state.data,
+    data: state.data, // Standardized naming compatibility
+    pagination: state.pagination,
+    isLoading: state.isLoading,
+    error: state.error,
     refresh,
     markAsRead,
     markAllAsRead,
-    deleteNotification
+    deleteNotification,
   };
 }
 
-export function useUnreadCount() {
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function useUnreadCount(): UseUnreadCountReturn {
+  const [state, dispatch] = useReducer(unreadCountReducer, {
+    unreadCount: 0,
+    isLoading: true,
+    error: null,
+  });
 
   const refresh = useCallback(() => {
-    let cancelled = false;
+    const abortController = new AbortController();
 
-    setIsLoading(true);
-    setError(null);
+    dispatch({ type: 'FETCH_START' });
 
     notificationService
-      .getUnreadCount()
+      .getUnreadCount({ signal: abortController.signal })
       .then((res) => {
-        if (!cancelled) {
-          setUnreadCount(res.data.unreadCount);
-        }
+        dispatch({
+          type: 'FETCH_SUCCESS',
+          payload: res.data.unreadCount,
+        });
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setError(normalizeApiError(error).message);
+        if (
+          axios.isCancel(error) ||
+          (error instanceof Error && error.name === 'CanceledError') ||
+          (error as any)?.code === 'ERR_CANCELED'
+        ) {
+          return;
         }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        dispatch({
+          type: 'FETCH_ERROR',
+          error: normalizeApiError(error).message,
+        });
       });
 
     return () => {
-      cancelled = true;
+      abortController.abort();
     };
   }, []);
 
@@ -148,9 +325,9 @@ export function useUnreadCount() {
   }, [refresh]);
 
   return {
-    unreadCount,
-    isLoading,
-    error,
-    refresh
+    unreadCount: state.unreadCount,
+    isLoading: state.isLoading,
+    error: state.error,
+    refresh,
   };
 }

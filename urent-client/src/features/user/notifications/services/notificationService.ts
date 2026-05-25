@@ -12,15 +12,21 @@ export type NotificationListResponse = {
 };
 
 export const notificationService = {
-  async getNotifications(params?: {
-    page?: number;
-    limit?: number;
-    type?: 'order' | 'message' | 'promotion' | 'system';
-    read?: boolean;
-  }): Promise<NotificationListResponse> {
+  async getNotifications(
+    params?: {
+      page?: number;
+      limit?: number;
+      type?: 'order' | 'message' | 'promotion' | 'system';
+      read?: boolean;
+    },
+    options?: { signal?: AbortSignal }
+  ): Promise<NotificationListResponse> {
     const res = await apiClient.get<ApiResponse<ApiNotification[]>>(
       "/api/v1/notifications",
-      { params }
+      {
+        params,
+        signal: options?.signal,
+      }
     );
     return {
       data: res.data.data,
@@ -28,9 +34,12 @@ export const notificationService = {
     };
   },
 
-  async getUnreadCount() {
+  async getUnreadCount(options?: { signal?: AbortSignal }) {
     const res = await apiClient.get<ApiResponse<ApiUnreadCount>>(
-      "/api/v1/notifications/unread-count"
+      "/api/v1/notifications/unread-count",
+      {
+        signal: options?.signal,
+      }
     );
     return res.data;
   },
