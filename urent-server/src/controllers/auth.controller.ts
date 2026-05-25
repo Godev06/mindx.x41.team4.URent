@@ -1,49 +1,68 @@
-import crypto from 'crypto';
-import { Request, Response } from 'express';
-import { admin, isFirebaseAdminInitialized } from '../config/firebase';
-import { env } from '../config/env';
-import { SettingsModel } from '../models/settings.model';
-import { UserModel } from '../models/user.model';
-import { comparePassword, hashPassword } from '../utils/hash';
-import { signToken } from '../utils/jwt';
+import crypto from "crypto";
+import { Request, Response } from "express";
+import { admin, isFirebaseAdminInitialized } from "../config/firebase";
+import { env } from "../config/env";
+import { SettingsModel } from "../models/settings.model";
+import { UserModel } from "../models/user.model";
+import { comparePassword, hashPassword } from "../utils/hash";
+import { Role, signToken } from "../utils/jwt";
+
 import {
   createUserWithOtp,
   issueLoginOtp,
   issueResetToken,
   issueOtp,
   verifyOtp,
-  verifyResetOtp
-} from '../services/user.service';
-import { OtpPurpose } from '../services/email.service';
-import { createActivityOnly } from '../services/activity-notification.service';
-import { verifyAccessToken } from '../utils/auth-token';
-import { resolveAppIdentity } from '../services/auth-identity.service';
-import { AppError } from '../utils/app-error';
-import { sendSuccess } from '../utils/api-response';
+  verifyResetOtp,
+} from "../services/user.service";
+import { OtpPurpose } from "../services/email.service";
+import { createActivityOnly } from "../services/activity-notification.service";
+import { verifyAccessToken } from "../utils/auth-token";
+import { resolveAppIdentity } from "../services/auth-identity.service";
+import { AppError } from "../utils/app-error";
+import { sendSuccess } from "../utils/api-response";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type AuthOtpPurpose = Extract<OtpPurpose, 'register' | 'login'>;
+type AuthOtpPurpose = Extract<OtpPurpose, "register" | "login">;
 type UnifiedOtpPurpose = OtpPurpose;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
-const looksLikeEmail = (value: string) => value.includes('@');
+const looksLikeEmail = (value: string) => value.includes("@");
 const hasLocalPasswordProvider = (authProviders: string[] | undefined) =>
-  (authProviders ?? []).includes('local');
-const isGoogleOnlyAccount = (authProviders: string[] | undefined, username?: string) => {
+  (authProviders ?? []).includes("local");
+const isGoogleOnlyAccount = (
+  authProviders: string[] | undefined,
+  username?: string,
+) => {
   const providers = authProviders ?? [];
-  if (providers.includes('google') && !providers.includes('local')) {
+  if (providers.includes("google") && !providers.includes("local")) {
     return true;
   }
 
   return providers.length === 0 && !username?.trim();
 };
 
-const buildTokenPayload = async (userId: string, email: string, message: string) => ({
-  token: await signToken({ sub: userId, email }),
-  message
+type JwtSignPayload = {
+  sub: string;
+  email: string;
+  role: Role;
+};
+
+const buildTokenPayload = async (
+  userId: string,
+  email: string,
+  message: string,
+  role: Role,
+): Promise<{ token: string; message: string }> => ({
+  token: await signToken({
+    sub: userId,
+    email,
+    role,
+  } satisfies JwtSignPayload),
+  message,
 });
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
@@ -51,7 +70,7 @@ const buildFirebaseUid = (userId: string) => `urent_${userId}`;
 const ensureFirebaseAuthUser = async (
   userId: string,
   email: string,
-  displayName?: string
+  displayName?: string,
 ): Promise<string> => {
   const firebaseUid = buildFirebaseUid(userId);
   // If Firebase admin is not initialized (dev environment), just return a
@@ -64,7 +83,7 @@ const ensureFirebaseAuthUser = async (
   try {
     await admin.auth().getUser(firebaseUid);
   } catch (error: any) {
-    if (error.code === 'auth/user-not-found') {
+    if (error.code === "auth/user-not-found") {
       await admin.auth().createUser({
         uid: firebaseUid,
         email,
@@ -79,7 +98,7 @@ const ensureFirebaseAuthUser = async (
 
 const logActivity = async (params: {
   userId: string;
-  type: 'auth' | 'order' | 'message' | 'update';
+  type: "auth" | "order" | "message" | "update";
   action: string;
   description: string;
 }) => {
@@ -95,7 +114,7 @@ const logActivity = async (params: {
 const verifyOtpWithPurpose = async (
   req: Request,
   res: Response,
-  purpose: AuthOtpPurpose
+  purpose: AuthOtpPurpose,
 ) => {
   const { email, otp } = req.body as { email: string; otp: string };
   const user = await verifyOtp(normalizeEmail(email), otp, purpose);
@@ -103,73 +122,99 @@ const verifyOtpWithPurpose = async (
   if (!user) {
     throw new AppError(
       400,
-      'INVALID_OTP',
-      purpose === 'register' ? 'Invalid or expired OTP' : 'Invalid or expired login OTP'
+      "INVALID_OTP",
+      purpose === "register"
+        ? "Invalid or expired OTP"
+        : "Invalid or expired login OTP",
     );
   }
 
-  if (purpose === 'register') {
+  if (purpose === "register") {
     await logActivity({
       userId: String(user._id),
-      type: 'auth',
-      action: 'Email verified',
-      description: 'User completed email verification via OTP'
+      type: "auth",
+      action: "Email verified",
+      description: "User completed email verification via OTP",
     });
-    return sendSuccess(res, { message: 'Email verified successfully' });
+    return sendSuccess(res, { message: "Email verified successfully" });
   }
 
   await logActivity({
     userId: String(user._id),
-    type: 'auth',
-    action: 'Two-factor login successful',
-    description: 'User completed sign in with email OTP verification'
+    type: "auth",
+    action: "Two-factor login successful",
+    description: "User completed sign in with email OTP verification",
   });
 
-  return sendSuccess(res, buildTokenPayload(String(user._id), user.email, 'Login successful'));
+  return sendSuccess(
+    res,
+    buildTokenPayload(
+      String(user._id),
+      user.email,
+      "Login successful",
+      user.role,
+    ),
+  );
 };
 
 const handleGoogleAuth = async (req: Request, res: Response) => {
   const { idToken } = req.body as { idToken?: string };
 
-  if (!idToken || typeof idToken !== 'string') {
-    throw new AppError(400, 'MISSING_ID_TOKEN', 'Missing Firebase ID token');
+  if (!idToken || typeof idToken !== "string") {
+    throw new AppError(400, "MISSING_ID_TOKEN", "Missing Firebase ID token");
   }
 
   if (!env.firebaseApiKey) {
-    throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase auth is not configured');
+    throw new AppError(
+      503,
+      "SERVICE_UNAVAILABLE",
+      "Firebase auth is not configured",
+    );
   }
 
   let identity;
   try {
     identity = await verifyAccessToken(idToken);
   } catch {
-    throw new AppError(401, 'INVALID_ID_TOKEN', 'Invalid Firebase ID token');
+    throw new AppError(401, "INVALID_ID_TOKEN", "Invalid Firebase ID token");
   }
 
-  if (identity.authProvider !== 'firebase') {
-    throw new AppError(400, 'INVALID_TOKEN_TYPE', 'Token is not a Firebase ID token');
+  if (identity.authProvider !== "firebase") {
+    throw new AppError(
+      400,
+      "INVALID_TOKEN_TYPE",
+      "Token is not a Firebase ID token",
+    );
   }
 
   if (!identity.email) {
-    throw new AppError(400, 'MISSING_EMAIL', 'Google account does not provide email');
+    throw new AppError(
+      400,
+      "MISSING_EMAIL",
+      "Google account does not provide email",
+    );
   }
 
   const appIdentity = await resolveAppIdentity(identity);
   const user = await UserModel.findById(appIdentity.sub).select(
-    '-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt'
+    "-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt",
   );
 
   await logActivity({
     userId: appIdentity.sub,
-    type: 'auth',
-    action: 'Google login successful',
-    description: 'User signed in with Google account'
+    type: "auth",
+    action: "Google login successful",
+    description: "User signed in with Google account",
   });
 
   return sendSuccess(res, {
-    token: await signToken({ sub: appIdentity.sub, email: appIdentity.email }),
+    token: await signToken({
+      sub: appIdentity.sub,
+      email: appIdentity.email,
+      role: user?.role ?? "user",
+    }),
     user,
-    message: 'Login with Google successful'
+    message: "Login with Google successful",
   });
 };
 
@@ -193,13 +238,23 @@ export const register = async (req: Request, res: Response) => {
     displayName?: string;
   };
 
-  const user = await createUserWithOtp(normalizeEmail(email), password, username, displayName);
+  const user = await createUserWithOtp(
+    normalizeEmail(email),
+    password,
+    username,
+    displayName,
+  );
 
   if (!user) {
-    throw new AppError(409, 'EMAIL_EXISTS', 'Email already exists');
+    throw new AppError(409, "EMAIL_EXISTS", "Email already exists");
   }
 
-  return sendSuccess(res, { message: 'OTP has been sent to your email' }, undefined, 201);
+  return sendSuccess(
+    res,
+    { message: "OTP has been sent to your email" },
+    undefined,
+    201,
+  );
 };
 
 export const login = async (req: Request, res: Response) => {
@@ -223,24 +278,30 @@ export const login = async (req: Request, res: Response) => {
     : await UserModel.findOne({ phone: phone!.trim() });
 
   if (!user) {
-    throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
+    throw new AppError(401, "INVALID_CREDENTIALS", "Invalid credentials");
   }
 
-  if (!user.password || isGoogleOnlyAccount(user.authProviders, user.username)) {
+  if (
+    !user.password ||
+    isGoogleOnlyAccount(user.authProviders, user.username)
+  ) {
     await issueResetToken(user.email, true);
     return sendSuccess(res, {
       email: user.email,
-      message: 'This account does not have a password yet. OTP has been sent to your email to create one',
-      requiresPasswordSetup: true
+      message:
+        "This account does not have a password yet. OTP has been sent to your email to create one",
+      requiresPasswordSetup: true,
     });
   }
 
   if (!(await comparePassword(password, user.password))) {
-    throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid credentials');
+    throw new AppError(401, "INVALID_CREDENTIALS", "Invalid credentials");
   }
 
   if (!hasLocalPasswordProvider(user.authProviders)) {
-    user.authProviders = Array.from(new Set([...(user.authProviders ?? []), 'local']));
+    user.authProviders = Array.from(
+      new Set([...(user.authProviders ?? []), "local"]),
+    );
     await user.save();
   }
 
@@ -249,44 +310,55 @@ export const login = async (req: Request, res: Response) => {
   if (settings?.twoFactorEnabled) {
     await issueLoginOtp(user);
     return sendSuccess(res, {
-      message: 'OTP has been sent to your email to complete sign in',
-      requiresTwoFactor: true
+      message: "OTP has been sent to your email to complete sign in",
+      requiresTwoFactor: true,
     });
   }
 
   await logActivity({
     userId: String(user._id),
-    type: 'auth',
-    action: 'Login successful',
-    description: 'User signed in successfully'
+    type: "auth",
+    action: "Login successful",
+    description: "User signed in successfully",
   });
 
-  return sendSuccess(res, buildTokenPayload(String(user._id), user.email, 'Login successful'));
+  return sendSuccess(
+    res,
+    buildTokenPayload(
+      String(user._id),
+      user.email,
+      "Login successful",
+      user.role,
+    ),
+  );
 };
 
 export const checkLoginIdentity = async (req: Request, res: Response) => {
   const { identifier } = req.body as { identifier: string };
   const trimmedIdentifier = identifier.trim();
 
-  const identityType = looksLikeEmail(trimmedIdentifier) ? 'email' : 'phone';
+  const identityType = looksLikeEmail(trimmedIdentifier) ? "email" : "phone";
   const query =
-    identityType === 'email'
+    identityType === "email"
       ? { email: normalizeEmail(trimmedIdentifier) }
       : { phone: trimmedIdentifier };
 
-  const user = await UserModel.findOne(query).select('_id email password authProviders username');
+  const user = await UserModel.findOne(query).select(
+    "_id email password authProviders username",
+  );
 
   if (!user) {
     throw new AppError(
       404,
-      'USER_NOT_FOUND',
-      identityType === 'email'
-        ? 'Email is not registered yet'
-        : 'Phone number is not registered yet'
+      "USER_NOT_FOUND",
+      identityType === "email"
+        ? "Email is not registered yet"
+        : "Phone number is not registered yet",
     );
   }
 
-  const requiresPasswordSetup = !user.password || isGoogleOnlyAccount(user.authProviders, user.username);
+  const requiresPasswordSetup =
+    !user.password || isGoogleOnlyAccount(user.authProviders, user.username);
 
   if (requiresPasswordSetup) {
     await issueResetToken(user.email, true);
@@ -295,9 +367,12 @@ export const checkLoginIdentity = async (req: Request, res: Response) => {
   return sendSuccess(res, {
     exists: true,
     method: identityType,
-    identifier: identityType === 'email' ? normalizeEmail(trimmedIdentifier) : trimmedIdentifier,
+    identifier:
+      identityType === "email"
+        ? normalizeEmail(trimmedIdentifier)
+        : trimmedIdentifier,
     email: user.email,
-    requiresPasswordSetup
+    requiresPasswordSetup,
   });
 };
 
@@ -308,10 +383,14 @@ export const verifyAuthOtp = async (req: Request, res: Response) => {
     otp: string;
   };
 
-  if (purpose === 'reset password' || purpose === 'create password') {
+  if (purpose === "reset password" || purpose === "create password") {
     const user = await verifyResetOtp(normalizeEmail(email), otp);
     if (!user) {
-      throw new AppError(400, 'INVALID_OTP', `Invalid or expired ${purpose === 'create password' ? 'create password' : 'reset'} OTP`);
+      throw new AppError(
+        400,
+        "INVALID_OTP",
+        `Invalid or expired ${purpose === "create password" ? "create password" : "reset"} OTP`,
+      );
     }
 
     const token = crypto.randomUUID();
@@ -319,8 +398,8 @@ export const verifyAuthOtp = async (req: Request, res: Response) => {
     await user.save();
 
     return sendSuccess(res, {
-      message: `${purpose === 'create password' ? 'Create password' : 'Reset'} OTP verified successfully`,
-      token
+      message: `${purpose === "create password" ? "Create password" : "Reset"} OTP verified successfully`,
+      token,
     });
   }
 
@@ -337,54 +416,59 @@ export const resendAuthOtp = async (req: Request, res: Response) => {
   const user = await UserModel.findOne({ email: normalizedEmail });
 
   if (!user) {
-    throw new AppError(404, 'USER_NOT_FOUND', 'Email not found');
+    throw new AppError(404, "USER_NOT_FOUND", "Email not found");
   }
 
-  if (purpose === 'register') {
+  if (purpose === "register") {
     if (user.isEmailVerified) {
-      throw new AppError(400, 'ALREADY_VERIFIED', 'Email is already verified');
+      throw new AppError(400, "ALREADY_VERIFIED", "Email is already verified");
     }
 
-    await issueOtp(user, 'register');
-    return sendSuccess(res, { message: 'OTP has been resent to your email' });
+    await issueOtp(user, "register");
+    return sendSuccess(res, { message: "OTP has been resent to your email" });
   }
 
-  if (purpose === 'login') {
+  if (purpose === "login") {
     const settings = await SettingsModel.findOne({ userId: user._id });
     if (!settings?.twoFactorEnabled) {
-      throw new AppError(400, 'TWO_FACTOR_NOT_ENABLED', 'Two-factor login is not enabled for this account');
+      throw new AppError(
+        400,
+        "TWO_FACTOR_NOT_ENABLED",
+        "Two-factor login is not enabled for this account",
+      );
     }
 
     await issueLoginOtp(user);
-    return sendSuccess(res, { message: 'OTP has been resent to your email' });
+    return sendSuccess(res, { message: "OTP has been resent to your email" });
   }
 
-  const isCreatePassword = purpose === 'create password';
+  const isCreatePassword = purpose === "create password";
   await issueResetToken(normalizedEmail, isCreatePassword);
   return sendSuccess(res, {
-    message: `${isCreatePassword ? 'Create password' : 'Reset password'} OTP has been resent to your email`
+    message: `${isCreatePassword ? "Create password" : "Reset password"} OTP has been resent to your email`,
   });
 };
 
 export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body as { email: string };
   const normalizedEmail = normalizeEmail(email);
-  
+
   const userRecord = await UserModel.findOne({ email: normalizedEmail });
-  const isCreatePassword = userRecord 
-    ? (!userRecord.password || isGoogleOnlyAccount(userRecord.authProviders, userRecord.username)) 
+  const isCreatePassword = userRecord
+    ? !userRecord.password ||
+      isGoogleOnlyAccount(userRecord.authProviders, userRecord.username)
     : false;
 
   const user = await issueResetToken(normalizedEmail, isCreatePassword);
 
   if (!user) {
-    throw new AppError(404, 'USER_NOT_FOUND', 'Email not found');
+    throw new AppError(404, "USER_NOT_FOUND", "Email not found");
   }
 
-  return sendSuccess(res, { 
-    message: isCreatePassword 
-      ? 'Create password OTP sent to your email' 
-      : 'Reset password OTP sent to your email' 
+  return sendSuccess(res, {
+    message: isCreatePassword
+      ? "Create password OTP sent to your email"
+      : "Reset password OTP sent to your email",
   });
 };
 
@@ -400,7 +484,11 @@ export const resetPassword = async (req: Request, res: Response) => {
   const user = await UserModel.findOne({ email: normalizeEmail(email) });
 
   if (!resetToken || resetToken.length <= 6) {
-    throw new AppError(400, 'UNVERIFIED_OTP', 'Bạn phải xác minh OTP trước khi đổi mật khẩu');
+    throw new AppError(
+      400,
+      "UNVERIFIED_OTP",
+      "Bạn phải xác minh OTP trước khi đổi mật khẩu",
+    );
   }
 
   if (
@@ -409,37 +497,43 @@ export const resetPassword = async (req: Request, res: Response) => {
     !user.resetTokenExpiresAt ||
     user.resetTokenExpiresAt.getTime() < Date.now()
   ) {
-    throw new AppError(400, 'INVALID_RESET_TOKEN', 'Invalid or expired reset token');
+    throw new AppError(
+      400,
+      "INVALID_RESET_TOKEN",
+      "Invalid or expired reset token",
+    );
   }
 
   user.password = await hashPassword(newPassword);
-  user.authProviders = Array.from(new Set([...(user.authProviders ?? []), 'local']));
+  user.authProviders = Array.from(
+    new Set([...(user.authProviders ?? []), "local"]),
+  );
   user.resetToken = undefined;
   user.resetTokenExpiresAt = undefined;
   await user.save();
 
   await logActivity({
     userId: String(user._id),
-    type: 'update',
-    action: 'Password reset',
-    description: 'User reset account password using reset token'
+    type: "update",
+    action: "Password reset",
+    description: "User reset account password using reset token",
   });
 
-  return sendSuccess(res, { message: 'Password reset successful' });
+  return sendSuccess(res, { message: "Password reset successful" });
 };
 
 export const getMe = async (req: Request, res: Response) => {
   const userId = req.user?.sub;
 
   if (!userId) {
-    throw new AppError(401, 'UNAUTHORIZED', 'Unauthorized');
+    throw new AppError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const user = await UserModel.findById(userId).select(
-    '-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt'
+    "-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt",
   );
 
-  if (!user && req.user?.authProvider === 'firebase') {
+  if (!user && req.user?.authProvider === "firebase") {
     return sendSuccess(res, {
       id: req.user.sub,
       email: req.user.email,
@@ -447,12 +541,12 @@ export const getMe = async (req: Request, res: Response) => {
       avatarUrl: req.user.avatarUrl ?? null,
       phone: req.user.phoneNumber ?? null,
       bio: null,
-      createdAt: null
+      createdAt: null,
     });
   }
 
   if (!user) {
-    throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+    throw new AppError(404, "USER_NOT_FOUND", "User not found");
   }
 
   return sendSuccess(res, user);
@@ -460,7 +554,11 @@ export const getMe = async (req: Request, res: Response) => {
 
 const buildFirebaseIdentityToolkitUrl = (path: string) => {
   if (!env.firebaseApiKey) {
-    throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase API key is not configured');
+    throw new AppError(
+      503,
+      "SERVICE_UNAVAILABLE",
+      "Firebase API key is not configured",
+    );
   }
 
   return `https://identitytoolkit.googleapis.com/v1/${path}?key=${encodeURIComponent(env.firebaseApiKey)}`;
@@ -469,11 +567,11 @@ const buildFirebaseIdentityToolkitUrl = (path: string) => {
 const fetchFirebaseIdentityToolkit = async <T>(path: string, body: unknown) => {
   const url = buildFirebaseIdentityToolkitUrl(path);
   const response = await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json'
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
   });
 
   const data = (await response.json()) as {
@@ -483,29 +581,51 @@ const fetchFirebaseIdentityToolkit = async <T>(path: string, body: unknown) => {
   if (!response.ok) {
     const errorMessage =
       data.error?.message ||
-      data.error?.errors?.map((error) => error.message).filter(Boolean).join(', ') ||
-      'Firebase Identity Toolkit request failed';
+      data.error?.errors
+        ?.map((error) => error.message)
+        .filter(Boolean)
+        .join(", ") ||
+      "Firebase Identity Toolkit request failed";
 
-    throw new AppError(502, 'FIREBASE_IDENTITY_TOOLKIT_ERROR', errorMessage);
+    throw new AppError(502, "FIREBASE_IDENTITY_TOOLKIT_ERROR", errorMessage);
   }
 
   return data;
 };
 
-const getFirebaseCustomIdTokenForUser = async (userId: string, email: string, displayName?: string) => {
+const getFirebaseCustomIdTokenForUser = async (
+  userId: string,
+  email: string,
+  displayName?: string,
+) => {
   if (!isFirebaseAdminInitialized() || !env.firebaseApiKey) {
-    throw new AppError(503, 'SERVICE_UNAVAILABLE', 'Firebase admin is not configured');
+    throw new AppError(
+      503,
+      "SERVICE_UNAVAILABLE",
+      "Firebase admin is not configured",
+    );
   }
 
-  const firebaseUid = await ensureFirebaseAuthUser(userId, normalizeEmail(email), displayName);
+  const firebaseUid = await ensureFirebaseAuthUser(
+    userId,
+    normalizeEmail(email),
+    displayName,
+  );
   const customToken = await admin.auth().createCustomToken(firebaseUid);
-  const result = await fetchFirebaseIdentityToolkit<{ idToken?: string }>('accounts:signInWithCustomToken', {
-    token: customToken,
-    returnSecureToken: true
-  });
+  const result = await fetchFirebaseIdentityToolkit<{ idToken?: string }>(
+    "accounts:signInWithCustomToken",
+    {
+      token: customToken,
+      returnSecureToken: true,
+    },
+  );
 
   if (!result.idToken) {
-    throw new AppError(502, 'FIREBASE_IDENTITY_TOOLKIT_ERROR', 'Failed to sign in with Firebase custom token');
+    throw new AppError(
+      502,
+      "FIREBASE_IDENTITY_TOOLKIT_ERROR",
+      "Failed to sign in with Firebase custom token",
+    );
   }
 
   return result.idToken;
@@ -516,9 +636,13 @@ export const getFirebaseCustomToken = async (req: Request, res: Response) => {
   const email = req.user?.email;
 
   if (!userId || !email) {
-    throw new AppError(401, 'UNAUTHORIZED', 'Unauthorized');
+    throw new AppError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
-  const customToken = await getFirebaseCustomIdTokenForUser(userId, email, req.user?.displayName);
+  const customToken = await getFirebaseCustomIdTokenForUser(
+    userId,
+    email,
+    req.user?.displayName,
+  );
   return sendSuccess(res, { token: customToken });
 };

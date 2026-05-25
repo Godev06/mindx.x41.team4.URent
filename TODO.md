@@ -1,5 +1,0 @@
-- [x] Tìm nguyên nhân lỗi host backend: axios baseURL đang fallback về http://localhost:5003
-- [ ] Sửa frontend để dùng relative URL cho HTTP (giảm phụ thuộc VITE_API_URL)
-- [ ] Sửa frontend socket để dùng relative URL/đúng wss/ws path
-- [ ] Đảm bảo Vercel rewrite giúp route về backend (không cần host tuyệt đối)
-- [ ] Chạy build/test cơ bản (npm run build cho urent-client, health check nếu có)
