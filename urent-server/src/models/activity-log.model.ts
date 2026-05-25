@@ -1,6 +1,6 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema } from "mongoose";
 
-const activityTypeValues = ['auth', 'update'] as const;
+const activityTypeValues = ["auth", "update", "message"] as const;
 
 type ActivityType = (typeof activityTypeValues)[number];
 
@@ -16,17 +16,20 @@ export interface ActivityLogDocument extends mongoose.Document {
 
 const activityLogSchema = new Schema<ActivityLogDocument>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     action: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     timestamp: { type: Date, default: Date.now },
     type: { type: String, enum: activityTypeValues, required: true },
-    notificationId: { type: Schema.Types.ObjectId, ref: 'Notification' },
-    eventKey: { type: String, trim: true }
+    notificationId: { type: Schema.Types.ObjectId, ref: "Notification" },
+    eventKey: { type: String, trim: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 activityLogSchema.index({ userId: 1, timestamp: -1 });
 
-export const ActivityLogModel = mongoose.model<ActivityLogDocument>('ActivityLog', activityLogSchema);
+export const ActivityLogModel = mongoose.model<ActivityLogDocument>(
+  "ActivityLog",
+  activityLogSchema,
+);

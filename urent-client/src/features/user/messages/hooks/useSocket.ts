@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
 
 const ENV_BASE_URL = (
@@ -7,8 +14,11 @@ const ENV_BASE_URL = (
     | undefined
 )?.trim();
 
+const INITIAL_RECONNECT_DELAY = 3000;
+const MAX_RECONNECT_DELAY = 15000;
+const ACK_TIMEOUT = 10000;
+
 function getBaseUrlForWebSocket() {
-  // Prefer explicit env; if not set, fallback to current origin (works with Vercel rewrites)
   return (
     ENV_BASE_URL ||
     (typeof window !== "undefined" ? window.location.origin : "")
@@ -16,107 +26,211 @@ function getBaseUrlForWebSocket() {
 }
 
 function getWebSocketUrl(baseUrl: string, token: string) {
-  try {
-    const url = new URL(baseUrl);
-    url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    url.pathname = "/ws";
-    url.searchParams.set("token", token);
-    return url.toString();
-  } catch {
-    return baseUrl.replace(/^http/, "ws") + `/ws?token=${token}`;
-  }
+  const url = new URL(baseUrl, window.location.origin);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  const pathname = url.pathname.replace(/\/$/, "");
+  url.pathname = `${pathname}/ws`;
+  url.searchParams.set("token", token);
+  return url.toString();
 }
 
-export function useSocket() {
+type AckCallback = (data: any) => void;
+
+interface SocketContextType {
+  isConnected: boolean;
+  joinConversation: (
+    conversationId: string,
+    onError?: (code: string) => void,
+  ) => void;
+  leaveConversation: (conversationId: string) => void;
+}
+
+const SocketContext = createContext<SocketContextType | null>(null);
+
+// Dùng React.createElement thay vì cú pháp <SocketProvider> để chạy được trong file .ts
+export function SocketProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}): React.ReactElement {
   const socketRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const reconnectDelayRef = useRef(INITIAL_RECONNECT_DELAY);
+  const mountedRef = useRef(false);
+  const shouldReconnectRef = useRef(true);
+  const ackMap = useRef<Map<string, AckCallback>>(new Map());
+
   const [isConnected, setIsConnected] = useState(false);
 
-  // We maintain a map of pending acknowledgments to mimic socket.io's callbacks
-  const ackMap = useRef<Map<string, (data: any) => void>>(new Map());
-
-  const connect = useCallback(() => {
-    const token = getStoredAuthToken();
-    if (!token) return;
-
-    if (socketRef.current?.readyState === WebSocket.OPEN) return;
-
-    const wsUrl = getWebSocketUrl(getBaseUrlForWebSocket(), token);
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      setIsConnected(true);
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-
-        // Handle acknowledgments for our custom events
-        if (data.type === "ack" && data.id) {
-          const cb = ackMap.current.get(data.id);
-          if (cb) {
-            cb(data);
-            ackMap.current.delete(data.id);
-          }
-        } else if (data.type) {
-          // Dispatch native events for message components to listen to
-          const customEvent = new CustomEvent(data.type, { detail: data.data });
-          window.dispatchEvent(customEvent);
-        }
-      } catch (err) {
-        console.error("Failed to parse WebSocket message:", err);
-      }
-    };
-
-    ws.onclose = () => {
-      setIsConnected(false);
-      socketRef.current = null;
-      // Auto reconnect
-      setTimeout(connect, 3000);
-    };
-
-    ws.onerror = (err) => {
-      console.error("WebSocket error:", err);
-    };
-
-    socketRef.current = ws;
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current !== null) {
+      window.clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
   }, []);
 
-  useEffect(() => {
-    connect();
-    return () => {
-      if (socketRef.current) {
-        // Prevent auto-reconnect on unmount by clearing onclose
-        socketRef.current.onclose = null;
-        socketRef.current.close();
-        socketRef.current = null;
+  const cleanupAck = (id: string) => {
+    ackMap.current.delete(id);
+  };
+
+  const triggerReconnect = useCallback(() => {
+    if (!mountedRef.current || !shouldReconnectRef.current) return;
+
+    const token = getStoredAuthToken();
+    if (!token) {
+      console.warn("[WS] Reconnect skipped: no auth token");
+      return;
+    }
+
+    if (reconnectTimeoutRef.current !== null) return;
+
+    const delay = reconnectDelayRef.current;
+    console.warn(`[WS] Reconnecting in ${delay}ms`);
+
+    reconnectTimeoutRef.current = window.setTimeout(() => {
+      reconnectTimeoutRef.current = null;
+      reconnectDelayRef.current = Math.min(
+        reconnectDelayRef.current * 2,
+        MAX_RECONNECT_DELAY,
+      );
+      connect();
+    }, delay);
+  }, []);
+
+  const connect = useCallback(() => {
+    if (!mountedRef.current) return;
+
+    const token = getStoredAuthToken();
+    if (!token) {
+      console.warn("[WS] Connection skipped: no token");
+      return;
+    }
+
+    const currentSocket = socketRef.current;
+    if (
+      currentSocket &&
+      (currentSocket.readyState === WebSocket.OPEN ||
+        currentSocket.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
+
+    try {
+      const wsUrl = getWebSocketUrl(getBaseUrlForWebSocket(), token);
+      console.log("[WS] Connecting:", wsUrl);
+
+      const ws = new WebSocket(wsUrl);
+      socketRef.current = ws;
+
+      ws.onopen = () => {
+        console.log("[WS] Connected");
+        reconnectDelayRef.current = INITIAL_RECONNECT_DELAY;
+        setIsConnected(true);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
+          if (!parsed || typeof parsed !== "object") return;
+
+          if (parsed.type === "ack" && parsed.id) {
+            const callback = ackMap.current.get(parsed.id);
+            if (callback) {
+              callback(parsed);
+              cleanupAck(parsed.id);
+            }
+            return;
+          }
+
+          if (typeof parsed.type === "string") {
+            const customEvent = new CustomEvent(parsed.type, {
+              detail: parsed.data,
+            });
+            window.dispatchEvent(customEvent);
+          }
+        } catch (error) {
+          console.error("[WS] Failed to parse message:", error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("[WS] Socket error:", error);
+        if (ws.readyState !== WebSocket.CLOSED) {
+          ws.close();
+        }
+      };
+
+      ws.onclose = () => {
+        console.warn("[WS] Disconnected");
         setIsConnected(false);
+
+        if (socketRef.current === ws) {
+          socketRef.current = null;
+        }
+
+        triggerReconnect();
+      };
+    } catch (error) {
+      console.error("[WS] Connection failed:", error);
+      triggerReconnect();
+    }
+  }, [triggerReconnect]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    shouldReconnectRef.current = true;
+
+    connect();
+
+    return () => {
+      mountedRef.current = false;
+      shouldReconnectRef.current = false;
+      clearReconnectTimeout();
+      ackMap.current.clear();
+
+      const socket = socketRef.current;
+      if (socket) {
+        socket.onopen = null;
+        socket.onmessage = null;
+        socket.onerror = null;
+        socket.onclose = null;
+
+        if (
+          socket.readyState === WebSocket.OPEN ||
+          socket.readyState === WebSocket.CONNECTING
+        ) {
+          socket.close();
+        }
       }
+      socketRef.current = null;
+      setIsConnected(false);
+      console.log("[WS] Cleaned up global context");
     };
-  }, [connect]);
+  }, [connect, clearReconnectTimeout]);
 
   const joinConversation = useCallback(
     (conversationId: string, onError?: (code: string) => void) => {
-      if (socketRef.current?.readyState !== WebSocket.OPEN) {
-        if (onError) onError("NOT_CONNECTED");
+      const socket = socketRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        onError?.("NOT_CONNECTED");
         return;
       }
 
-      const id = Math.random().toString(36).substring(7);
+      const id = crypto.randomUUID();
+      const timeout = window.setTimeout(() => {
+        console.warn(`[WS] Ack timeout: ${id}`);
+        cleanupAck(id);
+        onError?.("ACK_TIMEOUT");
+      }, ACK_TIMEOUT);
 
-      ackMap.current.set(
-        id,
-        (ack: {
-          success: boolean;
-          error?: { code: string; message: string };
-        }) => {
-          if (!ack.success && onError) {
-            onError(ack.error?.code ?? "UNKNOWN");
-          }
-        },
-      );
+      ackMap.current.set(id, (ack) => {
+        clearTimeout(timeout);
+        if (!ack.success) {
+          onError?.(ack.error?.code ?? "UNKNOWN");
+        }
+      });
 
-      socketRef.current.send(
+      socket.send(
         JSON.stringify({
           type: "conversation.join",
           id,
@@ -128,21 +242,30 @@ export function useSocket() {
   );
 
   const leaveConversation = useCallback((conversationId: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(
-        JSON.stringify({
-          type: "conversation.leave",
-          id: Math.random().toString(36).substring(7),
-          payload: { conversationId },
-        }),
-      );
-    }
+    const socket = socketRef.current;
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+
+    socket.send(
+      JSON.stringify({
+        type: "conversation.leave",
+        id: crypto.randomUUID(),
+        payload: { conversationId },
+      }),
+    );
   }, []);
 
-  return {
-    socket: socketRef.current,
-    isConnected,
-    joinConversation,
-    leaveConversation,
-  };
+  // Thay thế cho đoạn gạch đỏ <SocketContext.Provider value={{...}}> {children} </SocketContext.Provider>
+  return React.createElement(
+    SocketContext.Provider,
+    { value: { isConnected, joinConversation, leaveConversation } },
+    children,
+  );
+}
+
+export function useSocket() {
+  const context = useContext(SocketContext);
+  if (!context) {
+    throw new Error("useSocket must be used within a SocketProvider");
+  }
+  return context;
 }

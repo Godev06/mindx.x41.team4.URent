@@ -30,6 +30,9 @@ import { AdminOrdersDetailPage } from "./features/admin/pages/AdminOrdersDetailP
 import { AdminOrdersPage } from "./features/admin/pages/AdminOrdersPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 
+// IMPORT SocketProvider từ file hook .ts của bạn vào đây
+import { SocketProvider } from "./features/user/messages/hooks/useSocket";
+
 function ProductRoute() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -50,62 +53,65 @@ export default function App() {
     navigate(`/product/${id}`);
   };
 
+  // Bọc thẳng SocketProvider ra ngoài cùng của cây định tuyến trong component này
   return (
-    <Routes>
-      <Route element={<PublicOnlyRoute />}>
-        <Route path={APP_ROUTES.login} element={<LoginPage />} />
-        <Route path={APP_ROUTES.register} element={<RegisterPage />} />
-        <Route path={APP_ROUTES.authOtp} element={<VerifyOtpPage />} />
-        <Route
-          path={APP_ROUTES.forgotPassword}
-          element={<ForgotPasswordPage />}
-        />
-        <Route
-          path={APP_ROUTES.resetPassword}
-          element={<ResetPasswordPage />}
-        />
-      </Route>
-
-      {/* Main Layout routes */}
-      <Route element={<AppShell />}>
-        {/* Public routes — accessible without login */}
-        <Route
-          path={APP_ROUTES.home}
-          element={<HomePage onProductClick={handleProductClick} />}
-        />
-        <Route
-          path="/products"
-          element={
-            <ProductListingPage
-              onProductClick={handleProductClick}
-              onBack={() => navigate("/")}
-            />
-          }
-        />
-        <Route path="/product/:id" element={<ProductRoute />} />
-
-        {/* Protected routes — require login */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
-          <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/messages" element={<MessagesPage />} />
-          <Route path="/messages/:id" element={<MessagesPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path={APP_ROUTES.profile} element={<ProfilePage />} />
+    <SocketProvider>
+      <Routes>
+        <Route element={<PublicOnlyRoute />}>
+          <Route path={APP_ROUTES.login} element={<LoginPage />} />
+          <Route path={APP_ROUTES.register} element={<RegisterPage />} />
+          <Route path={APP_ROUTES.authOtp} element={<VerifyOtpPage />} />
+          <Route
+            path={APP_ROUTES.forgotPassword}
+            element={<ForgotPasswordPage />}
+          />
+          <Route
+            path={APP_ROUTES.resetPassword}
+            element={<ResetPasswordPage />}
+          />
         </Route>
-      </Route>
 
-      <Route element={<ProtectedRoute />}>
-        <Route path="/admin" element={<AdminDashboardPage />} />
-        <Route path="/admin/users" element={<AdminUsersPage />} />
-        <Route path="/admin/orders" element={<AdminOrdersPage />} />
-        <Route path="/admin/orders/:id" element={<AdminOrdersDetailPage />} />
-        <Route path="/admin/logs" element={<AdminLogsPage />} />
-      </Route>
+        {/* Main Layout routes */}
+        <Route element={<AppShell />}>
+          {/* Public routes — accessible without login */}
+          <Route
+            path={APP_ROUTES.home}
+            element={<HomePage onProductClick={handleProductClick} />}
+          />
+          <Route
+            path="/products"
+            element={
+              <ProductListingPage
+                onProductClick={handleProductClick}
+                onBack={() => navigate("/")}
+              />
+            }
+          />
+          <Route path="/product/:id" element={<ProductRoute />} />
 
-      <Route path="*" element={<Navigate to={APP_ROUTES.home} replace />} />
-    </Routes>
+          {/* Protected routes — require login */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+            <Route path="/inventory" element={<InventoryPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/messages/:id" element={<MessagesPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path={APP_ROUTES.profile} element={<ProfilePage />} />
+          </Route>
+        </Route>
+
+        <Route element={<ProtectedRoute />}>
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/orders" element={<AdminOrdersPage />} />
+          <Route path="/admin/orders/:id" element={<AdminOrdersDetailPage />} />
+          <Route path="/admin/logs" element={<AdminLogsPage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to={APP_ROUTES.home} replace />} />
+      </Routes>
+    </SocketProvider>
   );
 }
