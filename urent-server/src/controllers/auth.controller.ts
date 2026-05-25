@@ -17,6 +17,7 @@ import {
 } from "../services/user.service";
 import { OtpPurpose } from "../services/email.service";
 import { sendWelcomeMessageFromAdmin } from "../services/welcome-message.service";
+import { authEvents } from "../events/user-events";
 import { createActivityOnly } from "../services/activity-notification.service";
 import { verifyAccessToken } from "../utils/auth-token";
 import { resolveAppIdentity } from "../services/auth-identity.service";
@@ -260,6 +261,9 @@ export const register = async (req: Request, res: Response) => {
 
   // Tự động gửi tin nhắn chào mừng từ Admin (chạy ngầm - non-blocking)
   sendWelcomeMessageFromAdmin(user._id.toString());
+
+  // Phát sự kiện user.registered để tự động tạo support chat & gửi welcome message từ Admin (Event-Driven)
+  authEvents.emit("user.registered", { userId: user._id.toString() });
 
   return sendSuccess(
     res,

@@ -17,6 +17,9 @@ import { productRouter } from "./routes/product.route";
 import { settingsRouter } from "./routes/settings.route";
 import userRouter from "./routes/user.route";
 
+// Register event listeners
+import "./events/user-events";
+
 export const app = express();
 
 app.use(

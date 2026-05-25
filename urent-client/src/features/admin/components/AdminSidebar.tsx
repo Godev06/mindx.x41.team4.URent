@@ -19,6 +19,10 @@ export function AdminSidebar() {
       path: "/admin/orders",
     },
     {
+      label: "Support Chat",
+      path: "/admin/chat",
+    },
+    {
       label: "Logs",
       path: "/admin/logs",
     },

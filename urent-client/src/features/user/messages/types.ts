@@ -19,11 +19,25 @@ export interface ApiProduct {
 
 export interface ApiConversation {
   id: string;
+  type?: "one_to_one" | "support";
+  conversationType?: "ONE_TO_ONE";
   lastMessage: string | null;
   lastMessageAt: string | null;
   unreadCount: number;
   lastReadAt: string | null;
   participants: ApiConversationParticipant[];
+}
+
+export interface ApiSupportConversation {
+  id: string;
+  type: "support";
+  conversationType: "ONE_TO_ONE";
+  lastMessage: string | null;
+  lastMessageAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  client: ApiConversationParticipant | null;
+  participants: Array<ApiConversationParticipant & { role?: string; unreadCount?: number; lastReadAt?: string | null }>;
 }
 
 export interface ApiOneToOneConversation {

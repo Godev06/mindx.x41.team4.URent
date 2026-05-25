@@ -6,6 +6,7 @@ import type {
   ApiProduct,
   ApiResponse,
   ApiSearchMessage,
+  ApiSupportConversation,
 } from "../types";
 
 export const messageService = {
@@ -118,5 +119,20 @@ export const messageService = {
         createdAt: message.createdAt,
       })),
     };
+  },
+
+  async getOrCreateSupportConversation() {
+    const res = await apiClient.post<ApiResponse<ApiSupportConversation>>(
+      "/api/v1/conversations/support"
+    );
+    return res.data.data;
+  },
+
+  async listAllSupportConversations(params?: { cursor?: string; limit?: number }) {
+    const res = await apiClient.get<ApiResponse<ApiSupportConversation[]>>(
+      "/api/v1/admin/chat/conversations",
+      { params }
+    );
+    return res.data;
   },
 };

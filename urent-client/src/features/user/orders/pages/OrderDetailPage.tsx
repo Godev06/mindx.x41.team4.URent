@@ -9,11 +9,12 @@ import {
   QrCode,
   ShieldCheck,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ORDERS } from "../../dataset/orders";
 import { PRODUCTS } from "../../dataset/products";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { messageService } from "../../messages/services/messageService";
 
 export function OrderDetailPage() {
   const { orderId } = useParams();
@@ -30,6 +31,21 @@ export function OrderDetailPage() {
     () => PRODUCTS.find((item) => item.id === order.productId) ?? PRODUCTS[0],
     [order.productId],
   );
+
+  const [isConnectingSupport, setIsConnectingSupport] = useState(false);
+
+  const handleChatWithExpert = async () => {
+    if (isConnectingSupport) return;
+    try {
+      setIsConnectingSupport(true);
+      const conversation = await messageService.getOrCreateSupportConversation();
+      navigate(`/messages/${conversation.id}`);
+    } catch (error) {
+      console.error("Failed to connect to support chat:", error);
+    } finally {
+      setIsConnectingSupport(false);
+    }
+  };
 
   return (
     <div className="space-y-5 pb-10">
@@ -192,20 +208,25 @@ export function OrderDetailPage() {
               </div>
 
               <div className="mt-4 space-y-2.5">
-                <button
+                 <button
                   type="button"
-                  onClick={() => navigate("/messages")}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-teal-500/40 dark:hover:bg-slate-800"
+                  disabled={isConnectingSupport}
+                  onClick={handleChatWithExpert}
+                  className="group flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-teal-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
-                    <MessageCircle size={15} />
+                    {isConnectingSupport ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-700 border-t-transparent dark:border-teal-300" />
+                    ) : (
+                      <MessageCircle size={15} />
+                    )}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                      {t.orderDetailChatExpert}
+                      {isConnectingSupport ? "Đang kết nối..." : t.orderDetailChatExpert}
                     </p>
                     <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                      {t.orderDetailChatExpertDesc}
+                      {isConnectingSupport ? "Đang kết nối tới tổng đài viên..." : t.orderDetailChatExpertDesc}
                     </p>
                   </div>
                 </button>

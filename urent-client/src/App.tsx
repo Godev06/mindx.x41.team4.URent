@@ -29,6 +29,7 @@ import { AdminLogsPage } from "./features/admin/pages/AdminLogsPage";
 import { AdminOrdersDetailPage } from "./features/admin/pages/AdminOrdersDetailPage";
 import { AdminOrdersPage } from "./features/admin/pages/AdminOrdersPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
+import { AdminChatPage } from "./features/admin/pages/AdminChatPage";
 
 // IMPORT SocketProvider từ file hook .ts của bạn vào đây
 import { SocketProvider } from "./features/user/messages/hooks/useSocket";
@@ -107,6 +108,7 @@ export default function App() {
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
           <Route path="/admin/orders/:id" element={<AdminOrdersDetailPage />} />
+          <Route path="/admin/chat" element={<AdminChatPage />} />
           <Route path="/admin/logs" element={<AdminLogsPage />} />
         </Route>
 
