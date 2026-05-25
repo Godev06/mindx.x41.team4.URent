@@ -39,7 +39,7 @@ export const messageService = {
 
   async getConversationPeerByEmail(email: string) {
     const res = await apiClient.get<ApiResponse<ApiConversationParticipant>>(
-      "/api/v1/conversations/peer-by-email",
+      "/api/v1/conversations/peer",
       { params: { email } },
     );
 

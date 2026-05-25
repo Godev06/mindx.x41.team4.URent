@@ -10,7 +10,9 @@ export function useConversations() {
 
   const sortConversations = useCallback((items: ApiConversation[]) => {
     return [...items].sort((left, right) => {
-      const leftTime = left.lastMessageAt ? new Date(left.lastMessageAt).getTime() : 0;
+      const leftTime = left.lastMessageAt
+        ? new Date(left.lastMessageAt).getTime()
+        : 0;
       const rightTime = right.lastMessageAt
         ? new Date(right.lastMessageAt).getTime()
         : 0;
@@ -70,18 +72,14 @@ export function useConversations() {
   const incrementUnread = useCallback((conversationId: string) => {
     setConversations((prev) =>
       prev.map((c) =>
-        c.id === conversationId
-          ? { ...c, unreadCount: c.unreadCount + 1 }
-          : c,
+        c.id === conversationId ? { ...c, unreadCount: c.unreadCount + 1 } : c,
       ),
     );
   }, []);
 
   const resetUnread = useCallback((conversationId: string) => {
     setConversations((prev) =>
-      prev.map((c) =>
-        c.id === conversationId ? { ...c, unreadCount: 0 } : c,
-      ),
+      prev.map((c) => (c.id === conversationId ? { ...c, unreadCount: 0 } : c)),
     );
   }, []);
 
