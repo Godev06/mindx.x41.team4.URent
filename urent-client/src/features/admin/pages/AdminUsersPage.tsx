@@ -13,6 +13,8 @@ interface User {
   trustScore?: number;
 
   createdAt?: string;
+
+  role?: "admin" | "user";
 }
 
 export function AdminUsersPage() {
@@ -21,9 +23,58 @@ export function AdminUsersPage() {
   useEffect(() => {
     fetch("http://localhost:5003/api/v1/users")
       .then((res) => res.json())
-      .then((data) => setUsers(data))
+      .then((data) => {
+        const updatedUsers = data.map((user: User) => {
+          // 2 tài khoản mặc định admin
+          if (
+            user.email === "phamtuananh25062004@gmail.com" ||
+            user.email === "tiengarena2k@gmail.com"
+          ) {
+            return {
+              ...user,
+              role: "admin",
+            };
+          }
+
+          return {
+            ...user,
+            role: user.role || "user",
+          };
+        });
+
+        setUsers(updatedUsers);
+      })
       .catch((err) => console.log(err));
   }, []);
+
+  const handleRoleChange = async (userId: string, role: string) => {
+    try {
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === userId
+            ? {
+                ...user,
+                role: role as "admin" | "user",
+              }
+            : user,
+        ),
+      );
+
+      await fetch(`http://localhost:5003/api/v1/users/${userId}/role`, {
+        method: "PATCH",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          role,
+        }),
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -68,12 +119,14 @@ export function AdminUsersPage() {
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/80">
-          <div className="grid grid-cols-5 border-b border-slate-800 bg-slate-800/50 px-6 py-4 text-sm uppercase tracking-wide text-slate-400">
+          <div className="grid grid-cols-6 border-b border-slate-800 bg-slate-800/50 px-6 py-4 text-sm uppercase tracking-wide text-slate-400">
             <p>User</p>
 
             <p>Độ tín nhiệm</p>
 
             <p>Email</p>
+
+            <p>Chức vụ</p>
 
             <p>Status</p>
 
@@ -86,20 +139,14 @@ export function AdminUsersPage() {
 
               const emailName = user.email?.split("@")[0];
 
-              const isLocalAccount = user.username || user.displayName;
+              const mainName = user.username || emailName;
 
-              const mainName = isLocalAccount
-                ? user.username || "User"
-                : emailName;
-
-              const subName = isLocalAccount
-                ? `@${user.displayName || "No name"}`
-                : `@${emailName}`;
+              const subName = `@${user.displayName || "No name"}`;
 
               return (
                 <div
                   key={user._id}
-                  className="grid grid-cols-5 items-center border-b border-slate-800 px-6 py-5 transition hover:bg-slate-800/20"
+                  className="grid grid-cols-6 items-center border-b border-slate-800 px-6 py-5 transition hover:bg-slate-800/20"
                 >
                   <div className="flex flex-col">
                     <p className="font-semibold text-white">{mainName}</p>
@@ -168,6 +215,20 @@ export function AdminUsersPage() {
                   <p className="truncate text-white">{user.email}</p>
 
                   <div>
+                    <select
+                      value={user.role}
+                      onChange={(e) =>
+                        handleRoleChange(user._id, e.target.value)
+                      }
+                      className="rounded-lg bg-slate-800 px-3 py-2 text-sm text-white outline-none border border-slate-700"
+                    >
+                      <option value="admin">Admin</option>
+
+                      <option value="user">User</option>
+                    </select>
+                  </div>
+
+                  <div>
                     <span
                       className={`rounded-lg px-3 py-1 text-sm ${
                         index % 2 === 0
@@ -178,6 +239,7 @@ export function AdminUsersPage() {
                       {index % 2 === 0 ? "Online" : "Offline"}
                     </span>
                   </div>
+
                   <p className="text-slate-300">
                     {user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString()

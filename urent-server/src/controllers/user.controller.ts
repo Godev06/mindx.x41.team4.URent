@@ -38,3 +38,27 @@ export const updateTrustScore = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const { role } = req.body;
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      id,
+      {
+        role,
+      },
+      {
+        new: true,
+      },
+    );
+
+    res.json(updatedUser);
+  } catch (error) {
+    res.status(500).json({
+      message: "Role update failed",
+    });
+  }
+};
