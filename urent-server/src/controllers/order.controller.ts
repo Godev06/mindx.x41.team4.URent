@@ -48,7 +48,7 @@ export const createOrder = async (req: Request, res: Response) => {
     activity: {
       action: 'order_created',
       description: `Đơn hàng ${orderCode} đã được tạo`,
-      type: 'order'
+      type: 'update'
     },
     notification: {
       title: 'Đơn hàng mới',
@@ -105,7 +105,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     activity: {
       action: 'order_status_updated',
       description: `Trạng thái đơn hàng ${order.orderCode} đã được cập nhật thành ${status}`,
-      type: 'order'
+      type: 'update'
     },
     notification: {
       title: 'Cập nhật đơn hàng',

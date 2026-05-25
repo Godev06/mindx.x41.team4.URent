@@ -5,6 +5,7 @@ type ConversationType = (typeof conversationTypeValues)[number];
 
 export interface ConversationDocument extends mongoose.Document {
   conversationType: ConversationType;
+  type: 'one_to_one' | 'support';
   pairKey?: string;
   lastMessage?: string;
   lastMessageAt?: Date;
@@ -15,6 +16,7 @@ export interface ConversationDocument extends mongoose.Document {
 const conversationSchema = new Schema<ConversationDocument>(
   {
     conversationType: { type: String, enum: conversationTypeValues, default: 'ONE_TO_ONE', index: true },
+    type: { type: String, enum: ['one_to_one', 'support'], default: 'one_to_one', index: true },
     pairKey: { type: String, trim: true },
     lastMessage: { type: String, trim: true },
     lastMessageAt: { type: Date, index: true, default: Date.now }

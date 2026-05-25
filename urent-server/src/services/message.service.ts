@@ -265,6 +265,18 @@ const ensureConversationAccess = async (
   conversationId: string,
   userId: string,
 ) => {
+  const conversation = await ConversationModel.findById(conversationId).select("type").lean();
+  if (!conversation) {
+    throw new AppError(404, "CONVERSATION_NOT_FOUND", "Conversation not found");
+  }
+
+  if (conversation.type === "support") {
+    const user = await UserModel.findById(userId).select("role").lean();
+    if (user?.role === "admin") {
+      return; // Admin always has access to support conversations
+    }
+  }
+
   const state = await getConversationAccessState(conversationId, userId);
 
   if (!state.exists) {
@@ -279,7 +291,7 @@ const ensureConversationAccess = async (
     );
   }
 
-  if (state.participantCount !== 2) {
+  if (conversation.type !== "support" && state.participantCount !== 2) {
     throw new AppError(400, "CONVERSATION_NOT_1V1", ONLY_ONE_TO_ONE_MESSAGE);
   }
 };
@@ -508,6 +520,25 @@ export const sendConversationMessage = async (
   },
 ) => {
   try {
+    const conversation = await ConversationModel.findById(conversationId).select("type").lean();
+    if (conversation && conversation.type === "support") {
+      const sender = await UserModel.findById(userId).select("role").lean();
+      if (sender?.role === "admin") {
+        const participantExists = await ConversationParticipantModel.exists({
+          conversationId,
+          userId,
+        });
+        if (!participantExists) {
+          await ConversationParticipantModel.create({
+            conversationId,
+            userId,
+            role: "admin_moderator",
+            unreadCount: 0,
+          });
+        }
+      }
+    }
+
     await ensureConversationAccess(conversationId, userId);
 
     let metadata:
@@ -622,7 +653,7 @@ export const sendConversationMessage = async (
         activity: {
           action: "message_received",
           description: `Nhận tin nhắn mới từ ${message.messageType === "TEXT" ? "chat" : message.messageType.toLowerCase()}`,
-          type: "message",
+          type: "update",
         },
         notification: {
           title: "Tin nhắn mới",

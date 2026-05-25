@@ -9,6 +9,7 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 
 import { authRouter } from "./routes/auth.route";
 import { messageRouter } from "./routes/message.route";
+import { adminChatRouter } from "./routes/admin-chat.route";
 import { notificationRouter } from "./routes/notification.route";
 import { orderRouter } from "./routes/order.route";
 import { profileRouter } from "./routes/profile.route";
@@ -93,7 +94,8 @@ app.use("/api/v1/profile", profileRouter);
 app.use("/api/v1/settings", settingsRouter);
 app.use("/api/v1", productRouter);
 app.use("/api/v1", messageRouter);
-app.use("/api/v1/notifications", notificationRouter);
+app.use("/api/v1", adminChatRouter);
+app.use("/api/v1", notificationRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1", userRouter);
 

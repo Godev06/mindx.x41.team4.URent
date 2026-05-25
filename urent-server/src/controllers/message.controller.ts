@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { ConversationModel } from "../models/conversation.model";
 import {
   deleteConversationParamsSchema,
   conversationPeerQuerySchema,
@@ -107,7 +108,15 @@ export const postConversationMessage = async (req: Request, res: Response) => {
       },
     );
 
-    emitConversationMessageCreated(params.conversationId, message);
+    let conversationType: string | undefined;
+    try {
+      const conversation = await ConversationModel.findById(params.conversationId).select("type").lean();
+      conversationType = conversation?.type;
+    } catch (err) {
+      console.error("[postConversationMessage] Failed to fetch conversation type:", err);
+    }
+
+    emitConversationMessageCreated(params.conversationId, message, conversationType);
 
     return sendSuccess(res, message, undefined, 201);
   } catch (error) {

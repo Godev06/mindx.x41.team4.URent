@@ -5,6 +5,7 @@ import { verifyAccessToken } from "../utils/auth-token";
 import { resolveAppIdentity } from "../services/auth-identity.service";
 import { connectDB } from "../config/db-lazy";
 import { ConversationParticipantModel } from "../models/conversation-participant.model";
+import { UserModel } from "../models/user.model";
 
 type RoomMap = Map<string, Set<WebSocket>>;
 const rooms: RoomMap = new Map();
@@ -86,6 +87,14 @@ const handleWebSocketConnection = async (
 
   // Tự động tham gia vào tất cả các phòng chat của user khi kết nối thành công
   try {
+    const dbUser = await UserModel.findById(userId).select("role").lean();
+    const userRole = dbUser?.role || "user";
+
+    if (userRole === "admin") {
+      joinRoom(serverWs, "room:admin_pool");
+      console.log(`[WS] Auto-joined admin ${userId} to general admin pool room:admin_pool`);
+    }
+
     const participants = await ConversationParticipantModel.find({
       userId,
       deletedAt: null,
@@ -214,23 +223,43 @@ export const attachWebSocketServer = (httpServer: HttpServer) => {
 export const emitConversationMessageCreated = (
   conversationId: string,
   message: unknown,
+  conversationType?: string,
 ) => {
-  const room = roomForConversation(conversationId);
-  if (!rooms.has(room)) return;
+  try {
+    const room = roomForConversation(conversationId);
+    const payload = JSON.stringify({
+      type: "conversation.message.created",
+      data: { conversationId, message },
+    });
 
-  const payload = JSON.stringify({
-    type: "conversation.message.created",
-    data: { conversationId, message },
-  });
-
-  for (const client of rooms.get(room)!) {
-    try {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(payload);
+    if (rooms.has(room)) {
+      for (const client of rooms.get(room)!) {
+        try {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(payload);
+          }
+        } catch {
+          // Ignore broken pipe
+        }
       }
-    } catch {
-      // Ignore broken pipe
     }
+
+    if (conversationType === "support") {
+      const adminPool = "room:admin_pool";
+      if (rooms.has(adminPool)) {
+        for (const client of rooms.get(adminPool)!) {
+          try {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(payload);
+            }
+          } catch {
+            // Ignore broken pipe
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[WS emitConversationMessageCreated] Failed:", error);
   }
 };
 
