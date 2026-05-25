@@ -38,6 +38,7 @@ type AckCallback = (data: any) => void;
 
 interface SocketContextType {
   isConnected: boolean;
+  socket: WebSocket | null;
   joinConversation: (
     conversationId: string,
     onError?: (code: string) => void,
@@ -61,6 +62,7 @@ export function SocketProvider({
   const ackMap = useRef<Map<string, AckCallback>>(new Map());
 
   const [isConnected, setIsConnected] = useState(false);
+  const [socket, setSocket] = useState<WebSocket | null>(null);
 
   const clearReconnectTimeout = useCallback(() => {
     if (reconnectTimeoutRef.current !== null) {
@@ -126,6 +128,7 @@ export function SocketProvider({
         console.log("[WS] Connected");
         reconnectDelayRef.current = INITIAL_RECONNECT_DELAY;
         setIsConnected(true);
+        setSocket(ws);
       };
 
       ws.onmessage = (event) => {
@@ -163,6 +166,7 @@ export function SocketProvider({
       ws.onclose = () => {
         console.warn("[WS] Disconnected");
         setIsConnected(false);
+        setSocket(null);
 
         if (socketRef.current === ws) {
           socketRef.current = null;
@@ -204,6 +208,7 @@ export function SocketProvider({
       }
       socketRef.current = null;
       setIsConnected(false);
+      setSocket(null);
       console.log("[WS] Cleaned up global context");
     };
   }, [connect, clearReconnectTimeout]);
@@ -257,7 +262,7 @@ export function SocketProvider({
   // Thay thế cho đoạn gạch đỏ <SocketContext.Provider value={{...}}> {children} </SocketContext.Provider>
   return React.createElement(
     SocketContext.Provider,
-    { value: { isConnected, joinConversation, leaveConversation } },
+    { value: { isConnected, socket, joinConversation, leaveConversation } },
     children,
   );
 }

@@ -147,6 +147,14 @@ export function MessagesPage() {
   useEffect(() => {
     const handleMessageCreated = (event: Event) => {
       const { conversationId: convId, message } = (event as CustomEvent).detail;
+
+      // Kiểm tra nếu cuộc hội thoại chưa tồn tại trong danh sách cục bộ
+      const exists = conversations.some((c) => c.id === convId);
+      if (!exists) {
+        // Tải lại danh sách cuộc hội thoại để cập nhật cuộc hội thoại mới từ Admin
+        refreshConversations();
+      }
+
       if (convId === conversationId) {
         prependMessage(message);
         if (message.senderId !== user?.id) {
@@ -156,13 +164,16 @@ export function MessagesPage() {
       } else {
         incrementUnread(convId);
       }
-      const lastText =
-        message.messageType === "PRODUCT"
-          ? "[Product]"
-          : message.messageType === "LOCATION"
-            ? "[Location]"
-            : (message.content ?? "");
-      updateLastMessage(convId, lastText, message.createdAt);
+
+      if (exists) {
+        const lastText =
+          message.messageType === "PRODUCT"
+            ? "[Product]"
+            : message.messageType === "LOCATION"
+              ? "[Location]"
+              : (message.content ?? "");
+        updateLastMessage(convId, lastText, message.createdAt);
+      }
     };
 
     const handleReadUpdated = (event: Event) => {
@@ -196,6 +207,8 @@ export function MessagesPage() {
     prependMessage,
     updateLastMessage,
     user?.id,
+    conversations,
+    refreshConversations,
   ]);
 
   useEffect(() => {

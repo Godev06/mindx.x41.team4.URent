@@ -4,6 +4,7 @@ import { getConversationAccessState } from "../services/message.service";
 import { verifyAccessToken } from "../utils/auth-token";
 import { resolveAppIdentity } from "../services/auth-identity.service";
 import { connectDB } from "../config/db-lazy";
+import { ConversationParticipantModel } from "../models/conversation-participant.model";
 
 type RoomMap = Map<string, Set<WebSocket>>;
 const rooms: RoomMap = new Map();
@@ -81,6 +82,22 @@ const handleWebSocketConnection = async (
     );
     serverWs.close(1008, "Unauthorized");
     return;
+  }
+
+  // Tự động tham gia vào tất cả các phòng chat của user khi kết nối thành công
+  try {
+    const participants = await ConversationParticipantModel.find({
+      userId,
+      deletedAt: null,
+    }).select("conversationId").lean();
+
+    for (const participant of participants) {
+      const room = roomForConversation(String(participant.conversationId));
+      joinRoom(serverWs, room);
+      console.log(`[WS] Auto-joined user ${userId} to room ${room}`);
+    }
+  } catch (err) {
+    console.error(`[WS] Failed to auto-join rooms for user ${userId}:`, err);
   }
 
   serverWs.on("message", async (raw) => {

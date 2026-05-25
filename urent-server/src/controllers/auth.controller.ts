@@ -16,6 +16,7 @@ import {
   verifyResetOtp,
 } from "../services/user.service";
 import { OtpPurpose } from "../services/email.service";
+import { sendWelcomeMessageFromAdmin } from "../services/welcome-message.service";
 import { createActivityOnly } from "../services/activity-notification.service";
 import { verifyAccessToken } from "../utils/auth-token";
 import { resolveAppIdentity } from "../services/auth-identity.service";
@@ -103,13 +104,14 @@ const logActivity = async (params: {
   description: string;
 }) => {
   try {
-    await createActivityOnly(params);
+    // Type assertion bypasses the strict check if you're certain the service handles it
+    await createActivityOnly(params as any);
   } catch {
-    // Non-fatal: activity logging failure should not block auth flow
+    // Non-fatal
   }
 };
 
-// ─── Private handlers ────────────────────────────────────────────────────────
+// ─── Private handlers ──────────────────────────────────────────────────    ──────
 
 const verifyOtpWithPurpose = async (
   req: Request,
@@ -146,15 +148,14 @@ const verifyOtpWithPurpose = async (
     description: "User completed sign in with email OTP verification",
   });
 
-  return sendSuccess(
-    res,
-    buildTokenPayload(
-      String(user._id),
-      user.email,
-      "Login successful",
-      user.role,
-    ),
+  const payload = await buildTokenPayload(
+    String(user._id),
+    user.email,
+    "Login successful",
+    user.role,
   );
+
+  return sendSuccess(res, payload);
 };
 
 const handleGoogleAuth = async (req: Request, res: Response) => {
@@ -238,6 +239,14 @@ export const register = async (req: Request, res: Response) => {
     displayName?: string;
   };
 
+  if (!email || !password || !username) {
+    throw new AppError(
+      400,
+      "BAD_REQUEST",
+      "Email, password, and username are required",
+    );
+  }
+
   const user = await createUserWithOtp(
     normalizeEmail(email),
     password,
@@ -248,6 +257,9 @@ export const register = async (req: Request, res: Response) => {
   if (!user) {
     throw new AppError(409, "EMAIL_EXISTS", "Email already exists");
   }
+
+  // Tự động gửi tin nhắn chào mừng từ Admin (chạy ngầm - non-blocking)
+  sendWelcomeMessageFromAdmin(user._id.toString());
 
   return sendSuccess(
     res,
@@ -270,8 +282,20 @@ export const login = async (req: Request, res: Response) => {
   const { email, phone, password } = body as {
     email?: string;
     phone?: string;
-    password: string;
+    password?: string;
   };
+
+  if (!email && !phone) {
+    throw new AppError(
+      400,
+      "BAD_REQUEST",
+      "Email or phone identifier is required",
+    );
+  }
+
+  if (!password) {
+    throw new AppError(400, "BAD_REQUEST", "Password field is required");
+  }
 
   const user = email
     ? await UserModel.findOne({ email: normalizeEmail(email) })
@@ -322,19 +346,22 @@ export const login = async (req: Request, res: Response) => {
     description: "User signed in successfully",
   });
 
-  return sendSuccess(
-    res,
-    buildTokenPayload(
-      String(user._id),
-      user.email,
-      "Login successful",
-      user.role,
-    ),
+  const payload = await buildTokenPayload(
+    String(user._id),
+    user.email,
+    "Login successful",
+    user.role,
   );
+
+  return sendSuccess(res, payload);
 };
 
 export const checkLoginIdentity = async (req: Request, res: Response) => {
   const { identifier } = req.body as { identifier: string };
+  if (!identifier) {
+    throw new AppError(400, "BAD_REQUEST", "Identifier string is required");
+  }
+
   const trimmedIdentifier = identifier.trim();
 
   const identityType = looksLikeEmail(trimmedIdentifier) ? "email" : "phone";
@@ -383,6 +410,14 @@ export const verifyAuthOtp = async (req: Request, res: Response) => {
     otp: string;
   };
 
+  if (!purpose || !email || !otp) {
+    throw new AppError(
+      400,
+      "BAD_REQUEST",
+      "Purpose, email, and otp parameters are required",
+    );
+  }
+
   if (purpose === "reset password" || purpose === "create password") {
     const user = await verifyResetOtp(normalizeEmail(email), otp);
     if (!user) {
@@ -411,6 +446,14 @@ export const resendAuthOtp = async (req: Request, res: Response) => {
     email: string;
     purpose: UnifiedOtpPurpose;
   };
+
+  if (!email || !purpose) {
+    throw new AppError(
+      400,
+      "BAD_REQUEST",
+      "Email and purpose parameters are required",
+    );
+  }
 
   const normalizedEmail = normalizeEmail(email);
   const user = await UserModel.findOne({ email: normalizedEmail });
@@ -451,8 +494,11 @@ export const resendAuthOtp = async (req: Request, res: Response) => {
 
 export const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body as { email: string };
-  const normalizedEmail = normalizeEmail(email);
+  if (!email) {
+    throw new AppError(400, "BAD_REQUEST", "Email parameter is required");
+  }
 
+  const normalizedEmail = normalizeEmail(email);
   const userRecord = await UserModel.findOne({ email: normalizedEmail });
   const isCreatePassword = userRecord
     ? !userRecord.password ||
@@ -480,19 +526,29 @@ export const resetPassword = async (req: Request, res: Response) => {
     newPassword: string;
   };
 
+  if (!email || !newPassword) {
+    throw new AppError(
+      400,
+      "BAD_REQUEST",
+      "Email and newPassword parameters are required",
+    );
+  }
+
   const resetToken = token ?? otp;
-  const user = await UserModel.findOne({ email: normalizeEmail(email) });
 
   if (!resetToken || resetToken.length <= 6) {
     throw new AppError(
       400,
       "UNVERIFIED_OTP",
-      "Bạn phải xác minh OTP trước khi đổi mật khẩu",
+      "You must verify your OTP before modifying your password",
     );
   }
 
+  const user = await UserModel.findOne({ email: normalizeEmail(email) });
+
   if (
     !user ||
+    !user.resetToken ||
     user.resetToken !== resetToken ||
     !user.resetTokenExpiresAt ||
     user.resetTokenExpiresAt.getTime() < Date.now()
