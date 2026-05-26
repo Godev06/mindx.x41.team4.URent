@@ -38,3 +38,41 @@ export const updateTrustScore = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const updateUserRole = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const { role } = req.body;
+
+    if (!["admin", "user"].includes(role)) {
+      return res.status(400).json({
+        message: "Invalid role",
+      });
+    }
+
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      id,
+      {
+        role,
+      },
+      {
+        new: true,
+      },
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    return res.json(updatedUser);
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Role update failed",
+    });
+  }
+};
