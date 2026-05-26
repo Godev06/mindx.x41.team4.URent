@@ -427,9 +427,9 @@ export function MessagesPage() {
     (searchTerm.trim() ? searchError : null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-0 md:space-y-4">
       <div
-        className={`flex min-h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-2xl border shadow-sm ring-1 md:h-[min(800px,calc(110vh-15rem))] md:min-h-0 md:flex-row ${
+        className={`flex h-[calc(100dvh-11.5rem)] -mx-[2.63%] w-[105.26%] md:mx-0 md:w-auto flex-col overflow-hidden rounded-none md:rounded-2xl border-x-0 md:border shadow-none md:shadow-sm ring-0 md:ring-1 md:h-[min(800px,calc(110vh-15rem))] md:flex-row ${
           theme === "dark"
             ? "border-slate-700 bg-slate-900 ring-white/10"
             : "border-slate-200/90 bg-white ring-slate-900/4"
@@ -496,7 +496,7 @@ export function MessagesPage() {
                       handleOpenConversation(quickMatchConversations[0].id);
                     }
                   }}
-                  className={`w-full rounded-lg border pl-9 pr-3 py-2 text-sm focus:border-teal-600 focus:ring-1 focus:ring-teal-600 ${
+                  className={`w-full rounded-lg border pl-9 pr-3 py-2 text-base md:text-sm focus:border-teal-600 focus:ring-1 focus:ring-teal-600 ${
                     theme === "dark"
                       ? "border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500"
                       : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"

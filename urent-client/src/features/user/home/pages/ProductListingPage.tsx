@@ -9,6 +9,7 @@ import {
   Sliders,
   ArrowUpDown,
   Search,
+  X,
 } from "lucide-react";
 import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
@@ -340,18 +341,35 @@ export function ProductListingPage({
           </div>
         </div>
 
-        <div className="flex gap-5 min-h-[80vh]">
-          <div className="grid gap-6 md:gap-8">
-            <div className="sticky top-48 self-start" style={{ minWidth: 220 }}>
-              <div className="space-y-4 md:space-y-5 lg:space-y-6">
-                {/* Sort Section */}
-                <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-3 sm:p-4 shadow-md backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/80">
-                  <div className="mb-3 sm:mb-3.5 flex items-center gap-2">
+        {/* Mobile Filters Drawer Overlay */}
+        {showFilters && (
+          <div className="fixed inset-0 z-50 flex justify-end lg:hidden">
+            <div
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+              onClick={() => setShowFilters(false)}
+            />
+            <div className="relative z-10 w-full max-w-xs overflow-y-auto bg-white p-5 shadow-2xl dark:bg-slate-900 flex flex-col h-full">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                  {t.productListingViewFilters}
+                </h3>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-500 dark:hover:text-slate-400 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-5 flex-1">
+                {/* Mobile Sort Section */}
+                <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/80">
+                  <div className="mb-3 flex items-center gap-2">
                     <ArrowUpDown
                       size={16}
                       className="text-slate-600 dark:text-slate-400"
                     />
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">
                       {t.productListingSortBy}
                     </h3>
                   </div>
@@ -360,7 +378,7 @@ export function ProductListingPage({
                       const isSelected = sortBy === value;
                       return (
                         <label
-                          key={value}
+                          key={`mobile-${value}`}
                           className={`group flex gap-2 cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${
                             isSelected
                               ? "border-emerald-300/70 bg-emerald-50/70 dark:border-emerald-500/40 dark:bg-emerald-500/10"
@@ -369,7 +387,7 @@ export function ProductListingPage({
                         >
                           <input
                             type="radio"
-                            name="sort"
+                            name="sort-mobile"
                             value={value}
                             checked={isSelected}
                             onChange={() => setSortBy(value)}
@@ -399,7 +417,132 @@ export function ProductListingPage({
                     })}
                   </div>
                 </div>
-                {/* Price Range Section */}
+
+                {/* Mobile Price Range Section */}
+                <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/80">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">
+                      {t.productListingPriceRange}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMinPriceInput(String(dataMinPriceVnd));
+                        setMaxPriceInput(String(dataMaxPriceVnd));
+                      }}
+                      className="text-[11px] font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-300 dark:hover:text-teal-200"
+                    >
+                      {t.productListingClearPrice}
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      {t.productListingMinPrice}
+                      <input
+                        type="number"
+                        min={0}
+                        step={10000}
+                        inputMode="numeric"
+                        value={minPriceInput}
+                        onChange={(e) => setMinPriceInput(e.target.value)}
+                        placeholder={String(dataMinPriceVnd)}
+                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-teal-400 focus:outline-hidden focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+                      />
+                    </label>
+                    <label className="block text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                      {t.productListingMaxPrice}
+                      <input
+                        type="number"
+                        min={0}
+                        step={10000}
+                        inputMode="numeric"
+                        value={maxPriceInput}
+                        onChange={(e) => setMaxPriceInput(e.target.value)}
+                        placeholder={String(dataMaxPriceVnd)}
+                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-teal-400 focus:outline-hidden focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+                      />
+                    </label>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                      {t.productListingDefaultPriceRange}:{" "}
+                      {formatCompactNumber(dataMinPriceVnd)} -{" "}
+                      {formatCompactNumber(dataMaxPriceVnd)} VND
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowFilters(false)}
+                className="mt-5 w-full rounded-xl bg-teal-600 py-3 text-sm font-bold text-white shadow-lg shadow-teal-500/20 hover:bg-teal-700 active:scale-[0.98] transition-all duration-150"
+              >
+                {t.productListingShowResults}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-col lg:flex-row gap-6 min-h-[80vh]">
+          {/* Desktop Filters Sidebar */}
+          <aside className="hidden lg:block w-64 shrink-0">
+            <div className="sticky top-48 self-start">
+              <div className="space-y-4 md:space-y-5 lg:space-y-6">
+                {/* Desktop Sort Section */}
+                <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-3 sm:p-4 shadow-md backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/80">
+                  <div className="mb-3 sm:mb-3.5 flex items-center gap-2">
+                    <ArrowUpDown
+                      size={16}
+                      className="text-slate-600 dark:text-slate-400"
+                    />
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                      {t.productListingSortBy}
+                    </h3>
+                  </div>
+                  <div className="space-y-2">
+                    {sortOptions.map(({ value, label }) => {
+                      const isSelected = sortBy === value;
+                      return (
+                        <label
+                          key={`desktop-${value}`}
+                          className={`group flex gap-2 cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${
+                            isSelected
+                              ? "border-emerald-300/70 bg-emerald-50/70 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                              : "border-transparent hover:border-slate-200 hover:bg-slate-100/50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="sort-desktop"
+                            value={value}
+                            checked={isSelected}
+                            onChange={() => setSortBy(value)}
+                            className="peer sr-only"
+                          />
+                          <span
+                            className={`text-sm font-medium transition-colors ${
+                              isSelected
+                                ? "text-slate-900 dark:text-white"
+                                : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                          <span
+                            className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
+                              isSelected
+                                ? "border-emerald-500 bg-emerald-500 text-white shadow-sm dark:border-emerald-400 dark:bg-emerald-400 dark:text-slate-900"
+                                : "border-slate-300 bg-white text-transparent group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-900"
+                            }`}
+                            aria-hidden="true"
+                          >
+                            <Check size={14} strokeWidth={3} className="" />
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Desktop Price Range Section */}
                 <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-3 sm:p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
                   <div className="mb-3 sm:mb-3.5 flex items-center justify-between">
                     <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
@@ -451,20 +594,11 @@ export function ProductListingPage({
                   </div>
                 </div>
               </div>
-              {/* Close filters button on mobile */}
-              {showFilters && (
-                <button
-                  onClick={() => setShowFilters(false)}
-                  className="w-full rounded-lg border border-slate-200/80 bg-white/90 px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/90 dark:text-white dark:hover:bg-slate-700"
-                >
-                  {t.productListingShowResults}
-                </button>
-              )}
             </div>
-          </div>
+          </aside>
 
           {/* Product Grid */}
-          <div className="lg:col-span-4">
+          <div className="flex-1">
             {filteredAndSortedProducts.length > 0 ? (
               <div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-5">

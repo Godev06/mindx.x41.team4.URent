@@ -689,7 +689,7 @@ export function MessagesChatBox({
 
         {/* Composer Input Area */}
         <div
-          className={`border-t p-4 transition-all duration-200 ease-out ${
+          className={`border-t p-2.5 sm:p-4 transition-all duration-200 ease-out ${
             theme === "dark" ? "border-slate-800 bg-slate-950" : "border-slate-200/70 bg-white"
           }`}
         >
@@ -713,7 +713,7 @@ export function MessagesChatBox({
                 onKeyDown={handleMessageInputKeyDown}
                 rows={1}
                 disabled={isSending}
-                className={`min-h-[40px] max-h-32 flex-1 resize-none overflow-y-auto rounded-xl border px-4 py-2.5 text-sm transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50 ${
+                className={`min-h-[40px] max-h-32 flex-1 resize-none overflow-y-auto rounded-xl border px-4 py-2.5 text-base md:text-sm transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 disabled:cursor-not-allowed disabled:opacity-50 ${
                   theme === "dark"
                     ? "border-slate-700 bg-slate-800 text-slate-100 placeholder:text-slate-500"
                     : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"

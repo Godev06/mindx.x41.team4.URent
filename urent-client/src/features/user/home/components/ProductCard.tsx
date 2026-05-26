@@ -115,7 +115,7 @@ export function ProductCard({
               {` ${dayUnit}`}
             </span>
           </div>
-          <span className="inline-flex h-[2.2rem] w-[2.2rem] items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-400 dark:from-teal-700 dark:to-cyan-700 text-white shadow transition-colors group-hover:bg-amber-500 dark:group-hover:bg-amber-600">
+          <span className="inline-flex h-[2.2rem] w-[2.2rem] items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-400 dark:from-teal-700 dark:to-cyan-700 text-white shadow transition-all duration-200 group-hover:from-amber-400 group-hover:to-amber-500 dark:group-hover:from-amber-500 dark:group-hover:to-amber-600">
             <ChevronRight size={20} strokeWidth={2.25} />
           </span>
         </div>

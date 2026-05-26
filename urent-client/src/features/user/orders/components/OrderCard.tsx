@@ -30,7 +30,7 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
   return (
     <article
       onClick={onClick}
-      className={`flex gap-5 rounded-2xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-800 p-5 shadow-sm ring-1 ring-slate-900/4 dark:ring-white/4 transition-shadow hover:shadow-md ${onClick ? "cursor-pointer hover:border-indigo-200 dark:hover:border-indigo-600" : ""}`}
+      className={`flex gap-5 rounded-2xl border border-slate-200/90 dark:border-slate-700/90 bg-white dark:bg-slate-800 p-5 shadow-sm ring-1 ring-slate-900/4 dark:ring-white/4 transition-all duration-200 hover:shadow-md ${onClick ? "cursor-pointer hover:border-teal-400/60 dark:hover:border-teal-400/40" : ""}`}
     >
       <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-linear-to-br from-slate-100 dark:from-slate-700 to-slate-50 dark:to-slate-600 ring-1 ring-slate-200/80 dark:ring-slate-600/80">
         {imageUrl ? (

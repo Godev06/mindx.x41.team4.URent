@@ -87,7 +87,7 @@ export function OrdersPage() {
       </section>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {t.ordersRecent}
         </h2>
         <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
@@ -113,7 +113,7 @@ export function OrdersPage() {
                   onClick={() =>
                     navigate(`/orders/${encodeURIComponent(order.id)}`)
                   }
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500"
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 transition-colors"
                 >
                   {t.ordersViewDetail}
                   <ChevronRight size={14} />

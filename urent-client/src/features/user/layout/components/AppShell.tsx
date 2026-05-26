@@ -34,7 +34,7 @@ export function AppShell() {
     };
   }, [location.pathname]);
 
-  const hideFooter = location.pathname === "/products";
+  const hideFooter = location.pathname !== "/";
   return (
     <AuthGateProvider>
       <div className="relative min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100 selection:bg-teal-100 selection:text-teal-900">

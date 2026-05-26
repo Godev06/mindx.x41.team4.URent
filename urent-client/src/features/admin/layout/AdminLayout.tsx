@@ -43,6 +43,7 @@ export function AdminLayout({ children }: Props) {
           {navItem("Dashboard", "/admin")}
           {navItem("Users", "/admin/users")}
           {navItem("Orders", "/admin/orders")}
+          {navItem("Messages", "/admin/chat")}
           {navItem("Logs", "/admin/logs")}
         </nav>
 

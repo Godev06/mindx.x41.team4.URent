@@ -20,12 +20,8 @@
   "devDependencies": {
     "@types/swagger-ui-express": "^4.1.8",
     "concurrently": "^9.2.1",
-<<<<<<< HEAD
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
-=======
-    "tsx": "^4.22.3"
->>>>>>> 5d51573455bd965fcbafde9df07d7e953037b826
   },
   "dependencies": {
     "cors": "^2.8.6",
