@@ -1,7 +1,9 @@
-import { Sliders, MoonStar, BellRing, Activity, Languages } from "lucide-react";
+import { useState } from "react";
+import { MoonStar, BellRing, Activity, Languages, Volume2, Sliders, Smartphone } from "lucide-react";
 import { SettingSwitch } from "./SettingSwitch";
 import { PageLoader } from "../../shared/components/PageLoader";
 import { SETTINGS_TOKENS } from "../utils/styleTokens";
+import { useToast } from "../../shared/hooks/useToast";
 
 interface PreferencesSectionProps {
   theme: "dark" | "light";
@@ -30,6 +32,96 @@ export function PreferencesSection({
   setLang,
   t,
 }: PreferencesSectionProps) {
+  const { showToast } = useToast();
+
+  // Khởi tạo trạng thái chuông báo & thông báo đẩy trình duyệt từ localStorage
+  const [soundNotifications, setSoundNotifications] = useState(() => {
+    return localStorage.getItem("settings.soundNotifications") !== "false";
+  });
+
+  const [pushNotifications, setPushNotifications] = useState(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      return Notification.permission === "granted" && localStorage.getItem("settings.pushNotifications") !== "false";
+    }
+    return false;
+  });
+
+  const handleSoundToggle = (checked: boolean) => {
+    setSoundNotifications(checked);
+    localStorage.setItem("settings.soundNotifications", String(checked));
+    showToast({
+      title: "Cập nhật thành công",
+      description: `Đã ${checked ? "bật" : "tắt"} âm thanh thông báo.`,
+      variant: "success",
+    });
+  };
+
+  const handlePushToggle = async (checked: boolean) => {
+    if (checked) {
+      // Yêu cầu quyền và lấy token FCM từ fcmService
+      import("../../notifications/services/fcm").then(async ({ fcmService }) => {
+        const token = await fcmService.requestPermissionAndGetToken();
+        if (token) {
+          setPushNotifications(true);
+          localStorage.setItem("settings.pushNotifications", "true");
+          showToast({
+            title: "Đã bật thông báo đẩy",
+            description: "Trình duyệt đã đăng ký nhận thông báo đẩy thành công.",
+            variant: "success",
+          });
+        } else {
+          setPushNotifications(false);
+          showToast({
+            title: "Cấp quyền thất bại",
+            description: "Vui lòng cấp quyền thông báo trên cài đặt trình duyệt.",
+            variant: "error",
+          });
+        }
+      });
+    } else {
+      // Tắt push và hủy token FCM trên server
+      import("../../notifications/services/fcm").then(async ({ fcmService }) => {
+        await fcmService.revokeToken();
+        setPushNotifications(false);
+        localStorage.setItem("settings.pushNotifications", "false");
+        showToast({
+          title: "Đã tắt thông báo đẩy",
+          description: "Đã hủy đăng ký nhận thông báo đẩy trình duyệt.",
+          variant: "info",
+        });
+      });
+    }
+  };
+
+  const testChime = () => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.12);
+
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.6);
+      
+      showToast({
+        title: "Kiểm tra chuông",
+        description: "Chuông thông báo pha lê đã phát thử thành công.",
+        variant: "success",
+      });
+    } catch (err) {
+      console.warn("Chime blocked:", err);
+    }
+  };
+
   return (
     <div className={SETTINGS_TOKENS.card}>
       <div className="flex items-start justify-between gap-4">
@@ -41,7 +133,7 @@ export function PreferencesSection({
             {t.settingsPreferencesTitle ?? "Tùy chọn hệ thống"}
           </h3>
           <p className={`mt-2 text-sm leading-6 ${SETTINGS_TOKENS.text.muted}`}>
-            {t.settingsPreferencesDesc ?? "Manage layout themes and system communication alerts."}
+            {t.settingsPreferencesDesc ?? "Quản lý giao diện, ngôn ngữ và cấu hình nhận thông báo chung."}
           </p>
         </div>
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
@@ -97,7 +189,7 @@ export function PreferencesSection({
                     {t.settingsEmailNotifications ?? "Thông báo qua Email"}
                   </p>
                   <p className={`mt-1 text-xs ${SETTINGS_TOKENS.text.muted}`}>
-                    Receive updates for orders, verification, and important alerts.
+                    Nhận thông tin cập nhật về đơn hàng, bảo mật và khuyến mãi qua email.
                   </p>
                 </div>
               </div>
@@ -120,7 +212,7 @@ export function PreferencesSection({
                     {t.settingsScreenNotifications ?? "Thông báo trên màn hình"}
                   </p>
                   <p className={`mt-1 text-xs ${SETTINGS_TOKENS.text.muted}`}>
-                    Show updates directly inside the dashboard while working.
+                    Hiển thị thông báo nổi in-app ngay lập tức khi đang hoạt động.
                   </p>
                 </div>
               </div>
@@ -128,6 +220,60 @@ export function PreferencesSection({
                 checked={screenNotifications}
                 onChange={setScreenNotifications}
               />
+            </div>
+          </div>
+
+          {/* Push Notifications Switch */}
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/80 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
+                  <Smartphone size={18} />
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold ${SETTINGS_TOKENS.text.strong}`}>
+                    Thông báo đẩy trình duyệt (Web Push)
+                  </p>
+                  <p className={`mt-1 text-xs ${SETTINGS_TOKENS.text.muted}`}>
+                    Nhận thông báo thực của hệ điều hành ngay cả khi bạn đóng tab.
+                  </p>
+                </div>
+              </div>
+              <SettingSwitch
+                checked={pushNotifications}
+                onChange={handlePushToggle}
+              />
+            </div>
+          </div>
+
+          {/* Sound Chime Toggle & Test */}
+          <div className="rounded-2xl border border-slate-200/80 bg-slate-50/80 p-4 dark:border-slate-700/80 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                  <Volume2 size={18} />
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold ${SETTINGS_TOKENS.text.strong}`}>
+                    Âm thanh thông báo (Audio Chime)
+                  </p>
+                  <p className={`mt-1 text-xs ${SETTINGS_TOKENS.text.muted}`}>
+                    Phát chuông báo pha lê dual-tone khi có thông báo mới.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={testChime}
+                  className="text-xs font-semibold text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 border border-slate-200 dark:border-slate-700 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 transition cursor-pointer"
+                >
+                  Nghe thử
+                </button>
+                <SettingSwitch
+                  checked={soundNotifications}
+                  onChange={handleSoundToggle}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -143,7 +289,7 @@ export function PreferencesSection({
                 {t.settingsLanguage ?? "Ngôn ngữ"}
               </h4>
               <p className={`mt-2 text-sm leading-6 ${SETTINGS_TOKENS.text.muted}`}>
-                Apply one language across authentication screens and the dashboard interface.
+                Áp dụng ngôn ngữ hiển thị trên toàn bộ các màn hình ứng dụng.
               </p>
             </div>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">

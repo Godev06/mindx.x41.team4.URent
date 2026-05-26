@@ -28,8 +28,22 @@ export function OrderDetailPage() {
   );
 
   const product = useMemo(
-    () => PRODUCTS.find((item) => item.id === order.productId) ?? PRODUCTS[0],
-    [order.productId],
+    () =>
+      PRODUCTS.find((item) => item.id === order.productId) ?? {
+        id: order.productId || 0,
+        name: order.productName || "Sản phẩm",
+        category: "Electronics",
+        price: order.totalPrice ? Math.round(order.totalPrice / 3) : 10,
+        status: "Available",
+        image: "🛒",
+        imageUrl: "",
+        rating: 5.0,
+        reviews: 0,
+        owner: { name: "URent Partner", avatar: "", rating: 5.0, trips: 10 },
+        summary: "",
+        description: [],
+      },
+    [order.productId, order.productName, order.totalPrice],
   );
 
   const [isConnectingSupport, setIsConnectingSupport] = useState(false);
@@ -208,7 +222,7 @@ export function OrderDetailPage() {
               </div>
 
               <div className="mt-4 space-y-2.5">
-                 <button
+                <button
                   type="button"
                   disabled={isConnectingSupport}
                   onClick={handleChatWithExpert}

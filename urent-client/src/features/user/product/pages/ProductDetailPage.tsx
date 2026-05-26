@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Award,
@@ -15,9 +15,10 @@ import { ProductBookingCard } from "../components/ProductBookingCard";
 import { ProductSpecRow } from "../components/ProductSpecRow";
 import { ProductReviews } from "../components/ProductReviews";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { productService } from "../services/productService";
 
 interface ProductDetailPageProps {
-  productId: number | null;
+  productId: string | number | null;
   onBack: () => void;
 }
 
@@ -31,12 +32,104 @@ export function ProductDetailPage({
   onBack,
 }: ProductDetailPageProps) {
   const { t } = useI18n();
-  const product: Product = useMemo(
-    () => PRODUCTS.find((item) => item.id === productId) ?? PRODUCTS[0],
-    [productId],
-  );
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const description = product.description ?? DEFAULT_DESCRIPTION;
+  useEffect(() => {
+    let active = true;
+    async function loadProductDetail() {
+      if (!productId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Only try to call BE API if the productId looks like a MongoDB ObjectId (string of length 24 hex characters)
+        // or is a non-numeric string.
+        const isObjectId = typeof productId === "string" && productId.length === 24 && /^[0-9a-fA-F]+$/.test(productId);
+        
+        if (isObjectId) {
+          const fetched = await productService.getProductById(productId);
+          if (active) {
+            setProduct(fetched);
+          }
+        } else {
+          // It's a mock numeric ID or string, find in static dataset
+          const found = PRODUCTS.find((item) => String(item.id) === String(productId));
+          if (active) {
+            setProduct(found ?? null);
+          }
+        }
+      } catch (err: any) {
+        console.error("Failed to load product detail from BE API, falling back to mock:", err);
+        const found = PRODUCTS.find((item) => String(item.id) === String(productId));
+        if (active) {
+          setProduct(found ?? null);
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProductDetail();
+    return () => {
+      active = false;
+    };
+  }, [productId]);
+
+  const description = product?.description ?? DEFAULT_DESCRIPTION;
+
+  if (isLoading) {
+    return (
+      <div className="pb-12 animate-pulse space-y-8">
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-medium text-slate-600 shadow-sm backdrop-blur-sm transition dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
+        >
+          <ArrowLeft size={16} strokeWidth={2.5} />
+          {t.productDetailBack}
+        </button>
+        <div className="h-64 sm:h-80 md:h-96 w-full rounded-3xl bg-slate-200 dark:bg-slate-700" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
+          <div className="lg:col-span-8 space-y-6">
+            <div className="grid grid-cols-3 gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-24 rounded-2xl bg-slate-200 dark:bg-slate-700" />
+              ))}
+            </div>
+            <div className="h-48 rounded-3xl bg-slate-200 dark:bg-slate-700" />
+          </div>
+          <div className="lg:col-span-4">
+            <div className="h-96 rounded-3xl bg-slate-200 dark:bg-slate-700" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center space-y-4">
+        <p className="text-lg font-semibold text-slate-600 dark:text-slate-400">
+          Không tìm thấy sản phẩm này
+        </p>
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:bg-white/10"
+        >
+          Quay lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="pb-12">

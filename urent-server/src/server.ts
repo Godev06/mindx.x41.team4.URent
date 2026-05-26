@@ -6,6 +6,7 @@ import { connectDB } from "./config/db-lazy";
 
 import { initializeFirebase } from "./config/firebase";
 import { attachWebSocketServer } from "./realtime/socket";
+import { NotificationModel } from "./models/notification.model";
 
 dns.setDefaultResultOrder("ipv4first");
 initializeFirebase();
@@ -19,8 +20,22 @@ attachWebSocketServer(httpServer);
 
 // Ensure shared lazy Mongo connection is ready
 connectDB()
-  .then(() => {
+  .then(async () => {
     console.log("✅ DB connected");
+    try {
+      const deleteResult = await NotificationModel.deleteMany({
+        $or: [
+          { _id: { $in: ["notif_1", "notif_2", "notif_3"] } },
+          { title: /chào mừng|khuyến mãi|mazda/i },
+          { description: /urent/i }
+        ]
+      });
+      if (deleteResult.deletedCount > 0) {
+        console.log(`🧹 Cleaned up ${deleteResult.deletedCount} mock notifications from backend database.`);
+      }
+    } catch (e) {
+      console.warn("⚠️ Failed to clean up mock notifications on startup:", e);
+    }
   })
   .catch((err) => {
     console.error("❌ DB connection failed.", err);

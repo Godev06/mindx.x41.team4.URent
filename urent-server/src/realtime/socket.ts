@@ -87,6 +87,10 @@ const handleWebSocketConnection = async (
 
   // Tự động tham gia vào tất cả các phòng chat của user khi kết nối thành công
   try {
+    // Join personal notification room
+    joinRoom(serverWs, `user:${userId}`);
+    console.log(`[WS] Auto-joined user ${userId} to personal room user:${userId}`);
+
     const dbUser = await UserModel.findById(userId).select("role").lean();
     const userRole = dbUser?.role || "user";
 
@@ -283,5 +287,32 @@ export const emitConversationReadUpdated = (
     } catch {
       // Ignore
     }
+  }
+};
+
+export const emitNotificationToUser = (
+  userId: string,
+  notification: unknown
+) => {
+  try {
+    const room = `user:${userId}`;
+    const payload = JSON.stringify({
+      type: "notification.created",
+      data: notification,
+    });
+
+    if (rooms.has(room)) {
+      for (const client of rooms.get(room)!) {
+        try {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(payload);
+          }
+        } catch {
+          // Ignore
+        }
+      }
+    }
+  } catch (error) {
+    console.error("[WS emitNotificationToUser] Failed:", error);
   }
 };

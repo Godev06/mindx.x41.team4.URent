@@ -7,6 +7,7 @@ export interface ToastItem {
   title: string;
   description?: string;
   variant: ToastVariant;
+  actionUrl?: string;
 }
 
 export interface ToastContextValue {

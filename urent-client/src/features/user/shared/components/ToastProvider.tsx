@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { CheckCircle2, XCircle, Info, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   ToastContext,
   type ToastContextValue,
@@ -27,6 +28,7 @@ const variantStyles = {
 
 export function ToastProvider({ children }: PropsWithChildren) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!toasts.length) {
@@ -36,7 +38,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
     const timers = toasts.map((toast) => {
       return window.setTimeout(() => {
         setToasts((current) => current.filter((item) => item.id !== toast.id));
-      }, 4000);
+      }, 5000);
     });
 
     return () => {
@@ -46,7 +48,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<ToastContextValue>(() => {
     return {
-      showToast: ({ title, description, variant }) => {
+      showToast: ({ title, description, variant, actionUrl }) => {
         setToasts((current) => [
           ...current,
           {
@@ -54,6 +56,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
             title,
             description,
             variant,
+            actionUrl,
           },
         ]);
       },
@@ -67,7 +70,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed right-4 top-4 z-[100] flex w-full max-w-sm flex-col gap-3">
+      <div className="pointer-events-none fixed right-4 top-26 z-[100] flex w-full max-w-sm flex-col gap-3">
         {toasts.map((toast) => {
           const style = variantStyles[toast.variant];
           const Icon = style.icon;
@@ -80,7 +83,7 @@ export function ToastProvider({ children }: PropsWithChildren) {
             >
               {/* Colored status indicator strip on the left */}
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-teal-500 to-cyan-500" />
-              
+
               <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ${style.iconRing}`}>
                 <Icon size={16} strokeWidth={2.5} />
               </div>
@@ -91,6 +94,17 @@ export function ToastProvider({ children }: PropsWithChildren) {
                   <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                     {toast.description}
                   </p>
+                ) : null}
+                {toast.actionUrl ? (
+                  <button
+                    onClick={() => {
+                      navigate(toast.actionUrl!);
+                      removeToast(toast.id);
+                    }}
+                    className="mt-2.5 inline-flex items-center text-xs font-bold text-teal-600 hover:text-teal-700 hover:underline dark:text-teal-400 dark:hover:text-teal-300 transition cursor-pointer"
+                  >
+                    Xem chi tiết →
+                  </button>
                 ) : null}
               </div>
 

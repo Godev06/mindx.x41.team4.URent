@@ -1,23 +1,30 @@
 import { ChevronRight, Heart, MapPin, Star } from "lucide-react";
 import type { Product } from "../../shared/types";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { useI18n } from "../../shared/context/LanguageContext";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 interface ProductCardProps {
   product: Product;
-  onSelect: (id: number) => void;
+  onSelect: (id: string | number) => void;
   dayUnit?: string;
   priceVnd?: number;
   location?: string;
   distanceKm?: number;
   conditionLabel?: string;
   isWishlisted?: boolean;
-  onToggleWishlist?: (id: number) => void;
-  className?: string; // custom tailwind class
+  onToggleWishlist?: (id: string | number) => void;
+  className?: string;
 }
 
 export function ProductCard({
   product,
   onSelect,
-  dayUnit = "ngày",
+  dayUnit,
   priceVnd,
   location,
   distanceKm,
@@ -26,100 +33,178 @@ export function ProductCard({
   onToggleWishlist,
   className = "",
 }: ProductCardProps) {
+  const { lang } = useI18n();
+
+  // 1. Khắc phục logic giá tiền tệ: Phụ thuộc vào languageContext để hiển thị VND hoặc USD
+  const rawPrice = priceVnd ?? product?.price;
+  const hasPrice = rawPrice !== undefined && rawPrice !== null && !isNaN(Number(rawPrice));
+  const numericPrice = hasPrice ? Number(rawPrice) : 0;
+  const isDbVnd = priceVnd !== undefined || numericPrice > 1000;
+  const priceInVnd = isDbVnd ? numericPrice : numericPrice * 25000;
+  const priceInUsd = isDbVnd ? numericPrice / 25000 : numericPrice;
+
+  const formattedPrice = hasPrice
+    ? lang === "en"
+      ? priceInUsd.toLocaleString("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })
+      : priceInVnd.toLocaleString("vi-VN", {
+          style: "currency",
+          currency: "VND",
+          maximumFractionDigits: 0,
+        })
+    : lang === "en"
+    ? "Contact"
+    : "Giá liên hệ";
+
+  const displayDayUnit = dayUnit ? dayUnit.replace(/^\//, "").trim() : (lang === "vi" ? "ngày" : "day");
+
+  // Map ID an toàn giữa MongoDB _id và id
+  const productId = product._id || product.id || "";
+
+  // 2. Khắc phục lệch key Đánh giá: ưu tiên reviewsCount từ DB
+  const reviewsCount = product.reviewsCount ?? product.reviews ?? 0;
+
+  // 3. Linh hoạt hình ảnh: hỗ trợ cả imageUrl và image
+  const imageSrc = product.imageUrl || product.image;
+  const isImageUrl =
+    typeof imageSrc === "string" &&
+    (imageSrc.startsWith("http://") ||
+      imageSrc.startsWith("https://") ||
+      imageSrc.startsWith("//") ||
+      imageSrc.startsWith("/") ||
+      imageSrc.startsWith("data:") ||
+      /\.(jpg|jpeg|png|webp|gif|svg)/i.test(imageSrc));
+
+  // Tự động fallback sang thông tin từ product document trong MongoDB nếu không truyền prop
+  const displayLocation = location || product.location;
+  const displayCondition = conditionLabel || product.condition;
+
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(product.id)}
-      className={`group text-left w-full min-h-[55%] max-w-full flex flex-col rounded-3xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 p-[4%] shadow-lg hover:shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/5 transition-all duration-200 hover:-translate-y-1 hover:border-teal-500/40 dark:hover:border-teal-400/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 mx-auto ${className}`}
+    <div
+      onClick={() => onSelect(productId)}
+      className={cn(
+        "group relative flex flex-col w-full rounded-2xl bg-white p-3 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80",
+        "cursor-pointer select-none transition-all duration-300 ease-out",
+        "hover:-translate-y-1.5 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none",
+        "hover:border-teal-500/30 dark:hover:border-teal-400/30",
+        "focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-slate-900",
+        className
+      )}
     >
-      <div className="relative aspect-[5/6] w-full overflow-hidden rounded-2xl bg-gradient-to-br from-slate-50 dark:from-slate-700 to-slate-100/80 dark:to-slate-600/80 shadow-sm">
-        {product.imageUrl ? (
+      {/* Image Section Wrapper */}
+      <div className={cn("relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-800")}>
+        {isImageUrl ? (
           <img
-            src={product.imageUrl}
+            src={imageSrc}
             alt={product.name}
-            className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]"
+            className={cn("h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105")}
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-2xl md:text-3xl transition-transform duration-200 group-hover:scale-[1.03]">
-            {product.image}
+          <div className={cn("flex h-full items-center justify-center text-slate-400 text-2xl bg-slate-100 dark:bg-slate-800")}>
+            {typeof imageSrc === "string" && imageSrc.length > 0 ? imageSrc : "📦"}
           </div>
         )}
-        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-slate-900/5 dark:from-slate-900/30 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
-        {conditionLabel ? (
-          <span className="absolute left-3 top-3 z-10 rounded-full border border-teal-400/60 bg-white/90 px-3 py-1 text-xs font-bold text-teal-700 shadow-md dark:border-teal-400/40 dark:bg-slate-800/90 dark:text-teal-300">
-            {conditionLabel}
+        {/* Gradient overlay */}
+        <div className={cn("absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300")} />
+
+        {/* Condition Badge */}
+        {displayCondition && (
+          <span className={cn("absolute left-2.5 top-2.5 z-10 rounded-lg bg-teal-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm dark:bg-teal-600")}>
+            {displayCondition}
           </span>
-        ) : null}
+        )}
 
-        {onToggleWishlist ? (
+        {/* Wishlist Button */}
+        {onToggleWishlist && (
           <button
             type="button"
-            aria-label="toggle wishlist"
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             onClick={(event) => {
               event.stopPropagation();
-              onToggleWishlist(product.id);
+              onToggleWishlist(productId);
             }}
-            className={`absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-white/90 text-slate-500 shadow-sm transition hover:text-red-500 dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-300 ${
+            className={cn(
+              "absolute right-2.5 top-2.5 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition-all duration-200 shadow-sm",
               isWishlisted
-                ? "border-red-200 text-red-500 dark:border-red-500/40 dark:text-red-400"
-                : "border-white/70"
-            }`}
+                ? "bg-red-50 text-red-500 dark:bg-red-950/80 dark:text-red-400"
+                : "bg-white/80 text-slate-600 hover:text-red-500 hover:bg-white dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-slate-700"
+            )}
           >
             <Heart
-              size={15}
+              size={16}
               fill={isWishlisted ? "currentColor" : "none"}
-              strokeWidth={2.2}
+              className={cn(isWishlisted ? "scale-110 transition-transform" : "")}
             />
           </button>
-        ) : null}
+        )}
       </div>
-      <div className="flex-1 flex flex-col justify-between mt-3">
+
+      {/* Content Section */}
+      <div className={cn("flex-1 flex flex-col justify-between pt-3 px-0.5")}>
         <div>
-          <h3 className="line-clamp-2 font-semibold leading-snug text-base md:text-lg text-slate-800 dark:text-slate-100 mb-1">
+          {/* Category & Location Row */}
+          <div className={cn("flex items-center justify-between gap-2 mb-1")}>
+            <span className={cn("text-[11px] font-semibold uppercase tracking-wider text-teal-600 dark:text-teal-400 block truncate")}>
+              {product.category || "Danh mục"}
+            </span>
+
+            {displayLocation && (
+              <div className={cn("inline-flex items-center gap-0.5 text-[11px] text-slate-400 dark:text-slate-500 max-w-[50%]")}>
+                <MapPin size={10} className={cn("shrink-0")} />
+                <span className={cn("truncate")}>{displayLocation}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Product Name */}
+          <h3 className={cn("line-clamp-2 font-medium text-sm md:text-base text-slate-800 dark:text-slate-100 min-h-[2.5rem] leading-snug group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors")}>
             {product.name}
           </h3>
-          <p className="line-clamp-1 text-[11px] md:text-xs font-medium uppercase tracking-wide text-teal-500 dark:text-teal-300 mb-2">
-            {product.category}
-          </p>
-          {location ? (
-            <div className="mb-2 inline-flex items-center gap-1 rounded-full border border-slate-100/80 bg-slate-50 px-2 py-0.5 text-[11px] md:text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
-              <MapPin size={12} className="text-teal-400" />
-              <span>
-                {location}
-                {typeof distanceKm === "number" ? ` • ${distanceKm}km` : ""}
-              </span>
+
+          {/* Rating & Distance */}
+          <div className={cn("mt-1.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400")}>
+            <div className={cn("flex items-center gap-0.5 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded-md text-amber-700 dark:text-amber-400 font-semibold text-[11px]")}>
+              <Star size={11} fill="currentColor" />
+              <span>{product.rating ?? 4.8}</span>
             </div>
-          ) : null}
-          <div className="mb-2 inline-flex items-center gap-1 text-xs md:text-sm text-slate-400 dark:text-slate-400">
-            <Star size={15} className="text-amber-400" fill="currentColor" />
-            <span className="font-medium text-slate-700 dark:text-slate-200">
-              {product.rating ?? 4.8}
+            <span className={cn("text-slate-300 dark:text-slate-700")}>|</span>
+            <span className={cn("text-slate-500 dark:text-slate-400")}>
+              {reviewsCount > 0 ? `${reviewsCount} đánh giá` : "Chưa có đánh giá"}
             </span>
-            <span>{`(${product.reviews ?? 0})`}</span>
+            {typeof distanceKm === "number" && (
+              <>
+                <span className={cn("text-slate-300 dark:text-slate-700")}>|</span>
+                <span className={cn("text-teal-600 dark:text-teal-400 font-medium")}>{`${distanceKm}km`}</span>
+              </>
+            )}
           </div>
         </div>
-        <div className="flex items-end justify-between gap-3 mt-3">
-          <div>
-            <span className="text-xl md:text-2xl font-bold tabular-nums text-slate-800 dark:text-white">
-              {typeof priceVnd === "number"
-                ? priceVnd.toLocaleString("vi-VN", {
-                    style: "currency",
-                    currency: "VND",
-                  })
-                : `$${product.price}`}
-            </span>
-            <br></br>
-            <span className="text-xs md:text-sm font-normal text-slate-500 dark:text-slate-300">
-              {` ${dayUnit}`}
-            </span>
+
+        {/* Footer: Price and CTA Icon */}
+        <div className={cn("flex items-center justify-between gap-2 mt-4 pt-2 border-t border-slate-50 dark:border-slate-800/50")}>
+          <div className={cn("flex flex-col")}>
+            <div className={cn("flex items-baseline gap-1")}>
+              <span className={cn("text-lg md:text-xl font-bold tabular-nums text-slate-900 dark:text-white tracking-tight")}>
+                {formattedPrice}
+              </span>
+              <span className={cn("text-[11px] font-normal text-slate-400 dark:text-slate-500")}>
+                /{displayDayUnit}
+              </span>
+            </div>
           </div>
-          <span className="inline-flex h-[2.2rem] w-[2.2rem] items-center justify-center rounded-xl bg-gradient-to-br from-teal-400 to-cyan-400 dark:from-teal-700 dark:to-cyan-700 text-white shadow transition-all duration-200 group-hover:from-amber-400 group-hover:to-amber-500 dark:group-hover:from-amber-500 dark:group-hover:to-amber-600">
-            <ChevronRight size={20} strokeWidth={2.25} />
+
+          {/* CTA Chevron icon */}
+          <span className={cn("inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all duration-300 group-hover:bg-teal-500 group-hover:text-white dark:group-hover:bg-teal-600")}>
+            <ChevronRight size={16} className={cn("transition-transform duration-300 group-hover:translate-x-0.5")} />
           </span>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

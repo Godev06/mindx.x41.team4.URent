@@ -16,6 +16,7 @@ import { SidebarItem } from "../../shared/components/SidebarItem";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { getAvatarStyle } from "../../shared/utils/avatar";
 import { useNotifications, useUnreadCount } from "../../notifications/hooks/useNotifications";
+import { useToast } from "../../shared/hooks/useToast";
 import { MAIN_NAV_ITEMS } from "../constants/navItems";
 
 interface ProfileMenuItem {
@@ -23,6 +24,27 @@ interface ProfileMenuItem {
   icon: LucideIcon;
   onClick: () => void;
   isDanger?: boolean;
+}
+
+let sharedAudioCtx: AudioContext | null = null;
+
+const initAudio = () => {
+  if (typeof window === "undefined") return;
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  if (sharedAudioCtx.state === "suspended") {
+    sharedAudioCtx.resume().catch(() => {});
+  }
+};
+
+if (typeof window !== "undefined") {
+  const unlockEvents = ["click", "touchstart", "keydown", "mousedown"];
+  const unlock = () => {
+    initAudio();
+    unlockEvents.forEach(e => window.removeEventListener(e, unlock));
+  };
+  unlockEvents.forEach(e => window.addEventListener(e, unlock, { passive: true }));
 }
 
 export function AppHeader() {
@@ -37,6 +59,119 @@ export function AppHeader() {
   const profileRef = useRef<HTMLDivElement>(null);
   const { notifications } = useNotifications({ limit: 3 });
   const { unreadCount } = useUnreadCount();
+  const { showToast } = useToast();
+
+  // 1. Tự động đăng ký Service Worker và đồng bộ FCM Token khi đăng nhập
+  useEffect(() => {
+    if (isAuthenticated) {
+      if ("serviceWorker" in navigator) {
+        const firebaseConfig = {
+          apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+          authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+          projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+          storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+          messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+          appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+        };
+
+        // Chuyển cấu hình làm query params động cho Service Worker
+        const queryParams = new URLSearchParams(firebaseConfig as any).toString();
+
+        navigator.serviceWorker
+          .register(`/firebase-messaging-sw.js?${queryParams}`)
+          .then((reg) => {
+            console.log("[FCM SW] Service Worker registered successfully:", reg);
+            // Lấy token thiết bị
+            import("../../notifications/services/fcm").then(({ fcmService }) => {
+              fcmService.requestPermissionAndGetToken();
+            });
+          })
+          .catch((err) => {
+            console.error("[FCM SW] Service Worker registration failed:", err);
+          });
+      }
+    } else {
+      // Hủy token thiết bị khi đăng xuất
+      import("../../notifications/services/fcm").then(({ fcmService }) => {
+        fcmService.revokeToken();
+      });
+    }
+  }, [isAuthenticated]);
+
+  // 2. Lắng nghe sự kiện thông báo thời gian thực để kích hoạt Chuông báo & Toast nổi
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handleNotificationCreated = (event: Event) => {
+      const notification = (event as CustomEvent).detail;
+      if (!notification) return;
+
+      console.info("🔔 [Real-time Log] AppHeader nhận sự kiện thông báo qua WebSockets:", notification);
+
+      // Tổng hợp chuông pha lê dual-tone sử dụng Web Audio API (nếu người dùng bật)
+      const isSoundEnabled = localStorage.getItem("settings.soundNotifications") !== "false";
+      if (isSoundEnabled) {
+        try {
+          initAudio();
+          const audioCtx = sharedAudioCtx;
+          if (audioCtx) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Âm D5 thanh thoát
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.12); // Âm A5 cao vút
+
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.6);
+          }
+        } catch (err) {
+          console.warn("[AudioChime] Web Audio play failed:", err);
+        }
+      }
+
+      // Kích hoạt Toast thông báo cao cấp có hỗ trợ deep-link
+      showToast({
+        title: notification.title,
+        description: notification.description,
+        variant: "info",
+        actionUrl: notification.actionUrl,
+      });
+
+      // Phát thông báo Native của hệ điều hành (Browser Desktop Notification)
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+        try {
+          const nativeNotif = new Notification(notification.title, {
+            body: notification.description,
+            icon: "/urent.png",
+            tag: notification._id,
+          });
+
+          nativeNotif.onclick = (e) => {
+            e.preventDefault();
+            window.focus();
+            if (notification.actionUrl) {
+              navigate(notification.actionUrl);
+            }
+            nativeNotif.close();
+          };
+        } catch (err) {
+          console.warn("[NativeNotification] Failed to play native chime:", err);
+        }
+      }
+    };
+
+    window.addEventListener("notification.created", handleNotificationCreated);
+    return () => {
+      window.removeEventListener("notification.created", handleNotificationCreated);
+    };
+  }, [isAuthenticated, showToast, navigate]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -250,42 +385,48 @@ export function AppHeader() {
                       </div>
 
                       <div className="max-h-80 space-y-2 overflow-y-auto p-2.5">
-                        {notifications.slice(0, 3).map((notification) => (
-                          <button
-                            key={notification._id}
-                            type="button"
-                            className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-left transition hover:border-teal-200 hover:bg-white hover:shadow-sm dark:border-white/8 dark:bg-white/4 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
-                                <Bell size={16} strokeWidth={2.2} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="line-clamp-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                        {notification.title}
-                                      </p>
-                                      {!notification.read ? (
-                                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                                          {t.headerNotificationsBadge}
-                                        </span>
-                                      ) : null}
+                        {notifications.length > 0 ? (
+                          notifications.slice(0, 3).map((notification) => (
+                            <button
+                              key={notification._id}
+                              type="button"
+                              className="group relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-left transition hover:border-teal-200 hover:bg-white hover:shadow-sm dark:border-white/8 dark:bg-white/4 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
+                                  <Bell size={16} strokeWidth={2.2} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        <p className="line-clamp-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                          {notification.title}
+                                        </p>
+                                        {!notification.read ? (
+                                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
+                                            {t.headerNotificationsBadge}
+                                          </span>
+                                        ) : null}
+                                      </div>
                                     </div>
+                                    <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                                      {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
                                   </div>
-                                  <span className="shrink-0 text-[11px] font-medium text-slate-400 dark:text-slate-500">
-                                    {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  </span>
-                                </div>
-                                <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                                  <span className={`h-2 w-2 rounded-full ${notification.read ? 'bg-gray-400' : 'bg-emerald-400'}`} />
-                                  <span>{notification.read ? 'Đã đọc' : t.headerNotificationsHint}</span>
+                                  <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                    <span className={`h-2 w-2 rounded-full ${notification.read ? 'bg-gray-400' : 'bg-emerald-400'}`} />
+                                    <span>{notification.read ? 'Đã đọc' : t.headerNotificationsHint}</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </button>
-                        ))}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
+                            Không có thông báo mới nào
+                          </div>
+                        )}
                       </div>
 
                       <div className="border-t border-slate-100 bg-slate-50/80 px-3 py-3 dark:border-white/10 dark:bg-white/3">

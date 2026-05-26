@@ -136,3 +136,49 @@ export const sendPasswordChangedEmail = async (to: string, displayName?: string)
   );
 };
 
+export const sendNotificationEmail = async (
+  to: string,
+  title: string,
+  body: string,
+  actionUrl?: string
+) => {
+  const ctaUrl = actionUrl ? `${env.emailFrom.includes('localhost') ? 'http://localhost:5173' : 'https://urent.vercel.app'}${actionUrl}` : undefined;
+  
+  await sendEmail(
+    to,
+    `[U-Rent] ${title}`,
+    `
+      <div style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,sans-serif;">
+        <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
+          <div style="background:#ffffff;border:1px solid #e4e4e7;border-radius:14px;padding:24px;">
+            <div style="display:flex;align-items:center;margin-bottom:16px;">
+              <span style="font-size:18px;font-weight:700;color:#0f766e;letter-spacing:0.05em;text-transform:uppercase;">
+                U-Rent Notification
+              </span>
+            </div>
+            <h2 style="margin:0 0 12px;font-size:20px;color:#18181b;font-weight:600;">${title}</h2>
+            <p style="margin:0 0 20px;font-size:14px;color:#3f3f46;line-height:1.6;">
+              ${body}
+            </p>
+            ${
+              ctaUrl
+                ? `
+              <div style="margin:0 0 20px;">
+                <a href="${ctaUrl}" target="_blank" style="display:inline-block;padding:12px 24px;font-size:14px;font-weight:600;color:#ffffff;background-color:#0f766e;border-radius:10px;text-decoration:none;text-align:center;box-shadow:0 4px 6px -1px rgba(15,118,110,0.2);">
+                  View Details in U-Rent
+                </a>
+              </div>
+              `
+                : ''
+            }
+            <hr style="border:none;border-top:1px solid #e4e4e7;margin:20px 0;" />
+            <p style="margin:0;font-size:12px;color:#71717a;line-height:1.5;">
+              You received this email because you opted in to receive notifications. You can customize your preferences anytime in your <a href="${ctaUrl ? ctaUrl.split('/')[0] + '//' + ctaUrl.split('/')[2] + '/settings' : '#'}" style="color:#0f766e;text-decoration:underline;">Settings</a> page.
+            </p>
+          </div>
+        </div>
+      </div>
+    `
+  );
+};
+

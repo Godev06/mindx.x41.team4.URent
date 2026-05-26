@@ -4,11 +4,11 @@ import { ProductCard } from "./ProductCard";
 
 interface FeaturedProductsProps {
   products: Product[];
-  onProductClick: (id: number) => void;
+  onProductClick: (id: string | number) => void;
   lang: "vi" | "en";
   dayUnit?: string;
   priceConverter?: (price: number) => number;
-  productMeta?: Record<number, any>;
+  productMeta?: Record<string | number, any>;
   onViewMore?: () => void;
 }
 
@@ -52,7 +52,13 @@ export function FeaturedProducts({
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {topProducts.map((product) => {
-          const meta = productMeta[product.id];
+          const meta = productMeta[product.id] || {
+            locationVi: product.location || (lang === "vi" ? "Chưa cập nhật" : "Unknown"),
+            locationEn: product.location || "Unknown",
+            distanceKm: undefined,
+            conditionVi: product.condition || (lang === "vi" ? "Tốt" : "Good"),
+            conditionEn: product.condition || "Good",
+          };
           const location = lang === "vi" ? meta?.locationVi : meta?.locationEn;
           const conditionLabel =
             lang === "vi" ? meta?.conditionVi : meta?.conditionEn;

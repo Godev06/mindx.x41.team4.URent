@@ -45,6 +45,7 @@ export function AdminLayout({ children }: Props) {
           {navItem("Orders", "/admin/orders")}
           {navItem("Messages", "/admin/chat")}
           {navItem("Logs", "/admin/logs")}
+          {navItem("Broadcast", "/admin/broadcast")}
         </nav>
 
         <div className="mt-auto text-xs text-slate-500">© U-Rent Admin</div>

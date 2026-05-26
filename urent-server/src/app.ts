@@ -98,7 +98,7 @@ app.use("/api/v1/settings", settingsRouter);
 app.use("/api/v1", productRouter);
 app.use("/api/v1", messageRouter);
 app.use("/api/v1", adminChatRouter);
-app.use("/api/v1", notificationRouter);
+app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1", userRouter);
 

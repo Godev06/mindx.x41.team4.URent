@@ -28,7 +28,8 @@ export type NotificationsAction =
   | { type: 'FETCH_ERROR'; error: string }
   | { type: 'MARK_READ'; payload: { notificationId: string; readAt: string } }
   | { type: 'MARK_ALL_READ'; payload: { type?: 'order' | 'message' | 'promotion' | 'system'; readAt: string } }
-  | { type: 'DELETE'; payload: { notificationId: string } };
+  | { type: 'DELETE'; payload: { notificationId: string } }
+  | { type: 'ADD_NEW'; payload: ApiNotification };
 
 export interface UseNotificationsReturn {
   notifications: ApiNotification[];
@@ -51,7 +52,8 @@ export interface UnreadCountState {
 export type UnreadCountAction =
   | { type: 'FETCH_START' }
   | { type: 'FETCH_SUCCESS'; payload: number }
-  | { type: 'FETCH_ERROR'; error: string };
+  | { type: 'FETCH_ERROR'; error: string }
+  | { type: 'INCREMENT_COUNT' };
 
 export interface UseUnreadCountReturn {
   unreadCount: number;
@@ -98,6 +100,14 @@ function useDeepCompareMemoize<T>(value: T): T {
 
 function notificationsReducer(state: NotificationsState, action: NotificationsAction): NotificationsState {
   switch (action.type) {
+    case 'ADD_NEW':
+      if (state.data.some(n => n._id === action.payload._id)) {
+        return state;
+      }
+      return {
+        ...state,
+        data: [action.payload, ...state.data],
+      };
     case 'FETCH_START':
       return {
         ...state,
@@ -147,6 +157,11 @@ function notificationsReducer(state: NotificationsState, action: NotificationsAc
 
 function unreadCountReducer(state: UnreadCountState, action: UnreadCountAction): UnreadCountState {
   switch (action.type) {
+    case 'INCREMENT_COUNT':
+      return {
+        ...state,
+        unreadCount: state.unreadCount + 1,
+      };
     case 'FETCH_START':
       return {
         ...state,
@@ -222,6 +237,20 @@ export function useNotifications(params?: UseNotificationsParams): UseNotificati
   useEffect(() => {
     return refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    const handleNotificationCreated = (event: Event) => {
+      const notification = (event as CustomEvent).detail;
+      if (notification) {
+        console.info("🔔 [Real-time Log] useNotifications hook nhận thông báo:", notification);
+        dispatch({ type: 'ADD_NEW', payload: notification });
+      }
+    };
+    window.addEventListener('notification.created', handleNotificationCreated);
+    return () => {
+      window.removeEventListener('notification.created', handleNotificationCreated);
+    };
+  }, []);
 
   const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
     try {
@@ -323,6 +352,18 @@ export function useUnreadCount(): UseUnreadCountReturn {
   useEffect(() => {
     return refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    const handleNotificationCreated = (event: Event) => {
+      const notification = (event as CustomEvent).detail;
+      console.info("🔔 [Real-time Log] useUnreadCount hook tăng số lượng chưa đọc (+1):", notification?.title);
+      dispatch({ type: 'INCREMENT_COUNT' });
+    };
+    window.addEventListener('notification.created', handleNotificationCreated);
+    return () => {
+      window.removeEventListener('notification.created', handleNotificationCreated);
+    };
+  }, []);
 
   return {
     unreadCount: state.unreadCount,

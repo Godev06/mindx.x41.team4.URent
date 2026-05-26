@@ -12,14 +12,19 @@ export interface ProductOwner {
 }
 
 export interface Product {
-  id: number;
+  id?: string | number;
+  _id?: string;
   name: string;
   category: string;
   price: number;
   status: ProductStatus;
-  image: string;
+  isArchived?: boolean;
   imageUrl?: string;
+  image?: string;
+  condition?: string;
+  location?: string;
   rating?: number;
+  reviewsCount?: number;
   reviews?: number;
   owner?: ProductOwner;
   summary?: string;
@@ -47,7 +52,7 @@ export interface Message {
 
 export interface Order {
   id: string;
-  productId: number;
+  productId: string | number;
   productName: string;
   customerName: string;
   startDate: string;

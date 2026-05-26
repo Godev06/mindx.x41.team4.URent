@@ -23,11 +23,36 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
   const [days, setDays] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const serviceFee = 2.5;
-  const total = product.price * days + serviceFee;
+
+  const isDbVnd = product.price > 1000;
+  const isShowVnd = lang === "vi";
+
+  // Convert prices dynamically depending on language context:
+  const priceInVnd = isDbVnd ? product.price : product.price * 25000;
+  const priceInUsd = isDbVnd ? product.price / 25000 : product.price;
+
+  const displayPrice = isShowVnd ? priceInVnd : priceInUsd;
+  const serviceFee = isShowVnd ? 10000 : 2.5;
+  const total = displayPrice * days + serviceFee;
+
+  const formatPrice = (value: number) => {
+    if (isShowVnd) {
+      return value.toLocaleString("vi-VN", {
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0,
+      });
+    }
+    return value.toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    });
+  };
 
   const handleRentClick = () => {
     if (isAuthenticated) {
@@ -71,7 +96,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
                 type="button"
                 onClick={() => setShowModal(false)}
                 className="absolute top-5 right-5 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/8 dark:hover:text-white"
-                aria-label="Đóng"
+                aria-label="Close"
               >
                 <X size={16} strokeWidth={2.5} />
               </button>
@@ -113,6 +138,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
         </div>
       )}
 
+      {/* Booking Card Interface */}
       <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/8 ring-1 ring-slate-900/4 md:sticky md:top-24 dark:border-white/8 dark:bg-[#101a2a] dark:ring-white/4">
         {/* Gradient top strip */}
         <div className="h-1.5 w-full bg-linear-to-r from-teal-400 via-cyan-400 to-teal-500" />
@@ -126,7 +152,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
               </p>
               <div className="mt-1 flex items-baseline gap-1.5">
                 <span className="text-4xl font-bold tabular-nums text-slate-900 dark:text-white">
-                  ${product.price}
+                  {formatPrice(displayPrice)}
                 </span>
                 <span className="mb-0.5 text-sm font-medium text-slate-400 dark:text-slate-500">
                   {t.bookingDayUnit}
@@ -178,10 +204,10 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
             <div className="space-y-2.5 border-t border-slate-200/80 pt-3 dark:border-white/8">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-slate-500 dark:text-slate-400">
-                  ${product.price} × {days} ngày
+                  {formatPrice(displayPrice)} × {days} {t.bookingDayUnit}
                 </span>
                 <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">
-                  ${product.price * days}
+                  {formatPrice(displayPrice * days)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -189,7 +215,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
                   {t.bookingSubtotal}
                 </span>
                 <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">
-                  ${serviceFee.toFixed(2)}
+                  {formatPrice(serviceFee)}
                 </span>
               </div>
               <div className="flex items-center justify-between border-t border-dashed border-slate-200 pt-2.5 dark:border-white/10">
@@ -197,7 +223,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
                   {t.bookingTotal}
                 </span>
                 <span className="text-2xl font-bold tabular-nums text-teal-600 dark:text-teal-400">
-                  ${total.toFixed(2)}
+                  {formatPrice(total)}
                 </span>
               </div>
             </div>

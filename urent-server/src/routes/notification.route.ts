@@ -5,7 +5,12 @@ import {
   markAsRead,
   markAllAsRead,
   deleteNotification,
-  getUnreadCount
+  getUnreadCount,
+  saveFcmToken,
+  deleteFcmToken,
+  getNotificationSettings,
+  updateNotificationSettings,
+  broadcastNotification
 } from '../controllers/notification.controller';
 
 export const notificationRouter = Router();
@@ -142,3 +147,14 @@ notificationRouter.patch('/mark-all-read', authGuard, markAllAsRead);
  *                   type: boolean
  */
 notificationRouter.delete('/:id', authGuard, deleteNotification);
+
+// FCM Tokens
+notificationRouter.post('/fcm-token', authGuard, saveFcmToken);
+notificationRouter.delete('/fcm-token', authGuard, deleteFcmToken);
+
+// Preferences Cài đặt thông báo
+notificationRouter.get('/settings', authGuard, getNotificationSettings);
+notificationRouter.put('/settings', authGuard, updateNotificationSettings);
+
+// Broadcast diện rộng (Admin only)
+notificationRouter.post('/broadcast', authGuard, broadcastNotification);

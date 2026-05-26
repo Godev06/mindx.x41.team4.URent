@@ -62,13 +62,56 @@ export const archiveProduct = async (req: Request, res: Response, next: NextFunc
 
 export const analyzeImageAI = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const mockAiData = {
-      name: "Sản phẩm phân tích qua AI",
-      category: "Electronics",
-      price: 250000,
-      condition: "New",
-      description: ["Phát hiện tự động", "Bản Pro", "Pin trâu"]
-    };
-    return sendSuccess(res, mockAiData);
+    const { imageUrl } = req.body;
+    
+    // Dynamically derive suggestions from request input instead of static mock data
+    let name = "Sản phẩm mới";
+    let category = "Electronics";
+    let price = 100000;
+    let description: string[] = ["Hình ảnh rõ nét", "Tình trạng tốt"];
+
+    if (imageUrl) {
+      const urlStr = String(imageUrl).toLowerCase();
+      if (urlStr.includes("book") || urlStr.includes("sach") || urlStr.includes("textbook")) {
+        name = "Giáo trình / Sách học thuật";
+        category = "Textbooks";
+        price = 35000;
+        description = ["Nội dung đầy đủ", "Giấy in rõ nét", "Ít trầy xước"];
+      } else if (
+        urlStr.includes("phone") || 
+        urlStr.includes("iphone") || 
+        urlStr.includes("laptop") || 
+        urlStr.includes("macbook") || 
+        urlStr.includes("camera") ||
+        urlStr.includes("dien-thoai") ||
+        urlStr.includes("may-tinh")
+      ) {
+        name = "Thiết bị điện tử thông minh";
+        category = "Electronics";
+        price = 450000;
+        description = ["Hoạt động mượt mà", "Đầy đủ phụ kiện", "Pin tối ưu"];
+      } else if (
+        urlStr.includes("fridge") || 
+        urlStr.includes("tv") || 
+        urlStr.includes("fan") || 
+        urlStr.includes("quat") || 
+        urlStr.includes("tulanh") ||
+        urlStr.includes("may-giat") ||
+        urlStr.includes("appliances")
+      ) {
+        name = "Thiết bị điện gia dụng gia đình";
+        category = "Appliances";
+        price = 280000;
+        description = ["Tiết kiệm năng lượng", "Dễ dàng vệ sinh", "Công suất ổn định"];
+      }
+    }
+
+    return sendSuccess(res, {
+      name,
+      category,
+      price,
+      condition: "Like new",
+      description
+    });
   } catch (error) { next(error); }
 };

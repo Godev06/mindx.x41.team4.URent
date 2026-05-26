@@ -14,6 +14,8 @@ export interface NotificationDocument extends mongoose.Document {
   readAt?: Date;
   activityLogId?: mongoose.Types.ObjectId;
   eventKey?: string;
+  actionUrl?: string;
+  metadata?: Record<string, any>;
 }
 
 const notificationSchema = new Schema<NotificationDocument>(
@@ -26,7 +28,9 @@ const notificationSchema = new Schema<NotificationDocument>(
     read: { type: Boolean, default: false },
     readAt: { type: Date },
     activityLogId: { type: Schema.Types.ObjectId, ref: 'ActivityLog' },
-    eventKey: { type: String, trim: true }
+    eventKey: { type: String, trim: true },
+    actionUrl: { type: String, trim: true },
+    metadata: { type: Schema.Types.Map, of: Schema.Types.Mixed }
   },
   { timestamps: true }
 );

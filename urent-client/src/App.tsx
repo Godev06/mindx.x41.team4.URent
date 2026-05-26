@@ -30,6 +30,7 @@ import { AdminOrdersDetailPage } from "./features/admin/pages/AdminOrdersDetailP
 import { AdminOrdersPage } from "./features/admin/pages/AdminOrdersPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 import { AdminChatPage } from "./features/admin/pages/AdminChatPage";
+import { AdminBroadcastCenter } from "./features/admin/pages/AdminBroadcastCenter";
 
 // IMPORT SocketProvider từ file hook .ts của bạn vào đây
 import { SocketProvider } from "./features/user/messages/hooks/useSocket";
@@ -37,12 +38,11 @@ import { SocketProvider } from "./features/user/messages/hooks/useSocket";
 function ProductRoute() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const parsedId = Number(id);
-  const safeId = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : 1;
+  const parsedId = id && !isNaN(Number(id)) ? Number(id) : id;
 
   return (
     <ProductDetailPage
-      productId={safeId}
+      productId={parsedId ?? null}
       onBack={() => navigate(APP_ROUTES.home)}
     />
   );
@@ -50,7 +50,7 @@ function ProductRoute() {
 
 export default function App() {
   const navigate = useNavigate();
-  const handleProductClick = (id: number) => {
+  const handleProductClick = (id: string | number) => {
     navigate(`/product/${id}`);
   };
 
@@ -110,6 +110,7 @@ export default function App() {
           <Route path="/admin/orders/:id" element={<AdminOrdersDetailPage />} />
           <Route path="/admin/chat" element={<AdminChatPage />} />
           <Route path="/admin/logs" element={<AdminLogsPage />} />
+          <Route path="/admin/broadcast" element={<AdminBroadcastCenter />} />
         </Route>
 
         <Route path="*" element={<Navigate to={APP_ROUTES.home} replace />} />

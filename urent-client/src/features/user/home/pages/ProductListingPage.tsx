@@ -10,14 +10,16 @@ import {
   ArrowUpDown,
   Search,
   X,
+  Loader2,
 } from "lucide-react";
 import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { ProductCard } from "../components/ProductCard";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { productService } from "../../product/services/productService";
 
 interface ProductListingPageProps {
-  onProductClick: (id: number) => void;
+  onProductClick: (id: string | number) => void;
   onBack: () => void;
 }
 
@@ -121,7 +123,7 @@ const PRODUCT_META: Record<number, ProductMeta> = {
   ),
 };
 
-const toVnd = (price: number) => price * 25_000;
+const toVnd = (price: number) => (price > 1000 ? price : price * 25_000);
 const ACTIVE_STATUSES = new Set(["Available", "Active"]);
 const ITEMS_PER_PAGE = 10;
 const formatCompactNumber = (value: number) =>
@@ -140,13 +142,56 @@ export function ProductListingPage({
   const [maxPriceInput, setMaxPriceInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const activeProducts = useMemo(
-    () =>
-      PRODUCTS.filter((product: Product) =>
-        ACTIVE_STATUSES.has(product.status),
-      ),
-    [],
-  );
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function loadProducts() {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        let categoryParam: string | undefined = undefined;
+        if (category === "electronics") categoryParam = "Electronics";
+        else if (category === "textbooks") categoryParam = "Textbooks";
+        else if (category === "appliances") categoryParam = "Appliances";
+
+        const fetched = await productService.getProducts({
+          category: categoryParam,
+          limit: 50,
+        });
+
+        if (active) {
+          setProducts(fetched);
+        }
+      } catch (err: any) {
+        console.error("Failed to load products from BE API:", err);
+        if (active) {
+          setProducts([]);
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadProducts();
+    return () => {
+      active = false;
+    };
+  }, [category]);
+
+  const activeProducts = useMemo(() => {
+    if (products && products.length > 0) {
+      return products;
+    }
+    return PRODUCTS.filter((product: Product) =>
+      ACTIVE_STATUSES.has(product.status),
+    );
+  }, [products]);
 
   const { dataMinPriceVnd, dataMaxPriceVnd } = useMemo(() => {
     const prices = activeProducts.map((product: Product) =>
@@ -195,13 +240,22 @@ export function ProductListingPage({
     const effectiveMaxPrice = hasMaxPrice ? maxPrice : dataMaxPriceVnd;
 
     let result = activeProducts.filter((product: Product) => {
-      const meta = PRODUCT_META[product.id];
-      if (!meta) {
-        return false;
-      }
+      const meta = PRODUCT_META[product.id as number] || {
+        group: (product.category?.toLowerCase() || "electronics") as Exclude<CategoryKey, "all">,
+        locationVi: product.location || "Chưa cập nhật",
+        locationEn: product.location || "Unknown",
+        distanceKm: 1.5,
+        availableFrom: "2026-05-01",
+        availableTo: "2026-12-31",
+        conditionVi: product.condition || "Tốt",
+        conditionEn: product.condition || "Good",
+      };
 
       const productPriceVnd = toVnd(product.price);
-      const matchesCategory = category === "all" || meta.group === category;
+      const matchesCategory =
+        category === "all" ||
+        meta.group === category ||
+        product.category?.toLowerCase() === category.toLowerCase();
       const matchesMinPrice = productPriceVnd >= effectiveMinPrice;
       const matchesMaxPrice = productPriceVnd <= effectiveMaxPrice;
 
@@ -312,11 +366,10 @@ export function ProductListingPage({
                     <button
                       key={item.id}
                       onClick={() => setCategory(item.id)}
-                      className={`inline-flex h-8 sm:h-9 shrink-0 items-center gap-1.5 sm:gap-2 rounded-full border px-2.5 sm:px-3.5 text-[11px] sm:text-xs font-semibold transition-all duration-150 ${
-                        active
+                      className={`inline-flex h-8 sm:h-9 shrink-0 items-center gap-1.5 sm:gap-2 rounded-full border px-2.5 sm:px-3.5 text-[11px] sm:text-xs font-semibold transition-all duration-150 ${active
                           ? "border-slate-900 bg-slate-900 text-white shadow-sm dark:border-white dark:bg-white dark:text-slate-900"
                           : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                      }`}
+                        }`}
                     >
                       <Icon size={13} className="shrink-0 opacity-90" />
                       <span className="leading-none hidden sm:inline">
@@ -379,11 +432,10 @@ export function ProductListingPage({
                       return (
                         <label
                           key={`mobile-${value}`}
-                          className={`group flex gap-2 cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${
-                            isSelected
+                          className={`group flex gap-2 cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${isSelected
                               ? "border-emerald-300/70 bg-emerald-50/70 dark:border-emerald-500/40 dark:bg-emerald-500/10"
                               : "border-transparent hover:border-slate-200 hover:bg-slate-100/50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50"
-                          }`}
+                            }`}
                         >
                           <input
                             type="radio"
@@ -394,20 +446,18 @@ export function ProductListingPage({
                             className="peer sr-only"
                           />
                           <span
-                            className={`text-sm font-medium transition-colors ${
-                              isSelected
+                            className={`text-sm font-medium transition-colors ${isSelected
                                 ? "text-slate-900 dark:text-white"
                                 : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"
-                            }`}
+                              }`}
                           >
                             {label}
                           </span>
                           <span
-                            className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
-                              isSelected
+                            className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${isSelected
                                 ? "border-emerald-500 bg-emerald-500 text-white shadow-sm dark:border-emerald-400 dark:bg-emerald-400 dark:text-slate-900"
                                 : "border-slate-300 bg-white text-transparent group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-900"
-                            }`}
+                              }`}
                             aria-hidden="true"
                           >
                             <Check size={14} strokeWidth={3} className="" />
@@ -503,11 +553,10 @@ export function ProductListingPage({
                       return (
                         <label
                           key={`desktop-${value}`}
-                          className={`group flex gap-2 cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${
-                            isSelected
+                          className={`group flex gap-2 cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${isSelected
                               ? "border-emerald-300/70 bg-emerald-50/70 dark:border-emerald-500/40 dark:bg-emerald-500/10"
                               : "border-transparent hover:border-slate-200 hover:bg-slate-100/50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50"
-                          }`}
+                            }`}
                         >
                           <input
                             type="radio"
@@ -518,20 +567,18 @@ export function ProductListingPage({
                             className="peer sr-only"
                           />
                           <span
-                            className={`text-sm font-medium transition-colors ${
-                              isSelected
+                            className={`text-sm font-medium transition-colors ${isSelected
                                 ? "text-slate-900 dark:text-white"
                                 : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"
-                            }`}
+                              }`}
                           >
                             {label}
                           </span>
                           <span
-                            className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
-                              isSelected
+                            className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${isSelected
                                 ? "border-emerald-500 bg-emerald-500 text-white shadow-sm dark:border-emerald-400 dark:bg-emerald-400 dark:text-slate-900"
                                 : "border-slate-300 bg-white text-transparent group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-900"
-                            }`}
+                              }`}
                             aria-hidden="true"
                           >
                             <Check size={14} strokeWidth={3} className="" />
@@ -599,11 +646,33 @@ export function ProductListingPage({
 
           {/* Product Grid */}
           <div className="flex-1">
-            {filteredAndSortedProducts.length > 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-5">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div key={i} className="animate-pulse rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-md space-y-4">
+                    <div className="aspect-[5/6] w-full rounded-2xl bg-slate-200 dark:bg-slate-700" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700" />
+                      <div className="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                    <div className="flex justify-between items-end pt-2">
+                      <div className="h-6 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+                      <div className="h-8 w-8 rounded-xl bg-slate-200 dark:bg-slate-700" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredAndSortedProducts.length > 0 ? (
               <div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-5">
                   {paginatedProducts.map((product: Product) => {
-                    const meta = PRODUCT_META[product.id];
+                    const meta = PRODUCT_META[product.id as number] || {
+                      locationVi: product.location || "Chưa cập nhật",
+                      locationEn: product.location || "Unknown",
+                      distanceKm: 1.5,
+                      conditionVi: product.condition || "Tốt",
+                      conditionEn: product.condition || "Good",
+                    };
                     const location =
                       lang === "vi" ? meta.locationVi : meta.locationEn;
                     const conditionLabel =
@@ -653,11 +722,10 @@ export function ProductListingPage({
                           type="button"
                           key={item}
                           onClick={() => setCurrentPage(item)}
-                          className={`inline-flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-sm font-semibold transition ${
-                            currentPage === item
+                          className={`inline-flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-sm font-semibold transition ${currentPage === item
                               ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/30"
                               : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                          }`}
+                            }`}
                         >
                           {item}
                         </button>

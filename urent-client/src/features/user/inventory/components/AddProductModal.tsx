@@ -221,9 +221,12 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     { value: "Used", label: lang === "vi" ? "Đã sử dụng" : "Used" },
   ];
 
-  const categoryOptions = Array.from(
-    new Set(PRODUCTS.map((p) => p.category)),
-  ).map((cat) => {
+  const defaultCategories = ["Camera", "Laptop", "Outdoor", "Books", "Electronics"];
+  const uniqueCategories = PRODUCTS.length > 0
+    ? Array.from(new Set(PRODUCTS.map((p) => p.category)))
+    : defaultCategories;
+
+  const categoryOptions = uniqueCategories.map((cat) => {
     const labels: Record<string, { vi: string; en: string }> = {
       Camera: { vi: "Máy ảnh", en: "Camera" },
       Laptop: { vi: "Máy tính xách tay", en: "Laptop" },

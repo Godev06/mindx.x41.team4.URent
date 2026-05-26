@@ -12,8 +12,25 @@ export interface SettingsDocument extends mongoose.Document {
   language: Language;
   emailNotifications: boolean;
   screenNotifications: boolean;
+  pushNotifications: boolean;
+  soundNotifications: boolean;
   twoFactorEnabled: boolean;
+  preferences: {
+    orderUpdates: { email: boolean; push: boolean; inApp: boolean };
+    chatMessages: { email: boolean; push: boolean; inApp: boolean };
+    promotions: { email: boolean; push: boolean; inApp: boolean };
+    systemAlerts: { email: boolean; push: boolean; inApp: boolean };
+  };
 }
+
+const channelPreferenceSchema = new Schema(
+  {
+    email: { type: Boolean, default: true },
+    push: { type: Boolean, default: true },
+    inApp: { type: Boolean, default: true }
+  },
+  { _id: false }
+);
 
 const settingsSchema = new Schema<SettingsDocument>(
   {
@@ -42,9 +59,26 @@ const settingsSchema = new Schema<SettingsDocument>(
       type: Boolean,
       default: true
     },
+    pushNotifications: {
+      type: Boolean,
+      default: true
+    },
+    soundNotifications: {
+      type: Boolean,
+      default: true
+    },
     twoFactorEnabled: {
       type: Boolean,
       default: false
+    },
+    preferences: {
+      type: {
+        orderUpdates: { type: channelPreferenceSchema, default: () => ({}) },
+        chatMessages: { type: channelPreferenceSchema, default: () => ({}) },
+        promotions: { type: channelPreferenceSchema, default: () => ({}) },
+        systemAlerts: { type: channelPreferenceSchema, default: () => ({}) }
+      },
+      default: () => ({})
     }
   },
   { timestamps: true }
