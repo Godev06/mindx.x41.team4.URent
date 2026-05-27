@@ -6,12 +6,12 @@ import { OtpPurpose, sendOtpEmail } from './email.service';
 
 const otpExpiry = () => new Date(Date.now() + env.otpExpiresMinutes * 60 * 1000);
 const resetExpiry = () => new Date(Date.now() + env.resetTokenExpiresMinutes * 60 * 1000);
-type AuthOtpPurpose = Extract<OtpPurpose, 'register' | 'login'>;
+type AuthOtpPurpose = Extract<OtpPurpose, 'register' | 'login' | 'toggle 2fa'>;
 
-const normalizedPurpose = (purpose: AuthOtpPurpose) => (purpose === 'register' ? 'register' : 'login');
+const normalizedPurpose = (purpose: AuthOtpPurpose) => purpose;
 
 const setOtpByPurpose = (user: UserDocument, otp: string, purpose: AuthOtpPurpose) => {
-  if (purpose === 'register') {
+  if (purpose === 'register' || purpose === 'toggle 2fa') {
     user.otpCode = otp;
     user.otpExpiresAt = otpExpiry();
     return;
@@ -22,7 +22,7 @@ const setOtpByPurpose = (user: UserDocument, otp: string, purpose: AuthOtpPurpos
 };
 
 const clearOtpByPurpose = (user: UserDocument, purpose: AuthOtpPurpose) => {
-  if (purpose === 'register') {
+  if (purpose === 'register' || purpose === 'toggle 2fa') {
     user.otpCode = undefined;
     user.otpExpiresAt = undefined;
     return;
@@ -58,7 +58,13 @@ export const verifyOtp = async (email: string, otp: string, purpose: AuthOtpPurp
     !!user.loginOtpExpiresAt &&
     user.loginOtpExpiresAt.getTime() >= Date.now();
 
-  if (!isValidRegisterOtp && !isValidLoginOtp) return null;
+  const isValidToggle2FaOtp =
+    purpose === 'toggle 2fa' &&
+    user.otpCode === otp &&
+    !!user.otpExpiresAt &&
+    user.otpExpiresAt.getTime() >= Date.now();
+
+  if (!isValidRegisterOtp && !isValidLoginOtp && !isValidToggle2FaOtp) return null;
 
   if (purpose === 'register') {
     user.isEmailVerified = true;

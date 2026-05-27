@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ThemeContext, type Theme } from "./ThemeContextObject";
 import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
 import { notificationService } from "../../notifications/services/notificationService";
+import { apiClient } from "../../../../lib/api/apiClient";
 
 const resolveSystemTheme = (): Theme => {
   if (
@@ -50,6 +51,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           }
           if (res.data.screenNotifications !== undefined) {
             setScreenNotifications(res.data.screenNotifications);
+          }
+          if (res.data.theme !== undefined) {
+            setTheme(res.data.theme);
           }
         }
       })
@@ -126,9 +130,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           window.clearTimeout(finishTransitionTimerRef.current);
         }
 
-        setTheme((currentTheme) =>
-          currentTheme === "light" ? "dark" : "light",
-        );
+        setTheme((currentTheme) => {
+          const nextTheme = currentTheme === "light" ? "dark" : "light";
+          const token = getStoredAuthToken();
+          if (token) {
+            apiClient.patch("/api/v1/settings", { theme: nextTheme }).catch((err) => {
+              console.error("Failed to update theme on BE:", err);
+            });
+          }
+          return nextTheme;
+        });
 
         finishTransitionTimerRef.current = window.setTimeout(() => {
           setIsThemeTransitioning(false);

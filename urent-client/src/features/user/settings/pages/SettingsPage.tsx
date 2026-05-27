@@ -11,6 +11,7 @@ import { TwoFactorAuthSection } from "../components/TwoFactorAuthSection";
 import { ActivityLogsSection } from "../components/ActivityLogsSection";
 import { PreferencesSection } from "../components/PreferencesSection";
 import { ChangePasswordModal } from "../components/ChangePasswordModal";
+import { TwoFactorOtpModal } from "../components/TwoFactorOtpModal";
 
 export function SettingsPage() {
   const {
@@ -32,13 +33,16 @@ export function SettingsPage() {
     isLoading: isLoadingSecurity,
     isSaving2FA,
     isPasswordModalOpen,
+    is2faModalOpen,
     handleTwoFactorChange,
+    confirmTwoFactorChange,
+    close2faModal,
     openPasswordModal,
     closePasswordModal,
     handlePasswordSuccess,
   } = useSecuritySettings();
 
-  const [activeTab, setActiveTab] = useState<"security" | "activity" | "preferences" | "test">("security");
+  const [activeTab, setActiveTab] = useState<"security" | "activity" | "preferences">("security");
 
   const tabs = useMemo(
     () => [
@@ -56,11 +60,6 @@ export function SettingsPage() {
         id: "preferences" as const,
         label: t.settingsTabPreferences ?? "Tùy chọn",
         icon: Sliders,
-      },
-      {
-        id: "test" as const,
-        label: "Test",
-        icon: ShieldCheck,
       },
     ],
     [t]
@@ -131,18 +130,16 @@ export function SettingsPage() {
                   aria-selected={isActive}
                   role="tab"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`inline-flex shrink-0 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${
-                    isActive
-                      ? SETTINGS_TOKENS.interactive.tabActive
-                      : SETTINGS_TOKENS.interactive.tabInactive
-                  }`}
+                  className={`inline-flex shrink-0 items-center gap-2.5 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${isActive
+                    ? SETTINGS_TOKENS.interactive.tabActive
+                    : SETTINGS_TOKENS.interactive.tabInactive
+                    }`}
                 >
                   <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-2xl ring-1 ${
-                      isActive
-                        ? "bg-white/80 text-teal-700 ring-teal-200/70 dark:bg-teal-500/10 dark:text-teal-200 dark:ring-teal-500/20"
-                        : "bg-slate-100 ring-slate-200 dark:bg-slate-700/70 dark:ring-slate-600"
-                    }`}
+                    className={`flex h-9 w-9 items-center justify-center rounded-2xl ring-1 ${isActive
+                      ? "bg-white/80 text-teal-700 ring-teal-200/70 dark:bg-teal-500/10 dark:text-teal-200 dark:ring-teal-500/20"
+                      : "bg-slate-100 ring-slate-200 dark:bg-slate-700/70 dark:ring-slate-600"
+                      }`}
                   >
                     <Icon size={18} strokeWidth={2} />
                   </span>
@@ -223,9 +220,8 @@ export function SettingsPage() {
                       {t.settingsSecurityStrengthLabel ?? "Mức độ bảo vệ"}
                     </p>
                     <p
-                      className={`mt-2 text-base font-semibold ${
-                        twoFactorEnabled ? "text-teal-600 dark:text-teal-400" : "text-amber-600 dark:text-amber-400"
-                      }`}
+                      className={`mt-2 text-base font-semibold ${twoFactorEnabled ? "text-teal-600 dark:text-teal-400" : "text-amber-600 dark:text-amber-400"
+                        }`}
                     >
                       {twoFactorEnabled
                         ? (t.settingsSecurityLevelHigh ?? "Cao")
@@ -238,9 +234,8 @@ export function SettingsPage() {
                       {t.settingsSecurityStatusLabel ?? "Trạng thái"}
                     </p>
                     <p
-                      className={`mt-2 text-base font-semibold ${
-                        twoFactorEnabled ? "text-teal-600 dark:text-teal-400" : "text-amber-600 dark:text-amber-400"
-                      }`}
+                      className={`mt-2 text-base font-semibold ${twoFactorEnabled ? "text-teal-600 dark:text-teal-400" : "text-amber-600 dark:text-amber-400"
+                        }`}
                     >
                       {twoFactorEnabled
                         ? (t.settingsSecurityStatusProtected ?? "Được bảo vệ")
@@ -271,30 +266,6 @@ export function SettingsPage() {
               t={t}
             />
           )}
-
-          {activeTab === "test" && (
-            <div className={SETTINGS_TOKENS.card}>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className={`text-xs font-semibold uppercase tracking-[0.18em] ${SETTINGS_TOKENS.text.muted}`}>
-                    Test
-                  </p>
-                  <h3 className={`mt-2 text-lg font-semibold ${SETTINGS_TOKENS.text.strong}`}>
-                    Phone OTP Test
-                  </h3>
-                  <p className={`mt-2 text-sm leading-6 ${SETTINGS_TOKENS.text.muted}`}>
-                    Test chức năng gửi và xác minh OTP qua điện thoại
-                  </p>
-                </div>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300">
-                  <ShieldCheck size={22} />
-                </div>
-              </div>
-              <div className="mt-6 text-sm text-slate-500">
-                Chức năng gửi OTP qua điện thoại hiện đã được định cấu hình tự động.
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
@@ -304,6 +275,13 @@ export function SettingsPage() {
         onClose={closePasswordModal}
         onSuccess={handlePasswordSuccess}
         isPasswordSet={isPasswordSet}
+      />
+
+      <TwoFactorOtpModal
+        isOpen={is2faModalOpen}
+        onClose={close2faModal}
+        onConfirm={confirmTwoFactorChange}
+        isSaving={isSaving2FA}
       />
     </div>
   );

@@ -10,6 +10,8 @@ interface SecuritySettingsState {
   isLoading: boolean;
   isSaving2FA: boolean;
   isPasswordModalOpen: boolean;
+  is2faModalOpen: boolean;
+  pending2FAState: boolean;
 }
 
 export function useSecuritySettings() {
@@ -22,6 +24,8 @@ export function useSecuritySettings() {
     isLoading: true,
     isSaving2FA: false,
     isPasswordModalOpen: false,
+    is2faModalOpen: false,
+    pending2FAState: false,
   });
 
   const loadSettings = useCallback(async () => {
@@ -51,25 +55,42 @@ export function useSecuritySettings() {
   const handleTwoFactorChange = useCallback(async (enabled: boolean) => {
     setState((prev) => ({ ...prev, isSaving2FA: true }));
     try {
-      const settings = await settingsService.updateTwoFactorEnabled(enabled);
-      setState((prev) => ({ ...prev, twoFactorEnabled: settings.twoFactorEnabled }));
-      showToast({
-        title: t.settingsTwoFactorUpdated ?? "2FA Updated",
-        description: settings.twoFactorEnabled
-          ? t.settingsTwoFactorEnabled ?? "Two-Factor Authentication has been enabled."
-          : t.settingsTwoFactorDisabled ?? "Two-Factor Authentication has been disabled.",
-        variant: "success",
-      });
+      await settingsService.requestTwoFactorOtp();
+      setState((prev) => ({
+        ...prev,
+        pending2FAState: enabled,
+        is2faModalOpen: true,
+      }));
     } catch (error: unknown) {
       showToast({
         title: t.settingsTwoFactor ?? "Two-Factor Authentication",
-        description: normalizeApiError(error).message,
+        description: normalizeApiError(error).message || "Không thể gửi mã xác nhận. Vui lòng thử lại.",
         variant: "error",
       });
     } finally {
       setState((prev) => ({ ...prev, isSaving2FA: false }));
     }
   }, [showToast, t]);
+
+  const confirmTwoFactorChange = useCallback(async (otp: string) => {
+    setState((prev) => ({ ...prev, isSaving2FA: true }));
+    try {
+      const settings = await settingsService.updateTwoFactorEnabled(state.pending2FAState, otp);
+      setState((prev) => ({
+        ...prev,
+        twoFactorEnabled: settings.twoFactorEnabled,
+        is2faModalOpen: false,
+      }));
+    } catch (error: unknown) {
+      throw error;
+    } finally {
+      setState((prev) => ({ ...prev, isSaving2FA: false }));
+    }
+  }, [state.pending2FAState]);
+
+  const close2faModal = useCallback(() => {
+    setState((prev) => ({ ...prev, is2faModalOpen: false }));
+  }, []);
 
   const openPasswordModal = useCallback(() => {
     setState((prev) => ({ ...prev, isPasswordModalOpen: true }));
@@ -91,6 +112,8 @@ export function useSecuritySettings() {
   return {
     ...state,
     handleTwoFactorChange,
+    confirmTwoFactorChange,
+    close2faModal,
     openPasswordModal,
     closePasswordModal,
     handlePasswordSuccess,

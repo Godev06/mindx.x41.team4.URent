@@ -16,13 +16,14 @@ export const sendEmail = async (to: string, subject: string, html: string) => {
   console.log(`[mail] sent to=${to} subject=${subject} messageId=${info.messageId}`);
 };
 
-export type OtpPurpose = 'register' | 'login' | 'reset password' | 'create password';
+export type OtpPurpose = 'register' | 'login' | 'reset password' | 'create password' | 'toggle 2fa';
 
 export const sendOtpEmail = async (to: string, otp: string, purpose: OtpPurpose) => {
   const expiresInMinutes = env.otpExpiresMinutes;
   const isLoginPurpose = purpose === 'login';
   const isResetPurpose = purpose === 'reset password';
   const isCreatePasswordPurpose = purpose === 'create password';
+  const isToggle2faPurpose = purpose === 'toggle 2fa';
   
   const subject = isLoginPurpose
     ? 'Sign-in verification code'
@@ -30,21 +31,27 @@ export const sendOtpEmail = async (to: string, otp: string, purpose: OtpPurpose)
       ? 'Password reset verification code'
       : isCreatePasswordPurpose
         ? 'Create password verification code'
-        : 'Email verification code';
+        : isToggle2faPurpose
+          ? 'Two-factor authentication update code'
+          : 'Email verification code';
   const title = isLoginPurpose
     ? 'Two-factor sign-in verification'
     : isResetPurpose
       ? 'Password reset verification'
       : isCreatePasswordPurpose
         ? 'Create password verification'
-        : 'Email verification';
+        : isToggle2faPurpose
+          ? 'Two-factor authentication update'
+          : 'Email verification';
   const description = isLoginPurpose
     ? `Use this OTP to complete your sign-in. This code is valid for ${expiresInMinutes} minutes.`
     : isResetPurpose
       ? `Use this OTP to reset your password. This code is valid for ${expiresInMinutes} minutes.`
       : isCreatePasswordPurpose
         ? `Use this OTP to create a password for your account. This code is valid for ${expiresInMinutes} minutes.`
-        : `Use this OTP to verify your email and activate your account. This code is valid for ${expiresInMinutes} minutes.`;
+        : isToggle2faPurpose
+          ? `Use this OTP to confirm enabling/disabling your two-factor authentication (2FA). This code is valid for ${expiresInMinutes} minutes.`
+          : `Use this OTP to verify your email and activate your account. This code is valid for ${expiresInMinutes} minutes.`;
 
   await sendEmail(
     to,

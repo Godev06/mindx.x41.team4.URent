@@ -65,3 +65,21 @@ export const resetPasswordSchema = z
 export const updateTwoFactorSchema = z.object({
   twoFactorEnabled: z.boolean()
 });
+
+export const updateSettingsSchema = z.object({
+  twoFactorEnabled: z.boolean().optional(),
+  otp: z.string().length(6).optional(),
+  theme: z.enum(['light', 'dark']).optional(),
+  language: z.enum(['vi', 'en']).optional(),
+  emailNotifications: z.boolean().optional(),
+  screenNotifications: z.boolean().optional(),
+  pushNotifications: z.boolean().optional(),
+  soundNotifications: z.boolean().optional(),
+  preferences: z.object({
+    orderUpdates: z.object({ email: z.boolean(), push: z.boolean(), inApp: z.boolean() }).partial().optional(),
+    chatMessages: z.object({ email: z.boolean(), push: z.boolean(), inApp: z.boolean() }).partial().optional(),
+    promotions: z.object({ email: z.boolean(), push: z.boolean(), inApp: z.boolean() }).partial().optional(),
+    systemAlerts: z.object({ email: z.boolean(), push: z.boolean(), inApp: z.boolean() }).partial().optional()
+  }).partial().optional()
+});
+

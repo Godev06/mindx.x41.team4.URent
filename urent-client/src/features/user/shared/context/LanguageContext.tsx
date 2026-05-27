@@ -9,6 +9,8 @@ import {
   type ReactNode,
 } from "react";
 import { translations, type Lang, type T } from "../i18n/translations";
+import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
+import { apiClient } from "../../../../lib/api/apiClient";
 
 export interface LanguageContextValue {
   lang: Lang;
@@ -57,6 +59,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const token = getStoredAuthToken();
+    if (!token) return;
+
+    apiClient.get("/api/v1/settings")
+      .then((res: any) => {
+        const settings = res.data?.data || res.data;
+        if (settings && settings.language) {
+          setLangState(settings.language);
+          localStorage.setItem(STORAGE_KEY, settings.language);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load settings in LanguageContext:", err);
+      });
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (transitionTimerRef.current !== null) {
         window.clearTimeout(transitionTimerRef.current);
@@ -73,6 +92,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
         startTransition();
         localStorage.setItem(STORAGE_KEY, nextLang);
+        const token = getStoredAuthToken();
+        if (token) {
+          apiClient.patch("/api/v1/settings", { language: nextLang }).catch((err) => {
+            console.error("Failed to update language on BE:", err);
+          });
+        }
         return nextLang;
       });
     },
@@ -84,6 +109,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       const next: Lang = current === "vi" ? "en" : "vi";
       startTransition();
       localStorage.setItem(STORAGE_KEY, next);
+      const token = getStoredAuthToken();
+      if (token) {
+        apiClient.patch("/api/v1/settings", { language: next }).catch((err) => {
+          console.error("Failed to update language on BE:", err);
+        });
+      }
       return next;
     });
   }, [startTransition]);

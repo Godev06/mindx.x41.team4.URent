@@ -26,12 +26,18 @@ export const settingsService = {
   },
 
   async updateTwoFactorEnabled(
-    twoFactorEnabled: boolean
+    twoFactorEnabled: boolean,
+    otp?: string
   ): Promise<UserSettings> {
     const response = await apiClient.patch<unknown>("/api/v1/settings", {
       twoFactorEnabled,
+      otp,
     });
     return mapUserSettings(response.data);
+  },
+
+  async requestTwoFactorOtp(): Promise<void> {
+    await apiClient.post("/api/v1/settings/2fa/otp");
   },
 
   async updatePassword(

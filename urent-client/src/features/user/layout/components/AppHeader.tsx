@@ -18,6 +18,7 @@ import { getAvatarStyle } from "../../shared/utils/avatar";
 import { useNotifications, useUnreadCount } from "../../notifications/hooks/useNotifications";
 import { useToast } from "../../shared/hooks/useToast";
 import { MAIN_NAV_ITEMS } from "../constants/navItems";
+import { audioChimeService } from "../../notifications/services/audioChimeService";
 
 interface ProfileMenuItem {
   label: string;
@@ -26,26 +27,7 @@ interface ProfileMenuItem {
   isDanger?: boolean;
 }
 
-let sharedAudioCtx: AudioContext | null = null;
 
-const initAudio = () => {
-  if (typeof window === "undefined") return;
-  if (!sharedAudioCtx) {
-    sharedAudioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-  }
-  if (sharedAudioCtx.state === "suspended") {
-    sharedAudioCtx.resume().catch(() => {});
-  }
-};
-
-if (typeof window !== "undefined") {
-  const unlockEvents = ["click", "touchstart", "keydown", "mousedown"];
-  const unlock = () => {
-    initAudio();
-    unlockEvents.forEach(e => window.removeEventListener(e, unlock));
-  };
-  unlockEvents.forEach(e => window.addEventListener(e, unlock, { passive: true }));
-}
 
 export function AppHeader() {
   const navigate = useNavigate();
@@ -108,32 +90,10 @@ export function AppHeader() {
 
       console.info("🔔 [Real-time Log] AppHeader nhận sự kiện thông báo qua WebSockets:", notification);
 
-      // Tổng hợp chuông pha lê dual-tone sử dụng Web Audio API (nếu người dùng bật)
+      // Phát âm thanh thông báo sử dụng AudioChimeService (nếu người dùng bật)
       const isSoundEnabled = localStorage.getItem("settings.soundNotifications") !== "false";
       if (isSoundEnabled) {
-        try {
-          initAudio();
-          const audioCtx = sharedAudioCtx;
-          if (audioCtx) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.type = "sine";
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // Âm D5 thanh thoát
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.12); // Âm A5 cao vút
-
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.6);
-          }
-        } catch (err) {
-          console.warn("[AudioChime] Web Audio play failed:", err);
-        }
+        audioChimeService.playChime();
       }
 
       // Kích hoạt Toast thông báo cao cấp có hỗ trợ deep-link
