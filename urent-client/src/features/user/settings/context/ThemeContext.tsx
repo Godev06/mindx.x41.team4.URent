@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ThemeContext, type Theme } from "./ThemeContextObject";
+import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
+import { notificationService } from "../../notifications/services/notificationService";
 
 const resolveSystemTheme = (): Theme => {
   if (
@@ -35,6 +37,50 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return savedValue === null ? true : savedValue === "true";
     },
   );
+
+  useEffect(() => {
+    const token = getStoredAuthToken();
+    if (!token) return;
+
+    notificationService.getNotificationSettings()
+      .then((res) => {
+        if (res.data) {
+          if (res.data.emailNotifications !== undefined) {
+            setEmailNotifications(res.data.emailNotifications);
+          }
+          if (res.data.screenNotifications !== undefined) {
+            setScreenNotifications(res.data.screenNotifications);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch notification settings from BE:", err);
+      });
+  }, []);
+
+  const updateEmailNotifications = async (val: boolean) => {
+    setEmailNotifications(val);
+    const token = getStoredAuthToken();
+    if (token) {
+      try {
+        await notificationService.updateNotificationSettings({ emailNotifications: val });
+      } catch (err) {
+        console.error("Failed to update email settings:", err);
+      }
+    }
+  };
+
+  const updateScreenNotifications = async (val: boolean) => {
+    setScreenNotifications(val);
+    const token = getStoredAuthToken();
+    if (token) {
+      try {
+        await notificationService.updateNotificationSettings({ screenNotifications: val });
+      } catch (err) {
+        console.error("Failed to update screen settings:", err);
+      }
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -88,8 +134,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           setIsThemeTransitioning(false);
         }, 220);
       },
-      setEmailNotifications,
-      setScreenNotifications,
+      setEmailNotifications: updateEmailNotifications,
+      setScreenNotifications: updateScreenNotifications,
     }),
     [emailNotifications, isThemeTransitioning, screenNotifications, theme],
   );

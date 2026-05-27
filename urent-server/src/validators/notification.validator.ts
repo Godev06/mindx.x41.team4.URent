@@ -1,17 +1,29 @@
 import { z } from 'zod';
 
+const objectIdSchema = z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid MongoDB ObjectId format');
+
 export const getNotificationsSchema = z.object({
   query: z.object({
-    page: z.string().optional().transform(val => val ? parseInt(val) : 1),
-    limit: z.string().optional().transform(val => val ? parseInt(val) : 10),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(10),
     type: z.enum(['order', 'message', 'promotion', 'system']).optional(),
-    read: z.string().optional().transform(val => val ? val === 'true' : undefined)
+    read: z.preprocess((val) => {
+      if (val === 'true' || val === true) return true;
+      if (val === 'false' || val === false) return false;
+      return undefined;
+    }, z.boolean().optional())
   })
 });
 
 export const markAsReadSchema = z.object({
   params: z.object({
-    id: z.string().min(1)
+    id: objectIdSchema
+  })
+});
+
+export const getNotificationByIdSchema = z.object({
+  params: z.object({
+    id: objectIdSchema
   })
 });
 
@@ -23,7 +35,7 @@ export const markAllAsReadSchema = z.object({
 
 export const deleteNotificationSchema = z.object({
   params: z.object({
-    id: z.string().min(1)
+    id: objectIdSchema
   })
 });
 

@@ -9,6 +9,7 @@ import { createLinkedActivityNotification } from '../services/activity-notificat
 import {
   getNotificationsSchema,
   markAsReadSchema,
+  getNotificationByIdSchema,
   markAllAsReadSchema,
   deleteNotificationSchema,
   saveFcmTokenSchema,
@@ -137,6 +138,23 @@ export const deleteFcmToken = async (req: Request, res: Response) => {
   return sendSuccess(res, { success: true });
 };
 
+const flattenObject = (obj: any, prefix = ''): any => {
+  return Object.keys(obj).reduce((acc: any, k: string) => {
+    const pre = prefix.length ? prefix + '.' : '';
+    if (
+      obj[k] !== null &&
+      typeof obj[k] === 'object' &&
+      !Array.isArray(obj[k]) &&
+      !(obj[k] instanceof Date)
+    ) {
+      Object.assign(acc, flattenObject(obj[k], pre + k));
+    } else {
+      acc[pre + k] = obj[k];
+    }
+    return acc;
+  }, {});
+};
+
 export const getNotificationSettings = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
 
@@ -152,9 +170,12 @@ export const updateNotificationSettings = async (req: Request, res: Response) =>
   const userId = requireUserId(req);
   const updateData = updateNotificationSettingsSchema.parse(req).body;
 
+  // Flatten nested objects to dot-notation keys to prevent overwriting other sibling keys
+  const flattenedUpdate = flattenObject(updateData);
+
   const settings = await SettingsModel.findOneAndUpdate(
     { userId },
-    { $set: updateData },
+    { $set: flattenedUpdate },
     { new: true, upsert: true }
   );
 
@@ -182,12 +203,8 @@ export const broadcastNotification = async (req: Request, res: Response) => {
 
   const targetUsers = await UserModel.find(query).select('_id').lean();
 
-  // Trả về kết quả lập tức cho admin và chạy background để tránh block phản hồi
-  res.status(202).json({
-    success: true,
-    message: `Đang phát sóng thông báo tới ${targetUsers.length} người dùng...`,
-    data: { targetCount: targetUsers.length }
-  });
+  // Trả về kết quả lập tức cho admin và chạy background để tránh block phản hồi bằng sendSuccess chuẩn
+  sendSuccess(res, { targetCount: targetUsers.length }, undefined, 202);
 
   (async () => {
     for (const u of targetUsers) {
@@ -211,4 +228,18 @@ export const broadcastNotification = async (req: Request, res: Response) => {
       }
     }
   })();
+};
+
+export const getNotificationById = async (req: Request, res: Response) => {
+  const userId = requireUserId(req);
+  const { id } = getNotificationByIdSchema.parse(req).params;
+
+  const notification = await NotificationModel.findOne({ _id: id, userId })
+    .populate('activityLogId', 'action description type timestamp');
+
+  if (!notification) {
+    throw new AppError(404, 'NOT_FOUND', 'Notification not found');
+  }
+
+  return sendSuccess(res, notification);
 };

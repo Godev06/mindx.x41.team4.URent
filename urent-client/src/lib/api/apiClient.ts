@@ -36,6 +36,9 @@ let isRetrying = false; // Prevent recursive loops on 401
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: unknown) => {
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
     const apiError = normalizeApiError(error);
 
     // Timeout or Network Error Retry Logic (for idempotent methods)

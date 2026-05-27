@@ -131,7 +131,8 @@ export const createLinkedActivityNotification = async (
   // -------------------------------------------------------------
   // ĐA KÊNH TRUYỀN TẢI THÔNG BÁO (WS, FCM, EMAIL) SAU KHI LƯU DB THÀNH CÔNG
   // -------------------------------------------------------------
-  if (input.userId) {
+  if (userObjectId) {
+    const userIdStr = userObjectId.toString();
     // Chạy background xử lý phân phối để tránh block luồng chính
     (async () => {
       try {
@@ -140,29 +141,45 @@ export const createLinkedActivityNotification = async (
         const description = input.notification.description;
         const actionUrl = input.notification.actionUrl;
 
+        // Map notification type to settings preference key
+        const prefKeyMap: Record<string, 'orderUpdates' | 'chatMessages' | 'promotions' | 'systemAlerts'> = {
+          order: 'orderUpdates',
+          message: 'chatMessages',
+          promotion: 'promotions',
+          system: 'systemAlerts',
+        };
+        const prefKey = prefKeyMap[notifType] || 'systemAlerts';
+
         // 1. Lấy cấu hình cài đặt của user (Nếu chưa có, tạo cấu hình mặc định bật tất cả)
-        let settings = await SettingsModel.findOne({ userId: input.userId });
+        let settings = await SettingsModel.findOne({ userId: userObjectId });
         if (!settings) {
           settings = await SettingsModel.create({
-            userId: new mongoose.Types.ObjectId(input.userId),
+            userId: userObjectId,
           });
         }
 
-        // 2. Kênh In-App (WebSocket Real-time) - Dựa hoàn toàn vào cấu hình thông báo màn hình
-        const canSendInApp = settings.screenNotifications !== false;
+        // Populate activityLogId so that the client receives a fully detailed notification object
+        const populatedNotification = await createdNotification.populate('activityLogId', 'action description type timestamp');
+
+        // 2. Kênh In-App (WebSocket Real-time) - Dựa hoàn toàn vào cấu hình thông báo màn hình và fine-grained pref
+        const canSendInApp =
+          settings.screenNotifications !== false &&
+          settings.preferences?.[prefKey]?.inApp !== false;
         if (canSendInApp) {
-          emitNotificationToUser(input.userId, createdNotification);
-          console.info(`🔔 [Notify Log - WS] Đã phát WebSocket thời gian thực tới user ${input.userId}:`, {
-            title: createdNotification.title,
-            type: createdNotification.type,
-            actionUrl: createdNotification.actionUrl
+          emitNotificationToUser(userIdStr, populatedNotification);
+          console.info(`🔔 [Notify Log - WS] Đã phát WebSocket thời gian thực tới user ${userIdStr}:`, {
+            title: populatedNotification.title,
+            type: populatedNotification.type,
+            actionUrl: populatedNotification.actionUrl
           });
         }
 
-        // 3. Kênh Web Push (FCM) - Dựa hoàn toàn vào cấu hình push chung
-        const canSendPush = settings.pushNotifications !== false;
+        // 3. Kênh Web Push (FCM) - Dựa hoàn toàn vào cấu hình push chung và fine-grained pref
+        const canSendPush =
+          settings.pushNotifications !== false &&
+          settings.preferences?.[prefKey]?.push !== false;
         if (canSendPush) {
-          await fcmPushService.sendPushToUser(input.userId, {
+          await fcmPushService.sendPushToUser(userIdStr, {
             title,
             body: description,
             actionUrl,
@@ -170,20 +187,22 @@ export const createLinkedActivityNotification = async (
               ? Object.entries(input.notification.metadata).reduce((acc, [k, v]) => ({ ...acc, [k]: String(v) }), {})
               : undefined,
           });
-          console.info(`🔔 [Notify Log - FCM] Đã gửi thông báo Web Push tới user ${input.userId}:`, { title, actionUrl });
+          console.info(`🔔 [Notify Log - FCM] Đã gửi thông báo Web Push tới user ${userIdStr}:`, { title, actionUrl });
         }
 
-        // 4. Kênh Email (Nodemailer) - Dựa hoàn toàn vào cấu hình email chung
-        const canSendEmail = settings.emailNotifications !== false;
+        // 4. Kênh Email (Nodemailer) - Dựa hoàn toàn vào cấu hình email chung và fine-grained pref
+        const canSendEmail =
+          settings.emailNotifications !== false &&
+          settings.preferences?.[prefKey]?.email !== false;
         if (canSendEmail) {
-          const user = await UserModel.findById(input.userId).select('email').lean();
+          const user = await UserModel.findById(userObjectId).select('email').lean();
           if (user?.email) {
             await sendNotificationEmail(user.email, title, description, actionUrl);
-            console.info(`🔔 [Notify Log - Email] Đã gửi thư điện tử tới user ${input.userId} (${user.email}):`, { title });
+            console.info(`🔔 [Notify Log - Email] Đã gửi thư điện tử tới user ${userIdStr} (${user.email}):`, { title });
           }
         }
       } catch (err) {
-        console.error(`[Notify Dispatch Error] Failed for user ${input.userId}:`, err);
+        console.error(`[Notify Dispatch Error] Failed for user ${userIdStr}:`, err);
       }
     })();
   }

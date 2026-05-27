@@ -3,6 +3,7 @@ import { authGuard } from '../middlewares/auth.middleware';
 import {
   getNotifications,
   markAsRead,
+  getNotificationById,
   markAllAsRead,
   deleteNotification,
   getUnreadCount,
@@ -120,6 +121,30 @@ notificationRouter.patch('/:id/read', authGuard, markAsRead);
  *                   type: integer
  */
 notificationRouter.patch('/mark-all-read', authGuard, markAllAsRead);
+
+/**
+ * @openapi
+ * /api/v1/notifications/{id}:
+ *   get:
+ *     tags: [Notifications]
+ *     summary: Lấy thông tin chi tiết của một thông báo
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *         description: ID của notification
+ *     responses:
+ *       200:
+ *         description: Chi tiết notification
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/NotificationResponse'
+ */
+notificationRouter.get('/:id', authGuard, getNotificationById);
 
 /**
  * @openapi

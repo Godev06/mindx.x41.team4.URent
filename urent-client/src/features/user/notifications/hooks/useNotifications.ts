@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import axios from "axios";
+import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { notificationService } from "../services/notificationService";
 import type { ApiNotification, ApiNotificationListMeta } from "../types";
@@ -200,6 +201,18 @@ export function useNotifications(params?: UseNotificationsParams): UseNotificati
   });
 
   const refresh = useCallback(() => {
+    const token = getStoredAuthToken();
+    if (!token) {
+      dispatch({
+        type: 'FETCH_SUCCESS',
+        payload: {
+          data: [],
+          pagination: null,
+        },
+      });
+      return () => {};
+    }
+
     const abortController = new AbortController();
 
     dispatch({ type: 'FETCH_START' });
@@ -318,6 +331,15 @@ export function useUnreadCount(): UseUnreadCountReturn {
   });
 
   const refresh = useCallback(() => {
+    const token = getStoredAuthToken();
+    if (!token) {
+      dispatch({
+        type: 'FETCH_SUCCESS',
+        payload: 0,
+      });
+      return () => {};
+    }
+
     const abortController = new AbortController();
 
     dispatch({ type: 'FETCH_START' });
