@@ -21,6 +21,7 @@ export const createProductSchema = z.object({
   }).optional(),
   condition: z.string().optional(),
   image: z.string().optional(),
+  imageUrl: z.string().optional(),
   description: z.array(z.string()).optional(),
   location: z.string().optional()
 });

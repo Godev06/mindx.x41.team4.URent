@@ -12,8 +12,8 @@ import { useI18n } from "../../shared/context/LanguageContext";
 
 interface InventoryRowProps {
   item: InventoryItem;
-  onDelete: (id: number) => void;
-  onArchive: (id: number) => void;
+  onDelete: (id: string | number) => void;
+  onArchive: (id: string | number) => void;
 }
 
 export function InventoryRow({ item, onDelete, onArchive }: InventoryRowProps) {

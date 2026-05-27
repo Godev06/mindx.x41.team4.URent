@@ -72,7 +72,7 @@ export interface Notification {
 }
 
 export interface InventoryItem {
-  id: number;
+  id: string | number;
   name: string;
   category: string;
   price: number;

@@ -15,80 +15,6 @@ interface HomePageProps {
 
 type CategoryKey = "all" | "electronics" | "textbooks" | "appliances";
 
-interface ProductMeta {
-  group: Exclude<CategoryKey, "all">;
-  locationVi: string;
-  locationEn: string;
-  distanceKm: number;
-  availableFrom: string;
-  availableTo: string;
-  conditionVi: string;
-  conditionEn: string;
-}
-
-const PRODUCT_META: Record<number, ProductMeta> = {
-  1: {
-    group: "electronics",
-    locationVi: "Thủ Đức",
-    locationEn: "Thu Duc",
-    distanceKm: 1.2,
-    availableFrom: "2026-04-24",
-    availableTo: "2026-06-24",
-    conditionVi: "Như mới",
-    conditionEn: "Like new",
-  },
-  2: {
-    group: "electronics",
-    locationVi: "Bình Thạnh",
-    locationEn: "Binh Thanh",
-    distanceKm: 2.8,
-    availableFrom: "2026-04-25",
-    availableTo: "2026-07-01",
-    conditionVi: "Rất tốt",
-    conditionEn: "Excellent",
-  },
-  3: {
-    group: "electronics",
-    locationVi: "Quận 3",
-    locationEn: "District 3",
-    distanceKm: 3.4,
-    availableFrom: "2026-05-01",
-    availableTo: "2026-06-12",
-    conditionVi: "Tốt",
-    conditionEn: "Good",
-  },
-  4: {
-    group: "appliances",
-    locationVi: "Quận 7",
-    locationEn: "District 7",
-    distanceKm: 4.5,
-    availableFrom: "2026-04-23",
-    availableTo: "2026-05-30",
-    conditionVi: "Mới 90%",
-    conditionEn: "90% new",
-  },
-  5: {
-    group: "textbooks",
-    locationVi: "Quận 1",
-    locationEn: "District 1",
-    distanceKm: 0.9,
-    availableFrom: "2026-04-23",
-    availableTo: "2026-12-31",
-    conditionVi: "Rất tốt",
-    conditionEn: "Excellent",
-  },
-  6: {
-    group: "electronics",
-    locationVi: "Phú Nhuận",
-    locationEn: "Phu Nhuan",
-    distanceKm: 2.1,
-    availableFrom: "2026-04-25",
-    availableTo: "2026-06-30",
-    conditionVi: "Như mới",
-    conditionEn: "Like new",
-  },
-};
-
 const toVnd = (price: number) => (price > 1000 ? price : price * 25_000);
 const ACTIVE_STATUSES = new Set(["Available", "Active"]);
 
@@ -122,7 +48,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
   }, []);
 
   const activeProducts = useMemo(() => {
-    return products.filter((product: Product) => ACTIVE_STATUSES.has(product.status));
+    return products.filter((product: Product) => ACTIVE_STATUSES.has(product.status ?? "Available"));
   }, [products]);
 
   return (
@@ -139,7 +65,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
         lang={lang}
         dayUnit={lang === "vi" ? "/ ngày" : "/ day"}
         priceConverter={(p) => toVnd(p)}
-        productMeta={PRODUCT_META}
+        productMeta={{}}
         onViewMore={() => navigate("/products")}
       />
     </div>

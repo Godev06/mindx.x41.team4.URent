@@ -1,7 +1,8 @@
 import { InventoryRow } from "../components/InventoryRow";
 import { AddProductModal } from "../components/AddProductModal";
 import { useI18n } from "../../shared/context/LanguageContext";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { productService } from "../../product/services/productService";
 import {
   Package,
   AlertCircle,
@@ -13,53 +14,43 @@ import {
 } from "lucide-react";
 import type { InventoryItem } from "../../shared/types";
 
-// US03: Status Management (Available, Rented, Overdue)
-const mockInventory: InventoryItem[] = [
-  {
-    id: 1,
-    name: "Sony A7R IV Camera",
-    category: "Electronics",
-    price: 450000,
-    statusQuantities: { available: 5, rented: 2, overdue: 1 },
-    condition: "99%",
-    lastUpdated: "2 mins ago",
-    description: ["61.0 MP", "4K Video"],
-    imageUrl:
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80",
-  },
-  {
-    id: 2,
-    name: "DJI Mavic 3 Pro",
-    category: "Outdoor",
-    price: 850000,
-    statusQuantities: { available: 2, rented: 3, overdue: 0 },
-    condition: "New",
-    lastUpdated: "1 hour ago",
-    description: ["4/3 CMOS", "43 min flight"],
-    imageUrl:
-      "https://images.unsplash.com/photo-1508614589041-895b88991e3e?w=800&q=80",
-  },
-  {
-    id: 3,
-    name: "MacBook Pro M2 Max",
-    category: "Electronics",
-    price: 1200000,
-    statusQuantities: { available: 1, rented: 0, overdue: 2 },
-    condition: "95%",
-    lastUpdated: "5 hours ago",
-    description: ["32GB RAM", "1TB SSD"],
-    imageUrl:
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80",
-  },
-];
+
 
 export default function InventoryPage() {
   const { t } = useI18n();
-  const [items, setItems] = useState<InventoryItem[]>(mockInventory);
+  const [items, setItems] = useState<InventoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<
     "all" | "Available" | "Rented" | "Overdue"
   >("all");
+
+  useEffect(() => {
+    let active = true;
+    async function fetchInventory() {
+      try {
+        const products = await productService.getProducts({ limit: 100 });
+        if (!active) return;
+        const mapped: InventoryItem[] = products.map((p) => ({
+          id: p._id || p.id || "",
+          name: p.name,
+          category: p.category,
+          price: p.price,
+          statusQuantities: p.statusQuantities || { available: 1, rented: 0, overdue: 0 },
+          condition: p.condition || "New",
+          lastUpdated: "Recently",
+          description: p.description,
+          imageUrl: p.imageUrl || p.image,
+        }));
+        setItems(mapped);
+      } catch (err) {
+        console.error("Failed to load inventory from BE:", err);
+      }
+    }
+    fetchInventory();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const stats = useMemo(() => {
     const available = items.reduce(
@@ -94,27 +85,51 @@ export default function InventoryPage() {
     return items;
   }, [items, filterStatus]);
 
-  const handleAddProduct = (product: any) => {
-    const newItem: InventoryItem = {
-      id: Date.now(),
-      name: product.name,
-      category: product.category,
-      price: product.price,
-      statusQuantities: product.statusQuantities,
-      condition: product.condition,
-      lastUpdated: "Just now",
-      description: product.description,
-      imageUrl: product.imageUrl,
-    };
-    setItems([newItem, ...items]);
+  const handleAddProduct = async (product: any) => {
+    try {
+      const created = await productService.createProduct({
+        name: product.name,
+        category: product.category,
+        price: product.price,
+        statusQuantities: product.statusQuantities,
+        condition: product.condition,
+        imageUrl: product.imageUrl,
+        description: product.description,
+      });
+
+      const newItem: InventoryItem = {
+        id: created._id || created.id || Date.now(),
+        name: created.name,
+        category: created.category,
+        price: created.price,
+        statusQuantities: created.statusQuantities || { available: 1, rented: 0, overdue: 0 },
+        condition: created.condition,
+        lastUpdated: "Just now",
+        description: created.description,
+        imageUrl: created.imageUrl || created.image,
+      };
+      setItems((prev) => [newItem, ...prev]);
+    } catch (err) {
+      console.error("Failed to add product to backend:", err);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setItems(items.filter((i) => i.id !== id));
+  const handleDelete = async (id: string | number) => {
+    try {
+      await productService.deleteProduct(id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error("Failed to delete product on backend:", err);
+    }
   };
 
-  const handleArchive = (id: number) => {
-    setItems(items.filter((i) => i.id !== id));
+  const handleArchive = async (id: string | number) => {
+    try {
+      await productService.archiveProduct(id);
+      setItems((prev) => prev.filter((i) => i.id !== id));
+    } catch (err) {
+      console.error("Failed to archive product on backend:", err);
+    }
   };
 
   return (

@@ -144,10 +144,10 @@ export function ProductDetailPage({
       </button>
 
       {/* Hero image */}
-      {product.imageUrl && (
+      {(product.imageUrl || product.image) && (
         <div className="relative mb-8 h-64 w-full overflow-hidden rounded-3xl sm:h-80 md:h-96">
           <img
-            src={product.imageUrl}
+            src={product.imageUrl || product.image}
             alt={product.name}
             className="h-full w-full object-cover"
           />
@@ -238,7 +238,7 @@ export function ProductDetailPage({
 
             <div className="p-6 sm:p-8">
               {/* Title (shown if no imageUrl) */}
-              {!product.imageUrl && (
+              {!product.imageUrl && !product.image && (
                 <h1 className="mb-4 text-balance text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
                   {product.name}
                 </h1>
@@ -321,9 +321,9 @@ export function ProductDetailPage({
       {/* Reviews */}
       <div className="mt-8">
         <ProductReviews
-          productId={product.id}
+          productId={product._id || product.id || ""}
           rating={product.rating}
-          reviews={product.reviews}
+          reviews={product.reviewsCount ?? product.reviews}
         />
       </div>
     </div>

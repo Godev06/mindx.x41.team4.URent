@@ -4,8 +4,8 @@ import { authGuard } from '../middlewares/auth.middleware';
 
 export const productRouter = Router();
 
-productRouter.get('/products', authGuard, getProducts);
-productRouter.get('/products/:id', authGuard, getProductById); 
+productRouter.get('/products', getProducts);
+productRouter.get('/products/:id', getProductById); 
 productRouter.post('/products', authGuard, createProduct);
 productRouter.put('/products/:id', authGuard, updateProduct);
 productRouter.delete('/products/:id', authGuard, deleteProduct);

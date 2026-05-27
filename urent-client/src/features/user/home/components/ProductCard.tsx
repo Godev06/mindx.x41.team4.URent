@@ -175,7 +175,9 @@ export function ProductCard({
             </div>
             <span className={cn("text-slate-300 dark:text-slate-700")}>|</span>
             <span className={cn("text-slate-500 dark:text-slate-400")}>
-              {reviewsCount > 0 ? `${reviewsCount} đánh giá` : "Chưa có đánh giá"}
+              {reviewsCount > 0
+                ? `${reviewsCount} ${lang === "vi" ? "đánh giá" : "reviews"}`
+                : lang === "vi" ? "Chưa có đánh giá" : "No reviews"}
             </span>
             {typeof distanceKm === "number" && (
               <>

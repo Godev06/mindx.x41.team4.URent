@@ -93,7 +93,7 @@ function RatingBar({ star, count, total }: RatingBarProps) {
 }
 
 interface ProductReviewsProps {
-  productId: string | number;
+  productId?: string | number;
   rating?: number;
   reviews?: number;
 }

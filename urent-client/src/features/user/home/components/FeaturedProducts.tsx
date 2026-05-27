@@ -52,7 +52,8 @@ export function FeaturedProducts({
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {topProducts.map((product) => {
-          const meta = productMeta[product.id] || {
+          const productKey = product._id || product.id;
+          const meta = productMeta[productKey as string | number] || {
             locationVi: product.location || (lang === "vi" ? "Chưa cập nhật" : "Unknown"),
             locationEn: product.location || "Unknown",
             distanceKm: undefined,
@@ -65,7 +66,7 @@ export function FeaturedProducts({
 
           return (
             <ProductCard
-              key={product.id}
+              key={productKey}
               product={product}
               onSelect={onProductClick}
               dayUnit={dayUnit}

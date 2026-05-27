@@ -34,4 +34,34 @@ export const productService = {
     const res = await apiClient.get<ApiResponse<Product>>(`/api/v1/products/${id}`);
     return res.data.data;
   },
+
+  /**
+   * Create a new product.
+   */
+  async createProduct(product: Omit<Product, "id" | "_id">): Promise<Product> {
+    const res = await apiClient.post<ApiResponse<Product>>("/api/v1/products", product);
+    return res.data.data;
+  },
+
+  /**
+   * Update an existing product.
+   */
+  async updateProduct(id: string | number, product: Partial<Product>): Promise<Product> {
+    const res = await apiClient.put<ApiResponse<Product>>(`/api/v1/products/${id}`, product);
+    return res.data.data;
+  },
+
+  /**
+   * Delete a product.
+   */
+  async deleteProduct(id: string | number): Promise<void> {
+    await apiClient.delete<ApiResponse<unknown>>(`/api/v1/products/${id}`);
+  },
+
+  /**
+   * Archive a product.
+   */
+  async archiveProduct(id: string | number): Promise<void> {
+    await apiClient.patch<ApiResponse<unknown>>(`/api/v1/products/${id}/archive`);
+  },
 };

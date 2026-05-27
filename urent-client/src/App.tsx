@@ -38,7 +38,8 @@ import { SocketProvider } from "./features/user/messages/hooks/useSocket";
 function ProductRoute() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const parsedId = id && !isNaN(Number(id)) ? Number(id) : id;
+  const isObjectId = id && id.length === 24 && /^[0-9a-fA-F]+$/.test(id);
+  const parsedId = isObjectId ? id : (id && !isNaN(Number(id)) ? Number(id) : id);
 
   return (
     <ProductDetailPage
