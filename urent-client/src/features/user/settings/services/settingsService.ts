@@ -49,4 +49,26 @@ export const settingsService = {
       newPassword,
     });
   },
+
+  async getActivities(): Promise<any[]> {
+    const response = await apiClient.get<any>("/api/v1/activities");
+    return isRecord(response.data) && Array.isArray(response.data.data) ? response.data.data : [];
+  },
+
+  async clearActivities(): Promise<void> {
+    await apiClient.delete("/api/v1/activities");
+  },
+
+  async getSessions(): Promise<any[]> {
+    const response = await apiClient.get<any>("/api/v1/activities/sessions");
+    return isRecord(response.data) && Array.isArray(response.data.data) ? response.data.data : [];
+  },
+
+  async revokeSession(id: string): Promise<void> {
+    await apiClient.delete(`/api/v1/activities/sessions/${id}`);
+  },
+
+  async revokeAllOtherSessions(): Promise<void> {
+    await apiClient.delete("/api/v1/activities/sessions");
+  },
 };

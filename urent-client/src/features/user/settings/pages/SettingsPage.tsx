@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { Activity, Lock, ShieldCheck, Sliders } from "lucide-react";
-import { ACTIVITY_LOGS } from "../../dataset/activityLogs";
 import { useTheme } from "../hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { PageLoader } from "../../shared/components/PageLoader";
@@ -248,7 +247,7 @@ export function SettingsPage() {
           )}
 
           {activeTab === "activity" && (
-            <ActivityLogsSection activityLogs={ACTIVITY_LOGS} t={t} />
+            <ActivityLogsSection t={t} />
           )}
 
           {activeTab === "preferences" && (

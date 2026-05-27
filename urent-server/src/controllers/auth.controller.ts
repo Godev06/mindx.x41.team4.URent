@@ -19,6 +19,7 @@ import { OtpPurpose } from "../services/email.service";
 import { sendWelcomeMessageFromAdmin } from "../services/welcome-message.service";
 import { authEvents } from "../events/user-events";
 import { createActivityOnly } from "../services/activity-notification.service";
+import { getClientIp, parseUserAgent, estimateLocation, evaluateRiskLevel } from "../utils/request-metadata";
 import { verifyAccessToken } from "../utils/auth-token";
 import { resolveAppIdentity } from "../services/auth-identity.service";
 import { AppError } from "../utils/app-error";
@@ -100,15 +101,35 @@ const ensureFirebaseAuthUser = async (
 
 const logActivity = async (params: {
   userId: string;
-  type: "auth" | "order" | "message" | "update";
+  type: "auth" | "order" | "message" | "update" | "login" | "logout" | "profile_update" | "password_change" | "settings_change";
   action: string;
   description: string;
+  req?: Request;
 }) => {
   try {
-    // Type assertion bypasses the strict check if you're certain the service handles it
-    await createActivityOnly(params as any);
-  } catch {
-    // Non-fatal
+    let metadata: any = {};
+    if (params.req) {
+      const ip = getClientIp(params.req);
+      const parsedUa = parseUserAgent(params.req.headers["user-agent"]);
+      const location = estimateLocation(ip);
+      const risk = evaluateRiskLevel(params.req.headers["user-agent"]);
+      metadata = {
+        ip,
+        userAgent: params.req.headers["user-agent"] || "",
+        location,
+        device: `${parsedUa.browser} / ${parsedUa.device}`,
+        riskLevel: risk,
+      };
+    }
+    await createActivityOnly({
+      userId: params.userId,
+      action: params.action,
+      description: params.description,
+      type: params.type as any,
+      ...metadata,
+    });
+  } catch (err) {
+    console.error("Failed to log activity:", err);
   }
 };
 
@@ -138,15 +159,17 @@ const verifyOtpWithPurpose = async (
       type: "auth",
       action: "Email verified",
       description: "User completed email verification via OTP",
+      req,
     });
     return sendSuccess(res, { message: "Email verified successfully" });
   }
 
   await logActivity({
     userId: String(user._id),
-    type: "auth",
+    type: "login",
     action: "Two-factor login successful",
     description: "User completed sign in with email OTP verification",
+    req,
   });
 
   const payload = await buildTokenPayload(
@@ -204,9 +227,10 @@ const handleGoogleAuth = async (req: Request, res: Response) => {
 
   await logActivity({
     userId: appIdentity.sub,
-    type: "auth",
+    type: "login",
     action: "Google login successful",
     description: "User signed in with Google account",
+    req,
   });
 
   return sendSuccess(res, {
@@ -345,9 +369,10 @@ export const login = async (req: Request, res: Response) => {
 
   await logActivity({
     userId: String(user._id),
-    type: "auth",
+    type: "login",
     action: "Login successful",
     description: "User signed in successfully",
+    req,
   });
 
   const payload = await buildTokenPayload(
@@ -574,9 +599,10 @@ export const resetPassword = async (req: Request, res: Response) => {
 
   await logActivity({
     userId: String(user._id),
-    type: "update",
+    type: "password_change",
     action: "Password reset",
     description: "User reset account password using reset token",
+    req,
   });
 
   return sendSuccess(res, { message: "Password reset successful" });

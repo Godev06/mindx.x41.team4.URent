@@ -16,6 +16,7 @@ import { profileRouter } from "./routes/profile.route";
 import { productRouter } from "./routes/product.route";
 import { settingsRouter } from "./routes/settings.route";
 import userRouter from "./routes/user.route";
+import { activityRouter } from "./routes/activity.route";
 
 // Register event listeners
 import "./events/user-events";
@@ -95,6 +96,7 @@ app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/profile", profileRouter);
 app.use("/api/v1/settings", settingsRouter);
+app.use("/api/v1/activities", activityRouter);
 app.use("/api/v1", productRouter);
 app.use("/api/v1", messageRouter);
 app.use("/api/v1", adminChatRouter);
