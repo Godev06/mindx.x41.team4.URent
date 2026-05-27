@@ -4,6 +4,7 @@ import { useI18n } from "../../shared/context/LanguageContext";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { AlertMessage } from "../../shared/components/AlertMessage";
+import { OtpInput } from "../../shared/components/OtpInput";
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -261,20 +262,14 @@ export function ChangePasswordModal({
 
             <div className="space-y-4">
               <div className="space-y-2 flex flex-col">
-                <label htmlFor="modal-otp-input" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                   Mã OTP (6 chữ số)
                 </label>
-                <input
-                  id="modal-otp-input"
-                  type="text"
+                <OtpInput
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  maxLength={6}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-center text-2xl font-bold tracking-widest outline-none transition focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus-visible:ring-2 focus-visible:ring-teal-500"
-                  placeholder="000000"
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  required
+                  onChange={setOtp}
+                  disabled={isVerifyingOtp}
+                  isError={!!otpError}
                 />
               </div>
             </div>

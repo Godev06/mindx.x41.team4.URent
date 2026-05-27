@@ -3,6 +3,7 @@ import { AlertMessage } from "../../shared/components/AlertMessage";
 import { useAuth } from "../hooks/useAuth";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { validateOtp } from "../../shared/utils/validation";
+import { OtpInput } from "../../shared/components/OtpInput";
 import { authUi } from "../styles";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import type { AuthSession, MutationResult, OtpPurpose } from "../types";
@@ -129,19 +130,14 @@ export function OTPForm({
 
       <label className={authUi.label}>
         {t.otpLabel}
-        <input
-          className={authUi.input}
-          type="text"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          pattern="[0-9]{6}"
-          maxLength={6}
-          value={otp}
-          onChange={(event) =>
-            setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
-          }
-          placeholder={t.otpPlaceholder}
-        />
+        <div className="mt-2">
+          <OtpInput
+            value={otp}
+            onChange={setOtp}
+            disabled={isSubmitting}
+            isError={!!errorMessage}
+          />
+        </div>
       </label>
 
       <div className="flex items-center justify-between gap-4 text-xs text-slate-500">
