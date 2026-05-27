@@ -205,6 +205,9 @@ export function AdminUsersPage() {
                           );
 
                           const updatedUser = await response.json();
+                          await fetchUsers();
+
+                          window.location.reload();
 
                           setUsers((prev) =>
                             prev.map((u) =>
