@@ -1,9 +1,20 @@
 import { ProductModel } from '../models/product.model';
 
-export const listProducts = async (options: { limit?: number; q?: string; category?: string }) => {
+export const listProducts = async (options: { 
+  limit?: number; 
+  q?: string; 
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  lat?: number;
+  lng?: number;
+  radiusInKm?: number;
+  startDate?: string;
+  endDate?: string;
+}) => {
   const limit = options.limit ?? 20;
   
-  const query: Record<string, unknown> = { 
+  const query: Record<string, any> = { 
     isArchived: false, 
     status: { $in: ['Available', 'Active'] } 
   };
@@ -22,6 +33,35 @@ export const listProducts = async (options: { limit?: number; q?: string; catego
     ];
   }
 
+  if (options.minPrice !== undefined || options.maxPrice !== undefined) {
+    query.price = {};
+    if (options.minPrice !== undefined) query.price.$gte = Number(options.minPrice);
+    if (options.maxPrice !== undefined) query.price.$lte = Number(options.maxPrice);
+  }
+
+  if (options.startDate && options.endDate) {
+    query.unavailableDates = {
+      $not: {
+        $elemMatch: {
+          startDate: { $lt: new Date(options.endDate) },
+          endDate: { $gt: new Date(options.startDate) }
+        }
+      }
+    };
+  }
+
+  if (options.lat && options.lng && options.radiusInKm) {
+    query.location = {
+      $near: {
+        $geometry: { 
+          type: 'Point', 
+          coordinates: [Number(options.lng), Number(options.lat)] 
+        },
+        $maxDistance: Number(options.radiusInKm) * 1000
+      }
+    };
+  }
+
   const rows = await ProductModel.find(query)
     .sort({ updatedAt: -1, _id: -1 })
     .limit(limit)
@@ -38,7 +78,8 @@ export const listProducts = async (options: { limit?: number; q?: string; catego
     image: row.image,
     imageUrl: row.imageUrl ?? null,
     description: row.description,
-    location: row.location,
+    location: row.locationText || 'Chưa cập nhật vị trí',
+    coordinates: row.location?.coordinates || null, // <-- THÊM DÒNG NÀY ĐỂ FRONTEND TÍNH TOÁN
     rating: row.rating,
     reviewsCount: row.reviewsCount
   }));
@@ -61,7 +102,8 @@ export const getProductById = async (id: string) => {
     image: product.image,
     imageUrl: product.imageUrl,
     description: product.description,
-    location: product.location,
+    location: product.locationText || 'Chưa cập nhật vị trí',
+    coordinates: product.location?.coordinates || null, // <-- THÊM DÒNG NÀY
     rating: product.rating,
     reviewsCount: product.reviewsCount,
     lastUpdated: product.lastUpdated

@@ -14,9 +14,10 @@ interface InventoryRowProps {
   item: InventoryItem;
   onDelete: (id: string | number) => void;
   onArchive: (id: string | number) => void;
+  onEdit: (item: InventoryItem) => void; // <-- THÊM PROP NÀY
 }
 
-export function InventoryRow({ item, onDelete, onArchive }: InventoryRowProps) {
+export function InventoryRow({ item, onDelete, onArchive, onEdit }: InventoryRowProps) {
   const { t } = useI18n();
 
   return (
@@ -62,13 +63,13 @@ export function InventoryRow({ item, onDelete, onArchive }: InventoryRowProps) {
         </div>
       </div>
 
-      {/* Status Breakdown (Updated for US) */}
+      {/* Status Breakdown */}
       <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-6">
         <div className="flex flex-col items-center gap-1.5">
           <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 size={14} strokeWidth={2.5} />
             <span className="text-xs font-black tabular-nums">
-              {item.statusQuantities.available}
+              {item.statusQuantities?.available ?? 0}
             </span>
           </div>
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
@@ -80,7 +81,7 @@ export function InventoryRow({ item, onDelete, onArchive }: InventoryRowProps) {
           <div className="flex items-center gap-1.5 text-amber-500">
             <Clock size={14} strokeWidth={2.5} />
             <span className="text-xs font-black tabular-nums">
-              {item.statusQuantities.rented}
+              {item.statusQuantities?.rented ?? 0}
             </span>
           </div>
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
@@ -92,7 +93,7 @@ export function InventoryRow({ item, onDelete, onArchive }: InventoryRowProps) {
           <div className="flex items-center gap-1.5 text-rose-500">
             <AlertCircle size={14} strokeWidth={2.5} />
             <span className="text-xs font-black tabular-nums">
-              {item.statusQuantities.overdue}
+              {item.statusQuantities?.overdue ?? 0}
             </span>
           </div>
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
@@ -113,7 +114,10 @@ export function InventoryRow({ item, onDelete, onArchive }: InventoryRowProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 ml-4">
-          <button className="rounded-xl p-2.5 text-slate-400 hover:bg-white hover:text-teal-600 dark:hover:bg-slate-700 shadow-sm transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600">
+          <button 
+            onClick={() => onEdit(item)} // <-- GỌI HÀM SỬA TẠI ĐÂY
+            className="rounded-xl p-2.5 text-slate-400 hover:bg-white hover:text-teal-600 dark:hover:bg-slate-700 shadow-sm transition-all border border-transparent hover:border-slate-100 dark:hover:border-slate-600"
+          >
             <Edit size={16} />
           </button>
           <button

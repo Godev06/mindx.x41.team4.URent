@@ -22,7 +22,11 @@ export interface Product {
   imageUrl?: string;
   image?: string;
   condition?: string;
-  location?: string;
+  // Bổ sung các thuộc tính cần thiết để tránh lỗi TypeScript
+  locationText?: string; 
+  location?: any;
+  coordinates?: number[];
+  // ----------------------------------------
   rating?: number;
   reviewsCount?: number;
   reviews?: number;

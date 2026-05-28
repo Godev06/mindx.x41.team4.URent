@@ -8,50 +8,33 @@ import {
 
 import { HomePage } from "./features/user/home/pages/HomePage";
 import { ProductListingPage } from "./features/user/home/pages/ProductListingPage";
-
 import InventoryPage from "./features/user/inventory/pages/InventoryPage";
-
 import { OrderDetailPage } from "./features/user/orders/pages/OrderDetailPage";
 import { OrdersPage } from "./features/user/orders/pages/OrdersPage";
-
 import { MessagesPage } from "./features/user/messages/pages/MessagesPage";
-
 import { NotificationsPage } from "./features/user/notifications/pages/NotificationsPage";
-
 import { SettingsPage } from "./features/user/settings/pages/SettingsPage";
-
 import { ProfilePage } from "./features/user/profile/pages/ProfilePage";
-
 import { ProductDetailPage } from "./features/user/product/pages/ProductDetailPage";
 
+// --- IMPORT COMPONENT WISHLIST PAGE MỚI ---
+import { WishlistPage } from "./features/user/profile/pages/WishlistPage"; 
+
 import { AppShell } from "./features/user/layout/components/AppShell";
-
 import { ProtectedRoute } from "./features/user/auth/components/ProtectedRoute";
-
 import { PublicOnlyRoute } from "./features/user/auth/components/PublicOnlyRoute";
-
 import { AdminRoute } from "./features/user/auth/components/AdminRoute";
-
 import { ForgotPasswordPage } from "./features/user/auth/pages/ForgotPasswordPage";
-
 import { LoginPage } from "./features/user/auth/pages/LoginPage";
-
 import { RegisterPage } from "./features/user/auth/pages/RegisterPage";
-
 import { ResetPasswordPage } from "./features/user/auth/pages/ResetPasswordPage";
-
 import { VerifyOtpPage } from "./features/user/auth/pages/VerifyOtpPage";
-
 import { APP_ROUTES } from "./features/user/auth/constants";
 
 import { AdminDashboardPage } from "./features/admin/pages/AdminDashboardPage";
-
 import { AdminLogsPage } from "./features/admin/pages/AdminLogsPage";
-
 import { AdminOrdersDetailPage } from "./features/admin/pages/AdminOrdersDetailPage";
-
 import { AdminOrdersPage } from "./features/admin/pages/AdminOrdersPage";
-
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 import { AdminChatPage } from "./features/admin/pages/AdminChatPage";
 import { AdminBroadcastCenter } from "./features/admin/pages/AdminBroadcastCenter";
@@ -80,7 +63,6 @@ export default function App() {
     navigate(`/product/${id}`);
   };
 
-  // Bọc thẳng SocketProvider ra ngoài cùng của cây định tuyến trong component này
   return (
     <SocketProvider>
       <Routes>
@@ -122,6 +104,10 @@ export default function App() {
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:orderId" element={<OrderDetailPage />} />
             <Route path="/inventory" element={<InventoryPage />} />
+            
+            {/* --- THÊM ROUTE CHO TRANG WISHLIST --- */}
+            <Route path="/wishlist" element={<WishlistPage />} />
+
             <Route path="/messages" element={<MessagesPage />} />
             <Route path="/messages/:id" element={<MessagesPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />

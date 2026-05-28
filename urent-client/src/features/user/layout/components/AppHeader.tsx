@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   User,
   Shield,
+  Heart, // Đã thêm
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -28,8 +29,6 @@ interface ProfileMenuItem {
   isDanger?: boolean;
 }
 
-
-
 export function AppHeader() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -44,7 +43,6 @@ export function AppHeader() {
   const { unreadCount } = useUnreadCount();
   const { showToast } = useToast();
 
-  // 1. Tự động đăng ký Service Worker và đồng bộ FCM Token khi đăng nhập
   useEffect(() => {
     if (isAuthenticated) {
       if ("serviceWorker" in navigator) {
@@ -57,14 +55,12 @@ export function AppHeader() {
           appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
         };
 
-        // Chuyển cấu hình làm query params động cho Service Worker
         const queryParams = new URLSearchParams(firebaseConfig as any).toString();
 
         navigator.serviceWorker
           .register(`/firebase-messaging-sw.js?${queryParams}`)
           .then((reg) => {
             console.log("[FCM SW] Service Worker registered successfully:", reg);
-            // Lấy token thiết bị
             import("../../notifications/services/fcm").then(({ fcmService }) => {
               fcmService.requestPermissionAndGetToken();
             });
@@ -74,14 +70,12 @@ export function AppHeader() {
           });
       }
     } else {
-      // Hủy token thiết bị khi đăng xuất
       import("../../notifications/services/fcm").then(({ fcmService }) => {
         fcmService.revokeToken();
       });
     }
   }, [isAuthenticated]);
 
-  // 2. Lắng nghe sự kiện thông báo thời gian thực để kích hoạt Chuông báo & Toast nổi
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -91,13 +85,11 @@ export function AppHeader() {
 
       console.info("🔔 [Real-time Log] AppHeader nhận sự kiện thông báo qua WebSockets:", notification);
 
-      // Phát âm thanh thông báo sử dụng AudioChimeService (nếu người dùng bật)
       const isSoundEnabled = localStorage.getItem("settings.soundNotifications") !== "false";
       if (isSoundEnabled) {
         audioChimeService.playChime();
       }
 
-      // Kích hoạt Toast thông báo cao cấp có hỗ trợ deep-link
       showToast({
         title: notification.title,
         description: notification.description,
@@ -105,7 +97,6 @@ export function AppHeader() {
         actionUrl: notification.actionUrl,
       });
 
-      // Phát thông báo Native của hệ điều hành (Browser Desktop Notification)
       if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
         try {
           const nativeNotif = new Notification(notification.title, {
@@ -155,8 +146,6 @@ export function AppHeader() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close dropdowns when the route changes.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setIsNotifOpen(false);
     setIsProfileOpen(false);
@@ -180,15 +169,15 @@ export function AppHeader() {
     },
     ...(user?.role === "admin"
       ? [
-        {
-          label: t.viewAdmin || "Trang quản trị",
-          icon: Shield,
-          onClick: () => {
-            navigate("/admin");
-            setIsProfileOpen(false);
+          {
+            label: t.viewAdmin || "Trang quản trị",
+            icon: Shield,
+            onClick: () => {
+              navigate("/admin");
+              setIsProfileOpen(false);
+            },
           },
-        },
-      ]
+        ]
       : []),
     {
       label: t.headerSettingsAria,
@@ -320,10 +309,20 @@ export function AppHeader() {
           <div className="flex items-center gap-2 border-l border-slate-200 pl-2.5 sm:gap-3.5 sm:pl-4.5 dark:border-white/10">
             {isAuthenticated ? (
               <>
+                {/* --- Nút Yêu thích mới thêm vào --- */}
+                <button
+                  type="button"
+                  onClick={() => navigate("/wishlist")}
+                  className="rounded-xl p-2.5 text-slate-500 hover:bg-slate-100 hover:text-rose-500 transition dark:text-slate-400 dark:hover:bg-white/6"
+                  aria-label="Wishlist"
+                >
+                  <Heart size={20} strokeWidth={2} />
+                </button>
+
                 <div className="relative" ref={notifRef}>
                   <button
                     type="button"
-                    className={`relative rounded-xl p-2.5 transition sm:p-2 ${isNotificationsPage || isNotifOpen
+                    className={`relative rounded-xl p-2.5 transition ${isNotificationsPage || isNotifOpen
                       ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
                       : "text-slate-500 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-teal-300"
                       }`}
@@ -385,10 +384,6 @@ export function AppHeader() {
                                       {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </div>
-                                  <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                                    <span className={`h-2 w-2 rounded-full ${notification.read ? 'bg-gray-400' : 'bg-emerald-400'}`} />
-                                    <span>{notification.read ? 'Đã đọc' : t.headerNotificationsHint}</span>
-                                  </div>
                                 </div>
                               </div>
                             </button>
@@ -432,23 +427,13 @@ export function AppHeader() {
                   <button
                     type="button"
                     className="flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1.5 pr-2.5 transition-all hover:border-slate-300 hover:bg-slate-100 sm:gap-2.5 sm:pr-4 dark:border-white/12 dark:bg-white/5 dark:hover:border-white/25 dark:hover:bg-white/8"
-                    onClick={() => setIsProfileOpen((open) => !open)}
+                    onClick={() => setIsProfileOpen(!isProfileOpen)}
                     aria-label={t.headerProfileMenuAria}
                     aria-expanded={isProfileOpen}
                   >
-                    {user?.avatarUrl ? (
-                      <img
-                        src={user.avatarUrl}
-                        alt={displayName}
-                        className="h-8 w-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div
-                        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-inner ${colorClass}`}
-                      >
-                        {initials}
-                      </div>
-                    )}
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-inner ${colorClass}`}>
+                      {initials}
+                    </div>
                     <div className="hidden text-left lg:block">
                       <p className="text-xs font-semibold text-slate-800 dark:text-white">
                         {displayName}
@@ -617,15 +602,15 @@ export function AppSidebar() {
     },
     ...(user?.role === "admin"
       ? [
-        {
-          label: t.viewAdmin || "Trang quản trị",
-          icon: Shield,
-          onClick: () => {
-            navigate("/admin");
-            setIsProfileOpen(false);
+          {
+            label: t.viewAdmin || "Trang quản trị",
+            icon: Shield,
+            onClick: () => {
+              navigate("/admin");
+              setIsProfileOpen(false);
+            },
           },
-        },
-      ]
+        ]
       : []),
     {
       label: t.headerSettings,

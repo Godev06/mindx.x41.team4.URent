@@ -1,6 +1,7 @@
 import { apiClient } from "../../../../lib/api/apiClient";
 import { mapAuthUser } from "../../auth/utils/authResponse";
 import type { AuthUser, ProfileUpdatePayload } from "../../auth/types";
+import type { Product } from "../../shared/types";
 
 const buildProfileUpdatePayload = (payload: ProfileUpdatePayload) => {
   const normalizedDisplayName = payload.displayName.trim();
@@ -55,5 +56,16 @@ export const profileService = {
     }
 
     return user;
+  },
+
+  // --- HÀM MỚI ---
+  async getFavorites(): Promise<Product[]> {
+    const response = await apiClient.get<{ success: boolean; data: Product[] }>("/api/v1/profile/favorites");
+    return response.data.data;
+  },
+
+  async toggleFavorite(productId: string): Promise<{ isWishlisted: boolean, favoriteProducts: string[] }> {
+    const response = await apiClient.post<{ success: boolean; data: { isWishlisted: boolean, favoriteProducts: string[] } }>(`/api/v1/profile/favorites/${productId}`);
+    return response.data.data;
   },
 };

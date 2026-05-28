@@ -8,12 +8,10 @@ import { sendPasswordCreatedEmail, sendPasswordChangedEmail } from '../services/
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
 
-// Returns deterministic UID stub instead of calling Firebase Admin SDK.
 const getExpectedFirebaseUidForUser = async (userId: string, _email: string) => {
   return buildFirebaseUid(userId);
 };
 
-// Fields excluded from all profile responses
 const EXCLUDED_FIELDS =
   '-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt';
 
@@ -33,9 +31,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
   let isPasswordCreation = false;
 
-  // Handle password change if requested
   if (newPassword) {
-    // If password is already set, require current password verification
     if (user.password) {
       if (!currentPassword) {
         return res.status(400).json({ message: 'Current password is required' });
@@ -45,7 +41,6 @@ export const updateProfile = async (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Current password is incorrect' });
       }
     } else {
-      // This is a password creation (first time setting password)
       isPasswordCreation = true;
     }
     
@@ -53,7 +48,6 @@ export const updateProfile = async (req: Request, res: Response) => {
     user.authProviders = Array.from(new Set([...(user.authProviders ?? []), 'local']));
   }
 
-  // Update other fields
   if (displayName) user.displayName = displayName;
   if (bio !== undefined) user.bio = bio;
   if (phone) {
@@ -73,11 +67,8 @@ export const updateProfile = async (req: Request, res: Response) => {
           ? 'User changed their password' 
           : 'User updated profile information'
     });
-  } catch {
-    // Non-fatal: activity logging failure should not block profile update
-  }
+  } catch {}
 
-  // Send password notification email
   if (newPassword) {
     try {
       if (isPasswordCreation) {
@@ -85,9 +76,7 @@ export const updateProfile = async (req: Request, res: Response) => {
       } else {
         await sendPasswordChangedEmail(user.email, user.displayName);
       }
-    } catch {
-      // Non-fatal: email sending failure should not block profile update
-    }
+    } catch {}
   }
 
   const updatedUser = await UserModel.findById(userId).select(EXCLUDED_FIELDS);
@@ -102,16 +91,12 @@ export const uploadAvatar = async (req: Request, res: Response) => {
   const user = await UserModel.findById(userId);
   if (!user) return res.status(404).json({ message: 'User not found' });
 
-  // Delete old avatar from Cloudinary if it exists
   if (user.avatarUrl) {
-    // Extract public ID: last two path segments joined by '/' without extension
     const parts = user.avatarUrl.split('/');
     const filename = parts[parts.length - 1].replace(/\.[^/.]+$/, '');
     const folder = parts[parts.length - 2];
     const oldPublicId = `${folder}/${filename}`;
-    await deleteImage(oldPublicId).catch(() => {
-      // Non-fatal: old image cleanup failure should not block the upload
-    });
+    await deleteImage(oldPublicId).catch(() => {});
   }
 
   const { url, publicId } = await uploadImage(req.file.buffer, 'avatars');
@@ -125,10 +110,38 @@ export const uploadAvatar = async (req: Request, res: Response) => {
       action: 'Avatar updated',
       description: 'User changed profile avatar'
     });
-  } catch {
-    // Non-fatal: activity logging failure should not block avatar upload
-  }
+  } catch {}
 
   const updated = await UserModel.findById(userId).select(EXCLUDED_FIELDS);
   return res.json({ avatarUrl: url, publicId, user: updated });
+};
+
+// --- HÀM MỚI CHO WISHLIST ---
+export const getFavorites = async (req: Request, res: Response) => {
+  const userId = req.user?.sub;
+  const user = await UserModel.findById(userId).populate('favoriteProducts');
+  if (!user) return res.status(404).json({ message: 'User not found' });
+  
+  return res.json({ success: true, data: user.favoriteProducts });
+};
+
+export const toggleFavorite = async (req: Request, res: Response) => {
+  const userId = req.user?.sub;
+  const { productId } = req.params;
+
+  const user = await UserModel.findById(userId);
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  const index = user.favoriteProducts.findIndex(id => id.toString() === productId);
+  let isWishlisted = false;
+
+  if (index === -1) {
+    user.favoriteProducts.push(productId as any);
+    isWishlisted = true;
+  } else {
+    user.favoriteProducts.splice(index, 1);
+  }
+
+  await user.save();
+  return res.json({ success: true, data: { isWishlisted, favoriteProducts: user.favoriteProducts } });
 };
