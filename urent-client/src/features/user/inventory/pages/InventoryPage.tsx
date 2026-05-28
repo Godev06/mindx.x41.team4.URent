@@ -1,5 +1,6 @@
 import { InventoryRow } from "../components/InventoryRow";
 import { AddProductModal } from "../components/AddProductModal";
+import { EditProductModal } from "../components/EditProductModal";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { useState, useMemo, useEffect } from "react";
 import { productService } from "../../product/services/productService";
@@ -20,6 +21,8 @@ export default function InventoryPage() {
   const { t } = useI18n();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<
     "all" | "Available" | "Rented" | "Overdue"
   >("all");
@@ -111,6 +114,46 @@ export default function InventoryPage() {
       setItems((prev) => [newItem, ...prev]);
     } catch (err) {
       console.error("Failed to add product to backend:", err);
+    }
+  };
+
+  const handleEditClick = (item: InventoryItem) => {
+    setEditingItem(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditProduct = async (
+    id: string | number,
+    updatedProduct: any
+  ) => {
+    try {
+      const updated = await productService.updateProduct(id, {
+        name: updatedProduct.name,
+        category: updatedProduct.category,
+        price: updatedProduct.price,
+        statusQuantities: updatedProduct.statusQuantities,
+        condition: updatedProduct.condition,
+        imageUrl: updatedProduct.imageUrl,
+        description: updatedProduct.description,
+      });
+
+      const updatedItem: InventoryItem = {
+        id: updated._id || updated.id || id,
+        name: updated.name,
+        category: updated.category,
+        price: updated.price,
+        statusQuantities: updated.statusQuantities || { available: 1, rented: 0, overdue: 0 },
+        condition: updated.condition,
+        lastUpdated: "Just now",
+        description: updated.description,
+        imageUrl: updated.imageUrl || updated.image,
+      };
+
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? updatedItem : item))
+      );
+    } catch (err) {
+      console.error("Failed to update product on backend:", err);
     }
   };
 
@@ -237,6 +280,7 @@ export default function InventoryPage() {
                 item={item}
                 onDelete={handleDelete}
                 onArchive={handleArchive}
+                onEdit={handleEditClick}
               />
             ))
           ) : (
@@ -256,6 +300,16 @@ export default function InventoryPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAdd={handleAddProduct}
+      />
+
+      <EditProductModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingItem(null);
+        }}
+        product={editingItem}
+        onEdit={handleEditProduct}
       />
     </div>
   );
@@ -292,3 +346,4 @@ function StatCard({ icon, label, value, active, onClick }: any) {
     </button>
   );
 }
+

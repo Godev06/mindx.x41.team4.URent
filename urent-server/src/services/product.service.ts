@@ -71,7 +71,7 @@ export const getProductById = async (id: string) => {
 export const createProduct = async (data: any) => {
   const product = new ProductModel({
     ...data,
-    image: data.image || data.imageUrl || 'https://via.placeholder.com/150'
+    image: data.image || data.imageUrl || 'https://placehold.co/150'
   });
   await product.save();
   return product;

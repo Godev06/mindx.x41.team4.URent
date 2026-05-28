@@ -37,7 +37,7 @@ const productSchema = new Schema<ProductDocument>(
     },
     isArchived: { type: Boolean, default: false },
     lastUpdated: { type: Date, default: Date.now },
-    image: { type: String, required: true, default: 'https://via.placeholder.com/150' },
+    image: { type: String, required: true, default: 'https://placehold.co/150' },
     imageUrl: { type: String },
     description: [{ type: String, trim: true }],
     condition: { type: String, default: 'New' },

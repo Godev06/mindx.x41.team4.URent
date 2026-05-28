@@ -273,6 +273,8 @@ export function ProductListingPage({
 
   useEffect(() => {
     let active = true;
+    setHasFetched(false);
+    initializedPriceRef.current = false;
 
     async function loadProducts() {
       try {
@@ -343,13 +345,14 @@ export function ProductListingPage({
   }, [activeProducts]);
 
   useEffect(() => {
+    if (!hasFetched) return;
     if (initializedPriceRef.current) return;
 
     setMinPriceInput(String(dataMinPriceVnd));
     setMaxPriceInput(String(dataMaxPriceVnd));
 
     initializedPriceRef.current = true;
-  }, [dataMinPriceVnd, dataMaxPriceVnd]);
+  }, [hasFetched, dataMinPriceVnd, dataMaxPriceVnd]);
 
   const resetPriceRange = useCallback(() => {
     setMinPriceInput(String(dataMinPriceVnd));

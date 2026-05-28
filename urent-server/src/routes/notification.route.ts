@@ -122,6 +122,10 @@ notificationRouter.patch('/:id/read', authGuard, markAsRead);
  */
 notificationRouter.patch('/mark-all-read', authGuard, markAllAsRead);
 
+// Preferences Cài đặt thông báo
+notificationRouter.get('/settings', authGuard, getNotificationSettings);
+notificationRouter.put('/settings', authGuard, updateNotificationSettings);
+
 /**
  * @openapi
  * /api/v1/notifications/{id}:
@@ -176,10 +180,6 @@ notificationRouter.delete('/:id', authGuard, deleteNotification);
 // FCM Tokens
 notificationRouter.post('/fcm-token', authGuard, saveFcmToken);
 notificationRouter.delete('/fcm-token', authGuard, deleteFcmToken);
-
-// Preferences Cài đặt thông báo
-notificationRouter.get('/settings', authGuard, getNotificationSettings);
-notificationRouter.put('/settings', authGuard, updateNotificationSettings);
 
 // Broadcast diện rộng (Admin only)
 notificationRouter.post('/broadcast', authGuard, broadcastNotification);

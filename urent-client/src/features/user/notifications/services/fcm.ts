@@ -3,7 +3,7 @@ import { app } from "../../../../lib/firebase";
 import { notificationService } from "./notificationService";
 
 // Key VAPID mặc định, có thể thay đổi bằng biến môi trường VITE_FIREBASE_VAPID_KEY
-const DEFAULT_VAPID_KEY = "BEl5O2i_t1oG6l9p23z29Fidw1F_47X17i8o4zZz67bF1X5G8y6M-d9K_3GZ_k7gL0F1G2z3X4F5y6z7A8B9C0D1E2F3G4H";
+const DEFAULT_VAPID_KEY = "BDd3_hVL9fZi9Ybo2UUzA284WG5FZR30_95YeZJsiApwXKpNcF1rRPF3foIiBHXRdJI2Qhumhf6_LFTeZaNndIo";
 
 export const fcmService = {
   /**
