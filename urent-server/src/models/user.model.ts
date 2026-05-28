@@ -6,6 +6,7 @@ export type Role = "admin" | "user";
 
 export interface UserDocument extends mongoose.Document {
   email: string;
+
   password?: string;
 
   authProviders?: AuthProvider[];
@@ -13,23 +14,34 @@ export interface UserDocument extends mongoose.Document {
   isEmailVerified: boolean;
 
   otpCode?: string;
+
   otpExpiresAt?: Date;
 
   loginOtpCode?: string;
+
   loginOtpExpiresAt?: Date;
 
   resetToken?: string;
+
   resetTokenExpiresAt?: Date;
 
   displayName?: string;
+
   username?: string;
+
   bio?: string;
+
   avatarUrl?: string;
+
   phone?: string;
 
   trustScore?: number;
 
   role: Role;
+
+  createdAt?: Date;
+
+  updatedAt?: Date;
 }
 
 const userSchema = new Schema<UserDocument>(

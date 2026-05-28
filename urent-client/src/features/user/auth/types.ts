@@ -2,9 +2,11 @@ export interface AuthUser {
   id: string;
   email: string;
   displayName: string;
+  username?: string;
   bio: string | null;
   phone: string | null;
   avatarUrl: string | null;
+  role?: "admin" | "user";
   createdAt: string | null;
 }
 

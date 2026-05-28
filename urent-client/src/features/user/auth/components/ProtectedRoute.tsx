@@ -5,9 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 export function ProtectedRoute() {
   const location = useLocation();
 
-  const { isAuthenticated, isInitializing } = useAuth();
-
-  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const { isAuthenticated, isInitializing, user } = useAuth();
 
   if (isInitializing) {
     return (
