@@ -237,20 +237,26 @@ export function MessagesPage() {
   const selectedConversationPreference = conversationId
     ? getConversationPreference(conversationId)
     : {};
-  const baseConversationName =
-    selectedConversation?.participants[0]?.displayName ??
-    selectedConversation?.participants[0]?.email ??
-    "Conversation";
+  const isSupport = selectedConversation?.type === "support";
+  const baseConversationName = isSupport
+    ? "U-Rent Support"
+    : (selectedConversation?.participants[0]?.displayName ??
+       selectedConversation?.participants[0]?.email ??
+       "Conversation");
   const conversationName =
     selectedConversationPreference.alias?.trim() || baseConversationName;
-  const peerName =
-    selectedConversationPreference.alias?.trim() ||
-    (selectedConversation?.participants[0]?.displayName ??
-      selectedConversation?.participants[0]?.email ??
-      "Unknown");
-  const peerAvatarUrl =
-    selectedConversation?.participants[0]?.avatarUrl ?? null;
-  const peerEmail = selectedConversation?.participants[0]?.email ?? "";
+  const peerName = isSupport
+    ? "U-Rent Support"
+    : (selectedConversationPreference.alias?.trim() ||
+       (selectedConversation?.participants[0]?.displayName ??
+         selectedConversation?.participants[0]?.email ??
+         "Unknown"));
+  const peerAvatarUrl = isSupport
+    ? "/urent.png"
+    : (selectedConversation?.participants[0]?.avatarUrl ?? null);
+  const peerEmail = isSupport
+    ? "support@urent.com"
+    : (selectedConversation?.participants[0]?.email ?? "");
   const currentUserName = user?.displayName ?? user?.email ?? "You";
   const currentUserAvatarUrl = user?.avatarUrl ?? null;
 

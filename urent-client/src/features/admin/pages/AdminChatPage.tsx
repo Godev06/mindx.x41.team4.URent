@@ -228,7 +228,10 @@ export function AdminChatPage() {
         content,
       });
 
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
       
       setConversations((prev) =>
         prev
@@ -246,76 +249,7 @@ export function AdminChatPage() {
     }
   };
 
-  // Quick Action: Send simulated Location message
-  const handleSendSimulatedLocation = async () => {
-    if (!selectedId) return;
 
-    try {
-      const message = await messageService.sendMessage(selectedId, {
-        messageType: "LOCATION",
-        metadata: {
-          latitude: 21.0285,
-          longitude: 105.8542,
-          address: "Hoan Kiem Lake, Hanoi, Vietnam (Support Assistant)",
-        },
-      });
-
-      setMessages((prev) => [...prev, message]);
-      
-      setConversations((prev) =>
-        prev
-          .map((c) =>
-            c.id === selectedId
-              ? { ...c, lastMessage: "[Location]", lastMessageAt: message.createdAt, updatedAt: message.createdAt }
-              : c
-          )
-          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      );
-
-      setTimeout(scrollToBottom, 50);
-    } catch (err) {
-      setError(normalizeApiError(err).message);
-    }
-  };
-
-  // Quick Action: Send simulated Product message
-  const handleSendSimulatedProduct = async () => {
-    if (!selectedId) return;
-
-    try {
-      const message = await messageService.sendMessage(selectedId, {
-        messageType: "PRODUCT",
-        metadata: {
-          productId: "p1",
-        },
-      });
-
-      setMessages((prev) => [...prev, message]);
-
-      setConversations((prev) =>
-        prev
-          .map((c) =>
-            c.id === selectedId
-              ? { ...c, lastMessage: "[Product]", lastMessageAt: message.createdAt, updatedAt: message.createdAt }
-              : c
-          )
-          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      );
-
-      setTimeout(scrollToBottom, 50);
-    } catch (err) {
-      try {
-        const dummyMsg = await messageService.sendMessage(selectedId, {
-          messageType: "TEXT",
-          content: "Xin chào, tôi có thể hỗ trợ gì về sản phẩm cho bạn không?",
-        });
-        setMessages((prev) => [...prev, dummyMsg]);
-        setTimeout(scrollToBottom, 50);
-      } catch {
-        setError(normalizeApiError(err).message);
-      }
-    }
-  };
 
   // Quick reply presets
   const handleSendPresetMessage = async (text: string) => {
@@ -326,7 +260,10 @@ export function AdminChatPage() {
         messageType: "TEXT",
         content: text,
       });
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === message.id)) return prev;
+        return [...prev, message];
+      });
       setConversations((prev) =>
         prev
           .map((c) =>
@@ -367,26 +304,26 @@ export function AdminChatPage() {
 
   return (
     <AdminLayout>
-      <div className="flex h-[calc(100vh-6.5rem)] flex-col overflow-hidden rounded-3xl border border-zinc-200/80 bg-white shadow-xl dark:border-zinc-800/50 dark:bg-zinc-950/70 backdrop-blur-2xl transition-all duration-300">
+      <div className="flex h-[calc(100vh-6.5rem)] flex-col overflow-hidden rounded-3xl border border-slate-800 bg-[#0b1329]/60 shadow-2xl backdrop-blur-xl transition-all duration-300">
         
         {/* TOP BAR / HEADER */}
-        <div className="flex h-20 items-center justify-between border-b border-zinc-150/90 bg-zinc-50/50 px-6 dark:border-zinc-800/60 dark:bg-zinc-900/30 backdrop-blur-md">
+        <div className="flex h-20 items-center justify-between border-b border-slate-800/80 bg-[#0b1329]/80 px-6 backdrop-blur-md">
           <div className="flex items-center gap-4">
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-600 dark:bg-indigo-400/10 dark:text-indigo-400 shadow-inner">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 shadow-inner">
               <MessageSquare className="h-5 w-5 animate-pulse" />
-              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-indigo-500 dark:border-zinc-950" />
+              <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-slate-900 bg-cyan-500" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-base font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+                <h2 className="text-base font-semibold tracking-tight text-white">
                   Concierge Support
                 </h2>
-                <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-slate-900/60 px-2 py-0.5 text-[10px] font-medium text-slate-400 border border-slate-800/50">
                   <Activity className="h-2.5 w-2.5" />
                   Live Desk
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-slate-400">
                 Manage communications and coordinate support requests.
               </p>
             </div>
@@ -394,7 +331,7 @@ export function AdminChatPage() {
 
           <div className="flex items-center gap-4">
             {/* Status indicator badge */}
-            <div className="flex items-center gap-2.5 rounded-2xl border border-zinc-200/60 bg-white/80 px-3.5 py-1.5 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-900/60">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-slate-800 bg-slate-900/50 px-3.5 py-1.5 shadow-sm">
               <span className="relative flex h-2 w-2">
                 {isConnected ? (
                   <>
@@ -405,7 +342,7 @@ export function AdminChatPage() {
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
                 )}
               </span>
-              <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300">
+              <span className="text-[11px] font-medium text-slate-300">
                 {isConnected ? "Agent Connected" : "Agent Offline"}
               </span>
             </div>
@@ -413,34 +350,34 @@ export function AdminChatPage() {
         </div>
 
         {/* MAIN BODY LAYOUT */}
-        <div className="flex flex-1 min-h-0 bg-zinc-50/20 dark:bg-zinc-950/20">
+        <div className="flex flex-1 min-h-0 bg-[#070b19]/20">
           
           {/* SIDEBAR */}
-          <div className="flex w-[22rem] shrink-0 flex-col border-r border-zinc-150/90 bg-white dark:border-zinc-800/60 dark:bg-zinc-950/40">
+          <div className="flex w-[22rem] shrink-0 flex-col border-r border-slate-800/80 bg-[#0b1329]/30">
             
             {/* SEARCH & FILTERS */}
-            <div className="p-4 space-y-3 border-b border-zinc-150/90 dark:border-zinc-800/60">
+            <div className="p-4 space-y-3 border-b border-slate-800/80">
               <div className="relative group">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 transition-colors group-focus-within:text-indigo-500" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 transition-colors group-focus-within:text-cyan-400" />
                 <input
                   type="text"
                   placeholder="Filter users or contents..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-xs text-zinc-900 placeholder-zinc-400 transition-all duration-200 ease-out outline-none hover:border-zinc-300 focus:border-indigo-500/80 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-800/80 dark:bg-zinc-900/40 dark:text-zinc-100 dark:placeholder-zinc-500 dark:hover:border-zinc-700 dark:focus:border-indigo-500 dark:focus:bg-zinc-900/60"
+                  className="w-full rounded-2xl border border-slate-800 bg-slate-900/40 py-2.5 pl-10 pr-4 text-xs text-slate-100 placeholder-slate-500 transition-all duration-200 ease-out outline-none hover:border-slate-700 focus:border-cyan-500/80 focus:bg-slate-900/80 focus:ring-4 focus:ring-cyan-500/10"
                 />
               </div>
 
               {/* FILTER SEGMENTS */}
-              <div className="flex items-center gap-1 rounded-xl bg-zinc-100/80 p-1 dark:bg-zinc-900/50">
+              <div className="flex items-center gap-1 rounded-xl bg-slate-900/60 p-1 border border-slate-800/50">
                 {(["all", "unread", "open"] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`flex-1 text-[11px] font-medium py-1.5 capitalize rounded-lg transition-all duration-200 ${
                       activeTab === tab
-                        ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50"
-                        : "text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                        ? "bg-slate-800 text-white shadow-sm"
+                        : "text-slate-400 hover:text-slate-200"
                     }`}
                   >
                     {tab}
@@ -450,20 +387,20 @@ export function AdminChatPage() {
             </div>
 
             {/* CONVERSATION LIST */}
-            <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
+            <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1 scrollbar-thin scrollbar-thumb-slate-800">
               {isLoadingList ? (
                 // SKELETON LIST LOADERS
                 <div className="space-y-2 p-2">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex items-center gap-3.5 rounded-2xl p-3.5 border border-transparent bg-zinc-50/60 dark:bg-zinc-900/20 animate-pulse">
-                      <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-800 shrink-0" />
+                    <div key={i} className="flex items-center gap-3.5 rounded-2xl p-3.5 border border-transparent bg-slate-900/20 animate-pulse">
+                      <div className="h-10 w-10 rounded-full bg-slate-800 shrink-0" />
                       <div className="flex-1 space-y-2 min-w-0">
                         <div className="flex justify-between">
-                          <div className="h-3 w-24 bg-zinc-200 dark:bg-zinc-800 rounded" />
-                          <div className="h-2 w-8 bg-zinc-100 dark:bg-zinc-900 rounded" />
+                          <div className="h-3 w-24 bg-slate-800 rounded" />
+                          <div className="h-2 w-8 bg-slate-900 rounded" />
                         </div>
-                        <div className="h-2 w-16 bg-zinc-100 dark:bg-zinc-900 rounded" />
-                        <div className="h-2 w-32 bg-zinc-200 dark:bg-zinc-800 rounded" />
+                        <div className="h-2 w-16 bg-slate-900 rounded" />
+                        <div className="h-2 w-32 bg-slate-800 rounded" />
                       </div>
                     </div>
                   ))}
@@ -475,24 +412,26 @@ export function AdminChatPage() {
                   const isSelected = selectedId === conv.id;
                   const { initials, colorClass } = getAvatarStyle(clientName);
                   const isUnread = (conv.unreadCount ?? 0) > 0;
+                  const clientAvatarUrl = conv.client?.avatarUrl;
+                  const isClientImageUrl = !!clientAvatarUrl && /^(https?:\/\/|\/).+/.test(clientAvatarUrl);
 
                   return (
                     <button
                       key={conv.id}
                       onClick={() => handleSelectConversation(conv.id)}
-                      className={`group flex w-full items-start gap-3.5 rounded-2xl p-3.5 text-left transition-all duration-200 ease-out active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/80 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-950 ${
+                      className={`group flex w-full items-start gap-3.5 rounded-2xl p-3.5 text-left transition-all duration-200 ease-out active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/80 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 ${
                         isSelected
-                          ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-950 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-zinc-50"
-                          : "border border-transparent hover:bg-zinc-100/60 dark:hover:bg-zinc-900/30 text-zinc-700 dark:text-zinc-300"
+                          ? "bg-cyan-500/10 border border-cyan-500/20 text-white shadow-lg shadow-cyan-500/5"
+                          : "border border-transparent hover:bg-white/[0.02] text-slate-300"
                       }`}
                     >
                       {/* Avatar container */}
                       <div className="relative shrink-0 mt-0.5">
-                        {conv.client?.avatarUrl ? (
+                        {isClientImageUrl ? (
                           <img
-                            src={conv.client.avatarUrl}
+                            src={clientAvatarUrl}
                             alt={clientName}
-                            className="h-10 w-10 rounded-full object-cover ring-2 ring-zinc-100 dark:ring-zinc-800"
+                            className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-800"
                           />
                         ) : (
                           <div
@@ -501,17 +440,17 @@ export function AdminChatPage() {
                             {initials}
                           </div>
                         )}
-                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
+                        <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900" />
                       </div>
 
                       {/* Conversation details */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <h4 className={`truncate text-xs font-semibold tracking-tight ${isSelected ? "text-indigo-600 dark:text-indigo-400" : "text-zinc-900 dark:text-zinc-100"}`}>
+                          <h4 className={`truncate text-xs font-semibold tracking-tight ${isSelected ? "text-cyan-400" : "text-slate-100"}`}>
                             {clientName}
                           </h4>
                           {conv.lastMessageAt && (
-                            <span className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono tracking-tighter">
+                            <span className="text-[10px] text-slate-500 font-mono tracking-tighter">
                               {new Date(conv.lastMessageAt).toLocaleTimeString([], {
                                 hour: "2-digit",
                                 minute: "2-digit",
@@ -519,17 +458,17 @@ export function AdminChatPage() {
                             </span>
                           )}
                         </div>
-                        <p className="truncate text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                        <p className="truncate text-[10px] text-slate-500 mt-0.5">
                           {clientEmail}
                         </p>
-                        <p className={`truncate text-xs mt-1.5 ${isUnread ? "font-medium text-zinc-900 dark:text-zinc-50" : "text-zinc-500 dark:text-zinc-400"}`}>
+                        <p className={`truncate text-xs mt-1.5 ${isUnread ? "font-medium text-white" : "text-slate-400"}`}>
                           {conv.lastMessage || "No messages yet"}
                         </p>
                       </div>
 
                       {/* Unread Pill indicator */}
                       {isUnread && (
-                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-indigo-500 px-1 text-[10px] font-bold text-white shadow-sm dark:bg-indigo-600">
+                        <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-bold text-slate-950 shadow-sm">
                           {conv.unreadCount}
                         </span>
                       )}
@@ -537,12 +476,12 @@ export function AdminChatPage() {
                   );
                 })
               ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center text-zinc-400 dark:text-zinc-500">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-100/80 text-zinc-400 dark:bg-zinc-900/50 dark:text-zinc-600 mb-3">
+                <div className="flex flex-col items-center justify-center py-20 text-center text-slate-500">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900/50 text-slate-500 border border-slate-800/80 mb-3">
                     <Filter className="h-5 w-5" />
                   </div>
                   <p className="text-xs font-medium">No results found</p>
-                  <p className="text-[11px] text-zinc-400 mt-1 max-w-[200px] mx-auto">
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-[200px] mx-auto">
                     Try modifying search parameters or selected filters.
                   </p>
                 </div>
@@ -551,18 +490,18 @@ export function AdminChatPage() {
           </div>
 
           {/* MAIN CHAT WINDOW */}
-          <div className="flex flex-1 flex-col bg-zinc-50/50 dark:bg-zinc-950/20">
+          <div className="flex flex-1 flex-col bg-[#070b19]/40">
             {selectedId && selectedConversation ? (
               <>
                 {/* ACTIVE CHAT TITLE HEADER */}
-                <div className="flex h-20 items-center justify-between border-b border-zinc-150/90 bg-white px-6 dark:border-zinc-800/60 dark:bg-zinc-950/40">
+                <div className="flex h-20 items-center justify-between border-b border-slate-800/80 bg-[#0b1329]/80 px-6 backdrop-blur-md">
                   <div className="flex items-center gap-3">
                     <div className="relative shrink-0">
-                      {selectedConversation.client?.avatarUrl ? (
+                      {selectedConversation.client?.avatarUrl && /^(https?:\/\/|\/).+/.test(selectedConversation.client.avatarUrl) ? (
                         <img
                           src={selectedConversation.client.avatarUrl}
                           alt={selectedConversation.client.displayName || ""}
-                          className="h-10 w-10 rounded-full object-cover ring-2 ring-zinc-100 dark:ring-zinc-800"
+                          className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-800"
                         />
                       ) : (
                         <div
@@ -573,48 +512,51 @@ export function AdminChatPage() {
                           {getAvatarStyle(selectedConversation.client?.displayName || "Support").initials}
                         </div>
                       )}
-                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-zinc-950" />
+                      <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-900" />
                     </div>
 
                     <div>
-                      <h3 className="text-xs font-semibold text-zinc-950 dark:text-zinc-50">
+                      <h3 className="text-xs font-semibold text-white">
                         {selectedConversation.client?.displayName || selectedConversation.client?.email || "Support Session"}
                       </h3>
-                      <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono mt-0.5">
+                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">
                         {selectedConversation.client?.email}
                       </p>
                     </div>
                   </div>
 
-                  {/* QUICK DEMO UTILITY BUTTONS */}
-                  <div className="flex gap-2.5">
-                    <button
-                      onClick={handleSendSimulatedProduct}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-                    >
-                      <Package className="h-3.5 w-3.5" />
-                      <span>Attach Product</span>
-                    </button>
-                    <button
-                      onClick={handleSendSimulatedLocation}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 active:scale-[0.98] transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-                    >
-                      <MapPin className="h-3.5 w-3.5" />
-                      <span>Share Location</span>
-                    </button>
-                  </div>
+
                 </div>
 
                 {/* MESSAGES THREAD PANELS */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-5 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 bg-zinc-50/30 dark:bg-zinc-950/20">
+                <div className="flex-1 overflow-y-auto p-6 space-y-5 scrollbar-thin scrollbar-thumb-slate-800 bg-[#070b19]/40">
                   {isLoadingMessages ? (
                     <div className="flex h-full flex-col items-center justify-center gap-3">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-                      <span className="text-xs text-zinc-400 font-medium">Securing communication history...</span>
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+                      <span className="text-xs text-slate-500 font-medium">Securing communication history...</span>
                     </div>
                   ) : messages.length > 0 ? (
                     messages.map((message) => {
-                      const isMe = message.senderId === user?.id;
+                      const isClient = message.senderId === selectedConversation.client?.userId;
+                      const isMe = !isClient;
+                      const sender = selectedConversation.participants?.find(
+                        (p) => p.userId === message.senderId
+                      );
+
+                      let senderName = "Support Client";
+                      let senderAvatarUrl: string | null = null;
+
+                      if (isClient) {
+                        const clientObj = sender || selectedConversation.client;
+                        senderName = clientObj?.displayName || clientObj?.email || "Support Client";
+                        senderAvatarUrl = clientObj?.avatarUrl || null;
+                      } else {
+                        const adminObj = sender;
+                        senderName = adminObj?.displayName || adminObj?.email || "Admin Support";
+                        senderAvatarUrl = "/urent.png";
+                      }
+
+                      const isSenderImageUrl = !!senderAvatarUrl && /^(https?:\/\/|\/).+/.test(senderAvatarUrl);
 
                       return (
                         <div
@@ -624,19 +566,19 @@ export function AdminChatPage() {
                           {/* Client Avatar left profile */}
                           {!isMe && (
                             <div className="shrink-0 mb-1">
-                              {selectedConversation.client?.avatarUrl ? (
+                              {isSenderImageUrl ? (
                                 <img
-                                  src={selectedConversation.client.avatarUrl}
-                                  alt=""
+                                  src={senderAvatarUrl}
+                                  alt={senderName}
                                   className="h-8 w-8 rounded-full object-cover ring-2 ring-white/50"
                                 />
                               ) : (
                                 <div
                                   className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs ${
-                                    getAvatarStyle(selectedConversation.client?.displayName || "Support").colorClass
+                                    getAvatarStyle(senderName).colorClass
                                   }`}
                                 >
-                                  {getAvatarStyle(selectedConversation.client?.displayName || "Support").initials}
+                                  {getAvatarStyle(senderName).initials}
                                 </div>
                               )}
                             </div>
@@ -646,8 +588,8 @@ export function AdminChatPage() {
                             <div
                               className={`rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm transition-all duration-200 border ${
                                 isMe
-                                  ? "bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white font-medium rounded-br-none border-indigo-600/30 dark:from-indigo-600 dark:to-indigo-500"
-                                  : "bg-white text-zinc-800 rounded-bl-none border-zinc-200/80 dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-800/80"
+                                  ? "bg-gradient-to-tr from-cyan-600 to-cyan-500 text-white font-medium rounded-br-none border-cyan-600/30"
+                                  : "bg-slate-900 text-slate-100 rounded-bl-none border-slate-800"
                               }`}
                             >
                               {/* TEXT TYPE */}
@@ -658,12 +600,12 @@ export function AdminChatPage() {
                               {/* PRODUCT TYPE */}
                               {message.messageType === "PRODUCT" && message.metadata && (
                                 <div className="space-y-3 mt-1.5">
-                                  <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${isMe ? "text-indigo-100" : "text-zinc-400 dark:text-zinc-500"}`}>
+                                  <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${isMe ? "text-cyan-100" : "text-slate-500"}`}>
                                     <Package className="h-3 w-3" />
                                     <span>Product Inquiry Reference</span>
                                   </div>
                                   
-                                  <div className="flex gap-3.5 rounded-xl bg-zinc-50/90 p-3 border border-zinc-200/60 dark:bg-zinc-950/60 dark:border-zinc-800/70 min-w-[240px] group transition-all hover:shadow-md">
+                                  <div className="flex gap-3.5 rounded-xl bg-slate-950/60 p-3 border border-slate-800/80 min-w-[240px] group transition-all hover:shadow-md hover:border-slate-700/80">
                                     {"snapshot" in message.metadata && (
                                       <>
                                         {message.metadata.snapshot.imageUrl && (
@@ -675,14 +617,14 @@ export function AdminChatPage() {
                                         )}
                                         <div className="min-w-0 flex-1 flex flex-col justify-between">
                                           <div>
-                                            <p className="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-50">
+                                            <p className="truncate text-xs font-semibold text-white">
                                               {message.metadata.snapshot.name}
                                             </p>
-                                            <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                                            <p className="text-[10px] text-slate-500">
                                               {message.metadata.snapshot.category}
                                             </p>
                                           </div>
-                                          <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-1.5 font-mono">
+                                          <p className="text-xs font-bold text-cyan-400 mt-1.5 font-mono">
                                             ${message.metadata.snapshot.pricePerDay}/day
                                           </p>
                                         </div>
@@ -695,20 +637,20 @@ export function AdminChatPage() {
                               {/* LOCATION TYPE */}
                               {message.messageType === "LOCATION" && message.metadata && (
                                 <div className="space-y-3 mt-1.5">
-                                  <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${isMe ? "text-indigo-100" : "text-zinc-400 dark:text-zinc-500"}`}>
+                                  <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${isMe ? "text-cyan-100" : "text-slate-500"}`}>
                                     <MapPin className="h-3 w-3" />
                                     <span>Meeting Handover Spot</span>
                                   </div>
 
-                                  <div className="rounded-xl bg-zinc-50/90 p-3 border border-zinc-200/60 dark:bg-zinc-950/60 dark:border-zinc-800/70 min-w-[240px] hover:shadow-md transition-all">
+                                  <div className="rounded-xl bg-slate-950/60 p-3 border border-slate-800/80 min-w-[240px] hover:shadow-md transition-all hover:border-slate-700/80">
                                     {"latitude" in message.metadata && (
                                       <>
-                                        <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 leading-relaxed flex items-start gap-1">
-                                          <Compass className="h-3.5 w-3.5 shrink-0 mt-0.5 text-indigo-500" />
+                                        <p className="text-xs font-medium text-slate-100 leading-relaxed flex items-start gap-1">
+                                          <Compass className="h-3.5 w-3.5 shrink-0 mt-0.5 text-cyan-400" />
                                           <span>{message.metadata.address || "Meeting Handover Location"}</span>
                                         </p>
                                         
-                                        <div className="mt-3 flex items-center justify-between text-[9px] text-zinc-400 dark:text-zinc-500 font-mono border-t border-zinc-200/40 pt-2 dark:border-zinc-800/40">
+                                        <div className="mt-3 flex items-center justify-between text-[9px] text-slate-500 font-mono border-t border-slate-850 pt-2">
                                           <span>LAT: {message.metadata.latitude.toFixed(5)}</span>
                                           <span>LNG: {message.metadata.longitude.toFixed(5)}</span>
                                         </div>
@@ -721,7 +663,7 @@ export function AdminChatPage() {
 
                             {/* Timestamp indicator */}
                             <span
-                              className={`text-[9px] text-zinc-400 dark:text-zinc-500 mt-1.5 flex items-center gap-1 ${
+                              className={`text-[9px] text-slate-500 mt-1.5 flex items-center gap-1 ${
                                 isMe ? "justify-end pr-1" : "justify-start pl-1"
                               }`}
                             >
@@ -732,19 +674,19 @@ export function AdminChatPage() {
                                   minute: "2-digit",
                                 })}
                               </span>
-                              {isMe && <CheckCheck className="h-3 w-3 text-indigo-500/80 ml-0.5" />}
+                              {isMe && <CheckCheck className="h-3 w-3 text-cyan-400/80 ml-0.5" />}
                             </span>
                           </div>
                         </div>
                       );
                     })
                   ) : (
-                    <div className="flex h-full flex-col items-center justify-center text-zinc-400 dark:text-zinc-500">
-                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-900/50 dark:text-zinc-600 animate-bounce">
+                    <div className="flex h-full flex-col items-center justify-center text-slate-500">
+                      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-slate-500 border border-slate-800/80 animate-bounce">
                         <MessageCircle className="h-6 w-6" />
                       </div>
-                      <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-50">Secure Chat Initiated</p>
-                      <p className="text-[11px] text-zinc-400 dark:text-zinc-500 max-w-[200px] mt-1 text-center">
+                      <p className="text-xs font-semibold text-white">Secure Chat Initiated</p>
+                      <p className="text-[11px] text-slate-500 max-w-[200px] mt-1 text-center">
                         Introduce yourself to start providing premium support assistance.
                       </p>
                     </div>
@@ -754,10 +696,10 @@ export function AdminChatPage() {
                 </div>
 
                 {/* FORM REPLY AREA */}
-                <div className="border-t border-zinc-150/90 bg-white px-6 py-4 dark:border-zinc-800/60 dark:bg-zinc-950/40">
+                <div className="border-t border-slate-800/80 bg-[#0b1329]/60 px-6 py-4">
                   {/* PRESET CHIPS BAR */}
                   <div className="flex gap-2 overflow-x-auto pb-3.5 scrollbar-none items-center">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase shrink-0 flex items-center gap-1 pr-1 select-none">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase shrink-0 flex items-center gap-1 pr-1 select-none">
                       <Sparkles className="h-3 w-3 text-amber-500" />
                       Presets:
                     </span>
@@ -770,7 +712,7 @@ export function AdminChatPage() {
                       <button
                         key={idx}
                         onClick={() => handleSendPresetMessage(preset)}
-                        className="shrink-0 rounded-full border border-zinc-200 bg-zinc-50 px-3.5 py-1 text-[11px] text-zinc-600 hover:border-indigo-500 hover:bg-indigo-50/50 hover:text-indigo-700 active:scale-[0.98] transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/20 dark:hover:text-indigo-400"
+                        className="shrink-0 rounded-full border border-slate-800 bg-slate-900/50 px-3.5 py-1 text-[11px] text-slate-400 hover:border-cyan-500/50 hover:bg-cyan-500/5 hover:text-cyan-400 active:scale-[0.98] transition-all"
                       >
                         {preset}
                       </button>
@@ -788,11 +730,11 @@ export function AdminChatPage() {
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                         placeholder="Compose administrative support message..."
-                        className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 px-4 py-3 pr-16 text-xs text-zinc-900 placeholder-zinc-400 transition-all duration-200 ease-out outline-none hover:border-zinc-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500 dark:hover:border-zinc-700 dark:focus:border-indigo-500 dark:focus:bg-zinc-950"
+                        className="w-full rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-3 pr-16 text-xs text-slate-100 placeholder-slate-500 transition-all duration-200 ease-out outline-none hover:border-slate-700 focus:border-cyan-500 focus:bg-slate-900 focus:ring-4 focus:ring-cyan-500/10"
                       />
                       
-                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 select-none text-[10px] font-medium text-zinc-400 dark:text-zinc-500">
-                        <kbd className="px-1 rounded bg-zinc-100 dark:bg-zinc-850 font-sans border border-zinc-200/50 dark:border-zinc-800">Enter</kbd>
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 select-none text-[10px] font-medium text-slate-500">
+                        <kbd className="px-1 rounded bg-slate-900 font-sans border border-slate-800">Enter</kbd>
                         <CornerDownLeft className="h-3 w-3" />
                       </div>
                     </div>
@@ -800,7 +742,7 @@ export function AdminChatPage() {
                     <button
                       type="submit"
                       disabled={!inputText.trim()}
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-600 text-white hover:bg-indigo-500 active:scale-[0.96] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 hover:shadow-md hover:shadow-indigo-500/15"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-cyan-500 text-slate-950 hover:bg-cyan-400 active:scale-[0.96] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 hover:shadow-md hover:shadow-cyan-500/15"
                     >
                       <Send className="h-4 w-4" />
                     </button>
@@ -809,24 +751,24 @@ export function AdminChatPage() {
               </>
             ) : (
               // EMPTY STATE CHAT WINDOW
-              <div className="flex flex-1 flex-col items-center justify-center p-12 text-center bg-zinc-50/20 dark:bg-zinc-950/20">
+              <div className="flex flex-1 flex-col items-center justify-center p-12 text-center bg-[#070b19]/20">
                 <div className="relative mb-6">
-                  <div className="absolute inset-0 rounded-3xl bg-indigo-500/10 blur-xl dark:bg-indigo-400/5" />
-                  <div className="relative flex h-20 w-20 items-center justify-center rounded-3xl bg-white border border-zinc-200 shadow-sm text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-500">
-                    <MessageSquare className="h-8 w-8 text-indigo-500" />
+                  <div className="absolute inset-0 rounded-3xl bg-cyan-500/10 blur-xl" />
+                  <div className="relative flex h-20 w-20 items-center justify-center rounded-3xl bg-[#0b1329] border border-slate-800 shadow-sm text-slate-500">
+                    <MessageSquare className="h-8 w-8 text-cyan-400" />
                   </div>
                 </div>
                 
-                <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50 mb-1.5 tracking-tight">
+                <h3 className="text-base font-semibold text-white mb-1.5 tracking-tight">
                   No Support Channel Selected
                 </h3>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500 max-w-[280px] leading-relaxed">
+                <p className="text-xs text-slate-500 max-w-[280px] leading-relaxed">
                   Select a live support thread from the left list pane to begin chatting with clients in real-time.
                 </p>
                 
                 <div className="mt-8 flex flex-col gap-2.5 items-center w-full max-w-[240px]">
-                  <div className="flex items-center gap-2 text-[11px] font-medium text-zinc-400">
-                    <User className="h-3.5 w-3.5 text-zinc-500" />
+                  <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                    <User className="h-3.5 w-3.5 text-slate-500" />
                     <span>Client queue is fully automated</span>
                   </div>
                 </div>

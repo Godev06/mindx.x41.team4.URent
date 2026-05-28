@@ -25,6 +25,7 @@ interface User {
   trustScore?: number;
   createdAt?: string;
   role?: "admin" | "user";
+  avatarUrl?: string;
 }
 
 export function AdminUsersPage() {
@@ -239,9 +240,17 @@ export function AdminUsersPage() {
                   >
                     {/* USER PROFILE INFO */}
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-extrabold text-xs bg-gradient-to-tr ${avatarStyle.split(" ")[0]} ${avatarStyle.split(" ")[1]} border border-white/5 shadow-inner`}>
-                        {avatarInit}
-                      </div>
+                      {user.avatarUrl && /^(https?:\/\/|\/).+/.test(user.avatarUrl) ? (
+                        <img
+                          src={user.avatarUrl}
+                          alt={mainName}
+                          className="h-10 w-10 shrink-0 rounded-xl object-cover border border-white/5 shadow-inner"
+                        />
+                      ) : (
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-extrabold text-xs bg-gradient-to-tr ${avatarStyle.split(" ")[0]} ${avatarStyle.split(" ")[1]} border border-white/5 shadow-inner`}>
+                          {avatarInit}
+                        </div>
+                      )}
                       <div className="flex flex-col min-w-0">
                         <p className="font-bold text-white text-sm truncate group-hover:text-cyan-400 transition-colors duration-150">{mainName}</p>
                       </div>

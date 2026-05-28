@@ -427,6 +427,7 @@ export const listConversations = async (
 
     return {
       id: key,
+      type: row.type,
       lastMessage: row.lastMessage ?? null,
       lastMessageAt: row.lastMessageAt?.toISOString() ?? null,
       unreadCount: member?.unreadCount ?? 0,

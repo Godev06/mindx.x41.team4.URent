@@ -60,10 +60,24 @@ const verifyFirebaseTokenAdmin = async (
   }
 };
 
+const decodeJwtHeader = (token: string): any => {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const base64 = parts[0].replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = Buffer.from(base64, "base64").toString("utf-8");
+    return JSON.parse(decoded);
+  } catch {
+    return null;
+  }
+};
+
 export const verifyAccessToken = async (
   token: string,
 ): Promise<AuthenticatedUser> => {
-  try {
+  const header = decodeJwtHeader(token);
+
+  if (header && header.alg === "HS256") {
     const payload = await verifyToken(token);
 
     return {
@@ -75,8 +89,6 @@ export const verifyAccessToken = async (
 
       role: payload.role ?? "user",
     };
-  } catch {
-    // fallback firebase
   }
 
   return verifyFirebaseTokenAdmin(token);

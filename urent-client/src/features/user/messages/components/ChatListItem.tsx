@@ -30,9 +30,11 @@ export function ChatListItem({
   });
   const [, setNowTick] = useState(() => Date.now());
 
+  const isSupport = conversation.type === "support";
   const otherParticipant = conversation.participants[0];
-  const baseDisplayName =
-    otherParticipant?.displayName ?? otherParticipant?.email ?? "Unknown";
+  const baseDisplayName = isSupport
+    ? "U-Rent Support"
+    : (otherParticipant?.displayName ?? otherParticipant?.email ?? "Unknown");
   const displayName = conversationPreference.alias?.trim() || baseDisplayName;
 
   useEffect(() => {
@@ -135,13 +137,9 @@ export function ChatListItem({
     >
       <div className="flex gap-3">
         {(() => {
-          const avatarUrl = otherParticipant?.avatarUrl;
+          const avatarUrl = isSupport ? "/urent.png" : otherParticipant?.avatarUrl;
           const { initials, colorClass } = getAvatarStyle(displayName);
-          const isUrl =
-            !!avatarUrl &&
-            /^(https?:\/\/|\/)?.+\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(
-              avatarUrl,
-            );
+          const isUrl = !!avatarUrl && /^(https?:\/\/|\/).+/.test(avatarUrl);
           return isUrl ? (
             <img
               src={avatarUrl}

@@ -126,11 +126,7 @@ export function ChatListItem({
         {(() => {
           const avatarUrl = otherParticipant?.avatarUrl;
           const { initials, colorClass } = getAvatarStyle(displayName);
-          const isUrl =
-            !!avatarUrl &&
-            /^(https?:\/\/|\/)?.+\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(
-              avatarUrl,
-            );
+          const isUrl = !!avatarUrl && /^(https?:\/\/|\/).+/.test(avatarUrl);
           return isUrl ? (
             <img
               src={avatarUrl}
