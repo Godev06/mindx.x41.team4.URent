@@ -1,6 +1,17 @@
 import { useState } from "react";
-
 import { AdminLayout } from "../layout/AdminLayout";
+import { 
+  Activity, 
+  Terminal, 
+  Download, 
+  Clock, 
+  ShieldAlert, 
+  ShieldCheck, 
+  AlertTriangle, 
+  Compass,
+  AlertOctagon,
+  RefreshCw
+} from "lucide-react";
 
 interface LogItem {
   id: string;
@@ -66,143 +77,165 @@ export function AdminLogsPage() {
     },
   ]);
 
+  const getLevelBadge = (level: string) => {
+    switch (level) {
+      case "High":
+        return "bg-rose-500/10 text-rose-400 border border-rose-500/25";
+      case "Medium":
+        return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25";
+      default:
+        return "bg-teal-500/10 text-teal-400 border border-teal-500/25";
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "Critical":
+        return "bg-rose-500/10 text-rose-400 border border-rose-500/25";
+      case "Warning":
+        return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25";
+      default:
+        return "bg-teal-500/10 text-teal-400 border border-teal-500/25";
+    }
+  };
+
   return (
     <AdminLayout>
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
+      <div className="space-y-10">
+        {/* HEADER BAR */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
-            <h1 className="text-5xl font-bold text-white">System Logs</h1>
-
-            <p className="mt-3 text-lg text-slate-400">
-              Track important activities and suspicious behaviors
+            <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              System Logs Audit
+            </h1>
+            <p className="mt-2 text-sm font-semibold text-slate-400">
+              Audit important background operations, user registrations, and potential security escalations
             </p>
           </div>
 
-          <button className="rounded-2xl bg-cyan-500/10 px-6 py-4 font-medium text-cyan-400 transition hover:bg-cyan-500/20">
-            Export Logs
+          <button className="flex items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-6 py-3.5 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition duration-300 hover:-translate-y-0.5 hover:bg-cyan-400 hover:shadow-cyan-400/30 active:translate-y-0">
+            <Download className="h-4.5 w-4.5" />
+            Export Audit Logs
           </button>
         </div>
 
-        {/* STATS */}
-        <div className="grid grid-cols-4 gap-5">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-            <p className="text-slate-400">Total Logs</p>
-
-            <h2 className="mt-3 text-5xl font-bold text-white">
-              {logs.length}
-            </h2>
+        {/* METRICS ROW */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {/* TOTAL */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Entries</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white">{logs.length}</h2>
           </div>
 
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-            <p className="text-slate-400">Critical</p>
-
-            <h2 className="mt-3 text-5xl font-bold text-red-400">
+          {/* CRITICAL */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Critical Incidents</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-rose-400">
               {logs.filter((log) => log.status === "Critical").length}
             </h2>
           </div>
 
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-            <p className="text-slate-400">Warnings</p>
-
-            <h2 className="mt-3 text-5xl font-bold text-yellow-400">
+          {/* WARNINGS */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">System Warnings</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-yellow-400">
               {logs.filter((log) => log.status === "Warning").length}
             </h2>
           </div>
 
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-            <p className="text-slate-400">Success</p>
-
-            <h2 className="mt-3 text-5xl font-bold text-teal-400">
+          {/* SUCCESS */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Successful Events</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-teal-400">
               {logs.filter((log) => log.status === "Success").length}
             </h2>
           </div>
         </div>
-        <div className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/80">
-          <div className="grid grid-cols-6 border-b border-slate-800 bg-slate-800/40 px-6 py-5 text-sm uppercase tracking-wide text-slate-400">
-            <p>Log ID</p>
 
-            <p>Action</p>
-
-            <p>Description</p>
-
-            <p>Level</p>
-
-            <p>Status</p>
-
-            <p>Time</p>
+        {/* LOGS TABLE IDE/TERMINAL CONSOLE STYLE */}
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/20 backdrop-blur-md shadow-xl shadow-slate-950/25">
+          {/* CONSOLE HEADER */}
+          <div className="flex items-center gap-2 border-b border-slate-850 bg-slate-950/60 px-6 py-4">
+            <Terminal className="h-4.5 w-4.5 text-cyan-400" />
+            <p className="text-xs font-extrabold uppercase tracking-widest text-slate-400">Audit_Terminal_Session.log</p>
           </div>
-          <div>
+
+          {/* GRID HEADERS */}
+          <div className="grid grid-cols-6 border-b border-slate-850 bg-slate-950/30 px-6 py-4 text-[10px] font-extrabold uppercase tracking-widest text-slate-500">
+            <p>Reference / Actor</p>
+            <p>Action Type</p>
+            <p className="col-span-2">Logged details</p>
+            <p className="text-center">Severity</p>
+            <p className="text-right">Timestamp</p>
+          </div>
+
+          {/* GRID DATA */}
+          <div className="divide-y divide-slate-850 font-mono">
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="grid cursor-pointer grid-cols-6 items-center border-b border-slate-800 px-6 py-6 transition hover:bg-slate-800/30"
+                className="grid grid-cols-6 items-center px-6 py-5.5 transition duration-300 hover:bg-slate-900/40 group text-xs"
               >
-                <div>
-                  <p className="font-semibold text-cyan-400">{log.id}</p>
+                {/* ID & ACTOR */}
+                <div className="pr-4">
+                  <p className="font-extrabold text-cyan-400 tracking-wider">#{log.id}</p>
+                  <p className="text-[10px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">{log.actor}</p>
+                </div>
 
-                  <p className="mt-1 text-sm text-slate-500">{log.actor}</p>
-                </div>
+                {/* ACTION TYPE */}
                 <div>
-                  <p className="font-semibold text-white">{log.action}</p>
+                  <p className="font-bold text-slate-300">{log.action}</p>
                 </div>
-                <div>
-                  <p className="max-w-md text-sm leading-6 text-slate-300">
+
+                {/* DESCRIPTION */}
+                <div className="col-span-2 pr-6">
+                  <p className="text-slate-400 font-medium leading-relaxed max-w-lg">
                     {log.description}
                   </p>
                 </div>
-                <div>
-                  <span
-                    className={`rounded-xl px-4 py-2 text-sm font-medium ${
-                      log.level === "High"
-                        ? "bg-red-500/10 text-red-400"
-                        : log.level === "Medium"
-                          ? "bg-yellow-500/10 text-yellow-400"
-                          : "bg-teal-500/10 text-teal-400"
-                    }`}
-                  >
+
+                {/* SEVERITY LEVEL Badge */}
+                <div className="flex justify-center gap-1.5">
+                  <span className={`inline-flex rounded-xl px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${getLevelBadge(log.level)}`}>
                     {log.level}
                   </span>
                 </div>
-                <div>
-                  <span
-                    className={`rounded-xl px-4 py-2 text-sm font-medium ${
-                      log.status === "Critical"
-                        ? "bg-red-500/10 text-red-400"
-                        : log.status === "Warning"
-                          ? "bg-yellow-500/10 text-yellow-400"
-                          : "bg-teal-500/10 text-teal-400"
-                    }`}
-                  >
-                    {log.status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-slate-300">{log.time}</p>
+
+                {/* TIMESTAMP */}
+                <div className="flex items-center justify-end gap-1.5 text-slate-500 text-[10px] font-bold text-right">
+                  <Clock className="h-3.5 w-3.5 shrink-0 text-slate-700" />
+                  <span>{log.time}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6">
-          <h2 className="text-2xl font-bold text-white">Security Monitor</h2>
-
-          <p className="mt-3 text-slate-400">
-            Logs are automatically tracked for admin actions, rental disputes,
-            trust score changes, QR activities, and suspicious system behaviors.
+        {/* BOTTOM MONITOR CONTROL PANEL */}
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <Activity className="h-4.5 w-4.5 text-cyan-400" />
+            Security Shield Monitor active
+          </h3>
+          
+          <p className="text-xs font-semibold text-slate-500 leading-relaxed max-w-2xl">
+             Escrow security triggers automatically listen to administrator roles, renter trust mutations, escort code scans, checkout validations, and suspicious network headers. Use the filter controls below to parse the stack.
           </p>
 
-          <div className="mt-6 flex gap-4">
-            <button className="rounded-2xl bg-red-500/10 px-5 py-3 text-red-400 transition hover:bg-red-500/20">
-              View Critical Logs
+          <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold">
+            <button className="flex items-center gap-1.5 rounded-xl bg-rose-500/10 border border-rose-500/25 px-4.5 py-2.5 text-rose-400 hover:bg-rose-500/20 transition duration-150">
+              <ShieldAlert className="h-4 w-4" />
+              Critical Events only
             </button>
 
-            <button className="rounded-2xl bg-yellow-500/10 px-5 py-3 text-yellow-400 transition hover:bg-yellow-500/20">
-              View Warnings
+            <button className="flex items-center gap-1.5 rounded-xl bg-yellow-500/10 border border-yellow-500/25 px-4.5 py-2.5 text-yellow-400 hover:bg-yellow-500/20 transition duration-150">
+              <AlertOctagon className="h-4 w-4" />
+              Audits Warnings
             </button>
 
-            <button className="rounded-2xl bg-teal-500/10 px-5 py-3 text-teal-400 transition hover:bg-teal-500/20">
-              Refresh Logs
+            <button className="flex items-center gap-1.5 rounded-xl bg-teal-500/10 border border-teal-500/25 px-4.5 py-2.5 text-teal-400 hover:bg-teal-500/20 transition duration-150">
+              <RefreshCw className="h-4 w-4 shrink-0 transition-transform hover:rotate-180 duration-500" />
+              Refresh Audited Logs
             </button>
           </div>
         </div>

@@ -5,6 +5,7 @@ import {
   Settings,
   ShoppingCart,
   User,
+  Shield,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -177,6 +178,18 @@ export function AppHeader() {
         setIsProfileOpen(false);
       },
     },
+    ...(user?.role === "admin"
+      ? [
+        {
+          label: t.viewAdmin || "Trang quản trị",
+          icon: Shield,
+          onClick: () => {
+            navigate("/admin");
+            setIsProfileOpen(false);
+          },
+        },
+      ]
+      : []),
     {
       label: t.headerSettingsAria,
       icon: Settings,
@@ -290,11 +303,10 @@ export function AppHeader() {
                   key={item.path}
                   type="button"
                   onClick={() => guardedNavigate(item.path)}
-                  className={`flex items-center gap-2 rounded-full px-3.5 py-2 transition-all duration-200 lg:px-4.5 ${
-                    isActive
-                      ? "bg-teal-600 font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900"
-                      : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
-                  }`}
+                  className={`flex items-center gap-2 rounded-full px-3.5 py-2 transition-all duration-200 lg:px-4.5 ${isActive
+                    ? "bg-teal-600 font-semibold text-white shadow-sm dark:bg-white dark:text-slate-900"
+                    : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
+                    }`}
                 >
                   <Icon size={18} strokeWidth={2} />
                   <span className="hidden text-sm xl:block">
@@ -311,11 +323,10 @@ export function AppHeader() {
                 <div className="relative" ref={notifRef}>
                   <button
                     type="button"
-                    className={`relative rounded-xl p-2.5 transition sm:p-2 ${
-                      isNotificationsPage || isNotifOpen
-                        ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
-                        : "text-slate-500 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-teal-300"
-                    }`}
+                    className={`relative rounded-xl p-2.5 transition sm:p-2 ${isNotificationsPage || isNotifOpen
+                      ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                      : "text-slate-500 hover:bg-slate-100 hover:text-teal-600 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-teal-300"
+                      }`}
                     aria-label={t.headerNotificationsAria}
                     aria-expanded={isNotifOpen}
                     onClick={handleNotificationClick}
@@ -407,11 +418,10 @@ export function AppHeader() {
 
                 <button
                   type="button"
-                  className={`hidden rounded-xl p-2 transition lg:inline-flex ${
-                    isSettingsPage
-                      ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
-                  }`}
+                  className={`hidden rounded-xl p-2 transition lg:inline-flex ${isSettingsPage
+                    ? "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
+                    }`}
                   aria-label={t.headerSettingsAria}
                   onClick={() => navigate("/settings")}
                 >
@@ -459,18 +469,16 @@ export function AppHeader() {
                               key={item.label}
                               type="button"
                               onClick={item.onClick}
-                              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-[15px] transition lg:py-3 lg:text-sm ${
-                                item.isDanger
-                                  ? "border border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500/15 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
-                                  : "border border-slate-200/80 bg-slate-50/80 text-slate-700 hover:border-teal-200 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:text-slate-100 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
-                              }`}
+                              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-[15px] transition lg:py-3 lg:text-sm ${item.isDanger
+                                ? "border border-red-100 text-red-600 hover:bg-red-50 hover:text-red-700 dark:border-red-500/15 dark:text-red-400 dark:hover:bg-red-500/10 dark:hover:text-red-300"
+                                : "border border-slate-200/80 bg-slate-50/80 text-slate-700 hover:border-teal-200 hover:bg-white dark:border-white/8 dark:bg-white/4 dark:text-slate-100 dark:hover:border-teal-400/20 dark:hover:bg-white/6"
+                                }`}
                             >
                               <div
-                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${
-                                  item.isDanger
-                                    ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
-                                    : "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
-                                }`}
+                                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl ${item.isDanger
+                                  ? "bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-300"
+                                  : "bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                                  }`}
                               >
                                 <Icon size={16} strokeWidth={2} />
                               </div>
@@ -550,11 +558,10 @@ export function MobileBottomNav() {
                 key={item.path}
                 type="button"
                 onClick={() => guardedNavigate(item.path)}
-                className={`flex min-h-14 sm:min-h-16 flex-col items-center justify-center gap-0.5 sm:gap-1 rounded-[1rem] px-1 sm:px-1.5 py-1.5 sm:py-2 text-center transition-all duration-200 ${
-                  isActive
-                    ? "bg-teal-600 text-white shadow-lg shadow-teal-900/20 dark:bg-white dark:text-slate-900"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
-                }`}
+                className={`flex min-h-14 sm:min-h-16 flex-col items-center justify-center gap-0.5 sm:gap-1 rounded-[1rem] px-1 sm:px-1.5 py-1.5 sm:py-2 text-center transition-all duration-200 ${isActive
+                  ? "bg-teal-600 text-white shadow-lg shadow-teal-900/20 dark:bg-white dark:text-slate-900"
+                  : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
+                  }`}
                 aria-current={isActive ? "page" : undefined}
               >
                 <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
@@ -608,6 +615,18 @@ export function AppSidebar() {
         setIsProfileOpen(false);
       },
     },
+    ...(user?.role === "admin"
+      ? [
+        {
+          label: t.viewAdmin || "Trang quản trị",
+          icon: Shield,
+          onClick: () => {
+            navigate("/admin");
+            setIsProfileOpen(false);
+          },
+        },
+      ]
+      : []),
     {
       label: t.headerSettings,
       icon: Settings,
@@ -681,11 +700,10 @@ export function AppSidebar() {
                   key={item.label}
                   type="button"
                   onClick={item.onClick}
-                  className={`flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-sm transition last:border-b-0 dark:border-slate-700 ${
-                    item.isDanger
-                      ? "text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
-                      : "text-slate-900 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-700"
-                  }`}
+                  className={`flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-sm transition last:border-b-0 dark:border-slate-700 ${item.isDanger
+                    ? "text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/30 dark:hover:text-red-300"
+                    : "text-slate-900 hover:bg-slate-50 dark:text-slate-100 dark:hover:bg-slate-700"
+                    }`}
                 >
                   <Icon
                     size={16}

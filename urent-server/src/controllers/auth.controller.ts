@@ -619,6 +619,7 @@ export const getMe = async (req: Request, res: Response) => {
     "-password -otpCode -otpExpiresAt -loginOtpCode -loginOtpExpiresAt -resetToken -resetTokenExpiresAt",
   );
 
+  // FIREBASE USER
   if (!user && req.user?.authProvider === "firebase") {
     return sendSuccess(res, {
       id: req.user.sub,
@@ -627,6 +628,8 @@ export const getMe = async (req: Request, res: Response) => {
       avatarUrl: req.user.avatarUrl ?? null,
       phone: req.user.phoneNumber ?? null,
       bio: null,
+      trustScore: 100,
+      role: "user",
       createdAt: null,
     });
   }
@@ -635,7 +638,21 @@ export const getMe = async (req: Request, res: Response) => {
     throw new AppError(404, "USER_NOT_FOUND", "User not found");
   }
 
-  return sendSuccess(res, user);
+  // SAFE USER
+  const safeUser = {
+    id: user._id,
+    email: user.email,
+    displayName: user.displayName,
+    username: user.username,
+    avatarUrl: user.avatarUrl,
+    bio: user.bio,
+    phone: user.phone,
+    trustScore: user.trustScore ?? 100,
+    role: user.role ?? "user",
+    createdAt: user.createdAt ?? null,
+  };
+
+  return sendSuccess(res, safeUser);
 };
 
 const buildFirebaseIdentityToolkitUrl = (path: string) => {

@@ -97,13 +97,15 @@ export const mapAuthUser = (value: unknown): AuthUser | null => {
     displayName:
       displayNameCandidates.find(
         (candidate) => typeof candidate === "string" && candidate.trim(),
-      )?.toString() ?? email,
+      )?.toString() ?? email.split("@")[0],
+    username: typeof userRecord.username === "string" ? userRecord.username : undefined,
     bio: typeof userRecord.bio === "string" ? userRecord.bio : null,
     phone: typeof userRecord.phone === "string" ? userRecord.phone : null,
     avatarUrl:
       avatarCandidates.find(
         (candidate) => typeof candidate === "string" && candidate.trim(),
       )?.toString() ?? null,
+    role: typeof userRecord.role === "string" ? (userRecord.role as "admin" | "user") : undefined,
     createdAt:
       typeof userRecord.createdAt === "string"
         ? userRecord.createdAt

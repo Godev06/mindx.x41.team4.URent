@@ -4,7 +4,8 @@ import { useAuth } from "../hooks/useAuth";
 
 export function ProtectedRoute() {
   const location = useLocation();
-  const { isAuthenticated, isInitializing } = useAuth();
+
+  const { isAuthenticated, isInitializing, user } = useAuth();
 
   if (isInitializing) {
     return (
@@ -28,7 +29,6 @@ export function ProtectedRoute() {
       </div>
     );
   }
-
   if (!isAuthenticated) {
     return (
       <Navigate
@@ -37,6 +37,10 @@ export function ProtectedRoute() {
         state={{ from: `${location.pathname}${location.search}` }}
       />
     );
+  }
+
+  if (location.pathname.startsWith("/admin") && user?.role !== "admin") {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;
