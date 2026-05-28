@@ -643,8 +643,18 @@ export const sendConversationMessage = async (
     );
 
     // Lấy thông tin người gửi
-    const sender = await UserModel.findById(userId).select("displayName").lean();
-    const senderName = sender?.displayName || "Người dùng";
+    const sender = await UserModel.findById(userId).select("displayName role").lean();
+    let senderName = sender?.displayName || "Người dùng";
+
+    // Nếu người gửi là Admin, hiển thị tên chuyên nghiệp thay vì "Người dùng" hoặc tên cá nhân
+    if (sender?.role === "admin") {
+      const conversation = await ConversationModel.findById(conversationId).select("type").lean();
+      if (conversation?.type === "support") {
+        senderName = "U-Rent Support";
+      } else {
+        senderName = sender?.displayName || "Quản trị viên";
+      }
+    }
 
     // Chuẩn bị phần xem trước tin nhắn (message preview)
     let messagePreview = "";
