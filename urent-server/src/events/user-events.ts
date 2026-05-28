@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import { getOrCreateSupportConversation } from "../services/admin-chat.service";
 import { sendConversationMessage } from "../services/message.service";
 import { emitConversationMessageCreated } from "../realtime/socket";
-import { UserModel } from "../models/user.model";
+import { getSystemAdminId } from "../utils/admin";
 
 // Instance of the Auth Event Bus
 export const authEvents = new EventEmitter();
@@ -22,27 +22,8 @@ authEvents.on("user.registered", async ({ userId }: { userId: string }) => {
       return;
     }
 
-    // 2. Xác định System Admin ID từ biến môi trường hoặc fallback mặc định
-    let SYSTEM_ADMIN_ID = process.env.SYSTEM_ADMIN_ID || "65b2be22287a930012fdf8aa";
-    if (!mongoose.Types.ObjectId.isValid(SYSTEM_ADMIN_ID)) {
-      console.error("[UserSupportListener] SYSTEM_ADMIN_ID không phải là ObjectId hợp lệ.");
-      return;
-    }
-
-    // Kiểm tra tính tồn tại thực tế của SYSTEM_ADMIN_ID trong Database
-    let adminExists = await UserModel.exists({ _id: SYSTEM_ADMIN_ID }).then(res => !!res);
-    if (!adminExists) {
-      console.warn(`[UserSupportListener] Admin với ID ${SYSTEM_ADMIN_ID} không tồn tại trong database. Đang tìm tài khoản Admin khác...`);
-      const activeAdmin = await UserModel.findOne({ role: "admin" }).select("_id").lean();
-      if (activeAdmin) {
-        SYSTEM_ADMIN_ID = String(activeAdmin._id);
-        adminExists = true;
-        console.log(`[UserSupportListener] Tìm thấy tài khoản Admin thay thế: ${SYSTEM_ADMIN_ID}`);
-      } else {
-        console.error("[UserSupportListener] Không tìm thấy bất kỳ tài khoản Admin nào trong database để gửi tin nhắn hỗ trợ!");
-        return;
-      }
-    }
+    // 2. Xác định System Admin ID từ helper thống nhất
+    const SYSTEM_ADMIN_ID = await getSystemAdminId();
 
     // Tránh tự gửi tin nhắn support cho chính mình nếu đăng ký là Admin
     if (userId === SYSTEM_ADMIN_ID) {

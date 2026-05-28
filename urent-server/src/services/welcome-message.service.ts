@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { getOrCreateOneToOneConversation, sendConversationMessage } from "./message.service";
 import { emitConversationMessageCreated } from "../realtime/socket";
-import { UserModel } from "../models/user.model";
+import { getSystemAdminId } from "../utils/admin";
 
 /**
  * Tự động gửi tin nhắn chào mừng từ tài khoản Admin/Hệ thống đến người dùng mới.
@@ -18,27 +18,8 @@ export async function sendWelcomeMessageFromAdmin(newUserId: string): Promise<vo
       return;
     }
 
-    // 2. Cấu hình Admin ID từ biến môi trường với cơ chế fallback an toàn
-    let ADMIN_ID = process.env.ADMIN_ID || "65b2be22287a930012fdf8aa";
-    if (!mongoose.Types.ObjectId.isValid(ADMIN_ID)) {
-      console.error("[WelcomeMessage] Cấu hình ADMIN_ID không phải là ObjectId hợp lệ.");
-      return;
-    }
-
-    // Kiểm tra tính tồn tại thực tế của ADMIN_ID trong Database
-    let adminExists = await UserModel.exists({ _id: ADMIN_ID }).then(res => !!res);
-    if (!adminExists) {
-      console.warn(`[WelcomeMessage] Admin với ID ${ADMIN_ID} không tồn tại trong database. Đang tìm tài khoản Admin khác...`);
-      const activeAdmin = await UserModel.findOne({ role: "admin" }).select("_id").lean();
-      if (activeAdmin) {
-        ADMIN_ID = String(activeAdmin._id);
-        adminExists = true;
-        console.log(`[WelcomeMessage] Tìm thấy tài khoản Admin thay thế: ${ADMIN_ID}`);
-      } else {
-        console.error("[WelcomeMessage] Không tìm thấy bất kỳ tài khoản Admin nào trong database để gửi tin nhắn chào mừng!");
-        return;
-      }
-    }
+    // 2. Xác định System Admin ID từ helper thống nhất
+    const ADMIN_ID = await getSystemAdminId();
 
     // Tránh tự gửi tin nhắn cho chính mình nếu tài khoản đăng ký là Admin
     if (newUserId === ADMIN_ID) {

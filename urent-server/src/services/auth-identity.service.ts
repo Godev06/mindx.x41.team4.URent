@@ -112,6 +112,7 @@ export const resolveAppIdentity = async (identity: AuthenticatedUser): Promise<A
   return {
     ...identity,
     sub: String(user._id),
-    email: user.email
+    email: user.email,
+    role: user.role
   };
 };

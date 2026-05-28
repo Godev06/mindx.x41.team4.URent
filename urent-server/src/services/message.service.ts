@@ -642,24 +642,65 @@ export const sendConversationMessage = async (
       },
     );
 
+    // Lấy thông tin người gửi
+    const sender = await UserModel.findById(userId).select("displayName").lean();
+    const senderName = sender?.displayName || "Người dùng";
+
+    // Chuẩn bị phần xem trước tin nhắn (message preview)
+    let messagePreview = "";
+    if (message.messageType === "TEXT") {
+      const contentLimit = 60;
+      const cleanContent = message.content ? message.content.trim() : "";
+      if (cleanContent.length > contentLimit) {
+        messagePreview = cleanContent.substring(0, contentLimit) + "...";
+      } else {
+        messagePreview = cleanContent;
+      }
+    } else if (message.messageType === "PRODUCT") {
+      const productName = (message.metadata as any)?.snapshot?.name || "Sản phẩm";
+      messagePreview = `[Sản phẩm] ${productName}`;
+    } else if (message.messageType === "LOCATION") {
+      const address = (message.metadata as any)?.address || "Vị trí đã chia sẻ";
+      messagePreview = `[Vị trí] ${address}`;
+    } else {
+      messagePreview = "Đã gửi một tin nhắn";
+    }
+
     // Tạo notification cho người nhận
     const recipients = await ConversationParticipantModel.find(
       { conversationId, userId: { $ne: userId } },
       { userId: 1 },
     ).lean();
 
+    const recipientUserIds = recipients.map((r) => r.userId);
+    const recipientUsers = await UserModel.find(
+      { _id: { $in: recipientUserIds } },
+      { role: 1 },
+    ).lean();
+
+    const recipientRoleMap = new Map(
+      recipientUsers.map((u) => [String(u._id), u.role]),
+    );
+
     for (const recipient of recipients) {
+      const recipientRole = recipientRoleMap.get(String(recipient.userId));
+      const actionUrl =
+        recipientRole === "admin"
+          ? "/admin/chat"
+          : `/messages/${conversationId}`;
+
       await createLinkedActivityNotification({
         userId: String(recipient.userId),
         activity: {
           action: "message_received",
-          description: `Nhận tin nhắn mới từ ${message.messageType === "TEXT" ? "chat" : message.messageType.toLowerCase()}`,
+          description: `Nhận tin nhắn mới từ ${senderName}: ${messagePreview}`,
           type: "update",
         },
         notification: {
           title: "Tin nhắn mới",
-          description: `Bạn có tin nhắn mới từ ${message.messageType === "TEXT" ? "chat" : message.messageType.toLowerCase()}`,
+          description: `Bạn có tin nhắn mới từ ${senderName}: ${messagePreview}`,
           type: "message",
+          actionUrl,
         },
         eventKey: `message_${String(message._id)}`,
       });

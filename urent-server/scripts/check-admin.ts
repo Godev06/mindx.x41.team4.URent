@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { UserModel } from "../src/models/user.model";
+import { getSystemAdminId } from "../src/utils/admin";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ async function check() {
   await mongoose.connect(uri);
   console.log("Connected successfully!");
 
-  const ADMIN_ID = process.env.ADMIN_ID || "65b2be22287a930012fdf8aa";
+  const ADMIN_ID = await getSystemAdminId();
   console.log(`Checking user with ID: ${ADMIN_ID}...`);
   const adminUser = await UserModel.findById(ADMIN_ID);
   if (adminUser) {
