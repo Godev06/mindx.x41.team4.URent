@@ -10,7 +10,8 @@ import {
   Home,
   Bell,
   Search,
-  UserCheck
+  UserCheck,
+  MessageSquare
 } from "lucide-react";
 
 interface Props {
@@ -36,11 +37,35 @@ export function AdminLayout({ children }: Props) {
     { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
     { label: "Users", path: "/admin/users", icon: Users },
     { label: "Orders", path: "/admin/orders", icon: ShoppingBag },
+    { label: "Chat", path: "/admin/chat", icon: MessageSquare },
     { label: "Logs", path: "/admin/logs", icon: Activity },
   ];
 
   const handleLogout = () => {
     logout({ redirectTo: "/login" });
+  };
+
+  const navItem = (label: string, path: string) => {
+    const item = menuItems.find((m) => m.path === path);
+    const Icon = item ? item.icon : LayoutDashboard;
+    const active = isActive(path);
+
+    return (
+      <button
+        key={path}
+        onClick={() => navigate(path)}
+        className={`group flex w-full items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 border ${
+          active
+            ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20 shadow-lg shadow-cyan-500/5"
+            : "text-slate-400 border-transparent hover:text-white hover:bg-white/[0.02]"
+        }`}
+      >
+        <Icon className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${
+          active ? "text-cyan-400" : "text-slate-400 group-hover:text-white"
+        }`} />
+        {label}
+      </button>
+    );
   };
 
   return (
@@ -65,6 +90,7 @@ export function AdminLayout({ children }: Props) {
           {navItem("Dashboard", "/admin")}
           {navItem("Users", "/admin/users")}
           {navItem("Orders", "/admin/orders")}
+          {navItem("Chat", "/admin/chat")}
           {navItem("Logs", "/admin/logs")}
         </nav>
 

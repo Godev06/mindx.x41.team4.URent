@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AdminLayout } from "../layout/AdminLayout";
 import { useSocket } from "../../user/messages/hooks/useSocket";
 import { messageService } from "../../user/messages/services/messageService";
@@ -28,10 +29,24 @@ import {
 export function AdminChatPage() {
   const { user } = useAuth();
   const { joinConversation, leaveConversation, isConnected } = useSocket();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const conversationIdParam = searchParams.get("conversationId");
 
   const [conversations, setConversations] = useState<ApiSupportConversation[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(conversationIdParam);
   const [messages, setMessages] = useState<ApiMessage[]>([]);
+
+  // Sync URL conversationIdParam to selectedId state
+  useEffect(() => {
+    if (conversationIdParam) {
+      setSelectedId(conversationIdParam);
+    }
+  }, [conversationIdParam]);
+
+  const handleSelectConversation = (id: string) => {
+    setSelectedId(id);
+    setSearchParams({ conversationId: id });
+  };
   
   const [searchTerm, setSearchTerm] = useState("");
   const [inputText, setInputText] = useState("");
@@ -464,7 +479,7 @@ export function AdminChatPage() {
                   return (
                     <button
                       key={conv.id}
-                      onClick={() => setSelectedId(conv.id)}
+                      onClick={() => handleSelectConversation(conv.id)}
                       className={`group flex w-full items-start gap-3.5 rounded-2xl p-3.5 text-left transition-all duration-200 ease-out active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/80 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-950 ${
                         isSelected
                           ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-950 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-zinc-50"

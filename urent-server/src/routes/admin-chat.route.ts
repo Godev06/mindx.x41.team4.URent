@@ -113,3 +113,44 @@ adminChatRouter.get(
     }
   },
 );
+
+/**
+ * @openapi
+ * /api/v1/admin/chat/conversations:
+ *   post:
+ *     tags: [AdminChat]
+ *     summary: Tạo hoặc lấy phòng chat support với một user cụ thể.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [userId]
+ *             properties:
+ *               userId: { type: string }
+ *     responses:
+ *       201:
+ *         description: Trả về thông tin phòng chat support đã tạo/tìm thấy.
+ */
+adminChatRouter.post(
+  "/admin/chat/conversations",
+  authGuard,
+  requireRole(["admin"]),
+  async (req, res, next) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) {
+        throw new AppError(400, "VALIDATION_ERROR", "User ID is required");
+      }
+
+      const conversation = await getOrCreateSupportConversation(userId);
+      return sendSuccess(res, conversation, undefined, 201);
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "../layout/AdminLayout";
 import {
   Users,
@@ -10,8 +11,11 @@ import {
   Mail,
   Calendar,
   Lock,
-  Compass
+  Compass,
+  MessageSquare,
+  Loader2
 } from "lucide-react";
+import { messageService } from "../../user/messages/services/messageService";
 
 interface User {
   _id: string;
@@ -24,9 +28,24 @@ interface User {
 }
 
 export function AdminUsersPage() {
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [chatLoadingUserId, setChatLoadingUserId] = useState<string | null>(null);
+
+  const handleStartChat = async (userId: string) => {
+    setChatLoadingUserId(userId);
+    try {
+      const conversation = await messageService.getOrCreateSupportConversationForUser(userId);
+      navigate(`/admin/chat?conversationId=${conversation.id}`);
+    } catch (err) {
+      console.error("Failed to start or retrieve support chat:", err);
+      alert("Failed to start support chat. Please try again.");
+    } finally {
+      setChatLoadingUserId(null);
+    }
+  };
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -172,13 +191,14 @@ export function AdminUsersPage() {
         {/* TABLE LIST CONTAINER */}
         <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/20 backdrop-blur-md shadow-xl shadow-slate-950/25">
           {/* GRID HEADER */}
-          <div className="grid grid-cols-6 border-b border-slate-850 bg-slate-950/45 px-6 py-4.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
+          <div className="grid grid-cols-7 border-b border-slate-850 bg-slate-950/45 px-6 py-4.5 text-[11px] font-extrabold uppercase tracking-widest text-slate-400">
             <p>User profile</p>
             <p>Trust score</p>
             <p>Email address</p>
             <p className="text-center">Role / access</p>
             <p className="text-center">Session</p>
-            <p className="text-right">Joined date</p>
+            <p className="text-center">Joined date</p>
+            <p className="text-right">Actions</p>
           </div>
 
           {/* GRID DATA ITEMS */}
@@ -215,7 +235,7 @@ export function AdminUsersPage() {
                 return (
                   <div
                     key={user._id}
-                    className="grid grid-cols-6 items-center px-6 py-4.5 transition duration-300 hover:bg-slate-900/40 group"
+                    className="grid grid-cols-7 items-center px-6 py-4.5 transition duration-300 hover:bg-slate-900/40 group"
                   >
                     {/* USER PROFILE INFO */}
                     <div className="flex items-center gap-3">
@@ -283,9 +303,32 @@ export function AdminUsersPage() {
                     </div>
 
                     {/* REGISTRATION DATE */}
-                    <div className="flex items-center justify-end gap-1.5 text-slate-400 text-xs font-semibold text-right">
+                    <div className="flex items-center justify-center gap-1.5 text-slate-400 text-xs font-semibold text-center">
                       <Calendar className="h-3.5 w-3.5 text-slate-600" />
                       {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Unknown"}
+                    </div>
+
+                    {/* ACTIONS */}
+                    <div className="flex items-center justify-end">
+                      {user.role !== "admin" && (
+                        <button
+                          onClick={() => handleStartChat(user._id)}
+                          disabled={chatLoadingUserId !== null}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border ${
+                            chatLoadingUserId === user._id
+                              ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                              : "bg-slate-900/50 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800 hover:border-slate-700"
+                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          title="Chat with user"
+                        >
+                          {chatLoadingUserId === user._id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <MessageSquare className="h-3.5 w-3.5" />
+                          )}
+                          <span>Chat</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

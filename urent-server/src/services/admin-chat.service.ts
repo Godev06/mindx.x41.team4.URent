@@ -15,6 +15,11 @@ export const getOrCreateSupportConversation = async (userId: string) => {
     throw new AppError(400, "VALIDATION_ERROR", "Invalid user id");
   }
 
+  const targetUser = await UserModel.findById(userId).select("role").lean();
+  if (targetUser?.role === "admin") {
+    throw new AppError(400, "VALIDATION_ERROR", "Cannot chat/message with an administrator account");
+  }
+
   // Lấy các participant của user này
   const userParticipants = await ConversationParticipantModel.find({
     userId: new mongoose.Types.ObjectId(userId)
@@ -138,6 +143,7 @@ export const listAllSupportConversations = async (options: { cursor?: string; li
         displayName: u?.displayName ?? null,
         avatarUrl: u?.avatarUrl ?? null,
         email: u?.email ?? null,
+        userRole: u?.role ?? "user",
       };
     });
 
@@ -154,7 +160,7 @@ export const listAllSupportConversations = async (options: { cursor?: string; li
       client,
       participants: mappedParticipants
     };
-  });
+  }).filter(item => item.client?.userRole !== "admin");
 
   const nextRow = rows[limit];
   const nextCursor = hasMore && nextRow && nextRow.updatedAt

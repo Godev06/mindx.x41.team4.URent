@@ -135,4 +135,12 @@ export const messageService = {
     );
     return res.data;
   },
+
+  async getOrCreateSupportConversationForUser(userId: string) {
+    const res = await apiClient.post<ApiResponse<ApiSupportConversation>>(
+      "/api/v1/admin/chat/conversations",
+      { userId }
+    );
+    return res.data.data;
+  },
 };
