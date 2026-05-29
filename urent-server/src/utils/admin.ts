@@ -4,8 +4,8 @@ import { UserModel } from "../models/user.model";
 /** Tên hiển thị mặc định của tài khoản System Admin */
 export const SYSTEM_ADMIN_DISPLAY_NAME = "Quản trị viên URent";
 export const SYSTEM_ADMIN_AVATAR_URL: string | null = null;
-export const SYSTEM_ADMIN_ID_CONSTANT = "65a000000000000000000001";
-export const SYSTEM_ADMIN_EMAIL = "system-admin@urent.com";
+export const SYSTEM_ADMIN_ID_CONSTANT = "000000000000000000000001";
+export const SYSTEM_ADMIN_EMAIL = "contact.urent.vn@gmail.com";
 
 /**
  * Trả về ID của admin đầu tiên tìm thấy trong DB.
@@ -39,7 +39,7 @@ export async function getSystemAdmin(): Promise<{
         {
           $setOnInsert: {
             _id: new mongoose.Types.ObjectId(SYSTEM_ADMIN_ID_CONSTANT),
-            username: "system_admin",
+            username: "AdminSystem",
             displayName: SYSTEM_ADMIN_DISPLAY_NAME,
             role: "admin",
             isEmailVerified: true,
