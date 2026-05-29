@@ -32,7 +32,7 @@ export function OrderDetailPage() {
       PRODUCTS.find((item) => item.id === order.productId) ?? {
         id: order.productId || 0,
         name: order.productName || "Sản phẩm",
-        category: "Electronics",
+        category: "Điện tử & Công nghệ",
         price: order.totalPrice ? Math.round(order.totalPrice / 3) : 10,
         status: "Available",
         image: "🛒",

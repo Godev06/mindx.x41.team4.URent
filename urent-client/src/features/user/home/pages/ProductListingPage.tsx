@@ -19,6 +19,8 @@ import {
   X,
   MapPin,
   Calendar,
+  Tent,
+  Shirt,
 } from "lucide-react";
 
 import { PRODUCTS } from "../../dataset/products";
@@ -33,7 +35,7 @@ interface ProductListingPageProps {
   onBack: () => void;
 }
 
-type CategoryKey = "all" | "electronics" | "textbooks" | "appliances";
+type CategoryKey = "all" | "electronics" | "travel" | "study" | "lifestyle";
 type SortType = "latest" | "price-low" | "price-high";
 
 interface ProductMeta {
@@ -88,8 +90,9 @@ function buildProductMeta(product: any, userLocation: { lat: number; lng: number
 
 function normalizeCategory(category?: string): Exclude<CategoryKey, "all"> {
   const normalized = category?.toLowerCase();
-  if (normalized === "textbooks") return "textbooks";
-  if (normalized === "appliances") return "appliances";
+  if (normalized?.includes("du lịch") || normalized?.includes("dã ngoại") || normalized === "travel" || normalized === "outdoor") return "travel";
+  if (normalized?.includes("học tập") || normalized?.includes("sách") || normalized === "study" || normalized === "textbooks" || normalized === "books") return "study";
+  if (normalized?.includes("thời trang") || normalized?.includes("đời sống") || normalized === "lifestyle") return "lifestyle";
   return "electronics";
 }
 
@@ -417,9 +420,10 @@ export function ProductListingPage({
         setIsLoading(true);
 
         let categoryParam: string | undefined;
-        if (category === "electronics") categoryParam = "Electronics";
-        else if (category === "textbooks") categoryParam = "Textbooks";
-        else if (category === "appliances") categoryParam = "Appliances";
+        if (category === "electronics") categoryParam = "Điện tử & Công nghệ";
+        else if (category === "travel") categoryParam = "Du lịch & Dã ngoại";
+        else if (category === "study") categoryParam = "Đồ dùng học tập";
+        else if (category === "lifestyle") categoryParam = "Thời trang & Đời sống";
 
         const fetched = await productService.getProducts({
           category: categoryParam,
@@ -474,8 +478,9 @@ export function ProductListingPage({
   const categories = [
     { id: "all" as const, label: t.productListingCatAll, icon: House },
     { id: "electronics" as const, label: t.productListingCatElectronics, icon: Laptop },
-    { id: "textbooks" as const, label: t.productListingCatTextbooks, icon: BookOpen },
-    { id: "appliances" as const, label: t.productListingCatAppliances, icon: House },
+    { id: "travel" as const, label: t.productListingCatTravel, icon: Tent },
+    { id: "study" as const, label: t.productListingCatStudy, icon: BookOpen },
+    { id: "lifestyle" as const, label: t.productListingCatLifestyle, icon: Shirt },
   ];
 
   const sortOptions = [

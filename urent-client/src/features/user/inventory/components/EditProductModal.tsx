@@ -22,7 +22,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   
   const [formData, setFormData] = useState({
     name: "",
-    category: "Electronics",
+    category: "Điện tử & Công nghệ",
     price: "",
     condition: "New",
     locationText: "",
@@ -41,7 +41,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     if (isOpen && item) {
       setFormData({
         name: item.name || "",
-        category: item.category || "Electronics",
+        category: item.category || "Điện tử & Công nghệ",
         price: item.price ? String(item.price) : "",
         condition: item.condition || "New",
         locationText: item.locationText || item.location || "",
@@ -130,19 +130,30 @@ const handleSubmit = async (e: React.FormEvent) => {
     { value: "Used", label: lang === "vi" ? "Đã sử dụng" : "Used" },
   ];
 
-  const defaultCategories = ["Camera", "Laptop", "Outdoor", "Books", "Electronics"];
-  const uniqueCategories =
-    PRODUCTS.length > 0
-      ? Array.from(new Set(PRODUCTS.map((p) => p.category)))
-      : defaultCategories;
+  const defaultCategories = [
+    "Điện tử & Công nghệ",
+    "Du lịch & Dã ngoại",
+    "Đồ dùng học tập",
+    "Thời trang & Đời sống",
+  ];
 
-  const categoryOptions = uniqueCategories.map((cat) => {
+  // If the product has a legacy category, dynamically add it to the option list to avoid select state issues
+  const optionsList = [...defaultCategories];
+  if (formData.category && !optionsList.includes(formData.category)) {
+    optionsList.push(formData.category);
+  }
+
+  const categoryOptions = optionsList.map((cat) => {
     const labels: Record<string, { vi: string; en: string }> = {
-      Camera: { vi: "Máy ảnh", en: "Camera" },
-      Laptop: { vi: "Máy tính xách tay", en: "Laptop" },
-      Outdoor: { vi: "Dã ngoại", en: "Outdoor" },
-      Books: { vi: "Sách", en: "Books" },
-      Electronics: { vi: "Điện tử", en: "Electronics" },
+      "Điện tử & Công nghệ": { vi: "Điện tử & Công nghệ", en: "Electronics & Tech" },
+      "Du lịch & Dã ngoại": { vi: "Du lịch & Dã ngoại", en: "Travel & Outdoors" },
+      "Đồ dùng học tập": { vi: "Đồ dùng học tập", en: "School supplies" },
+      "Thời trang & Đời sống": { vi: "Thời trang & Đời sống", en: "Fashion & Lifestyle" },
+      Camera: { vi: "Máy ảnh (Cũ)", en: "Camera (Legacy)" },
+      Laptop: { vi: "Máy tính xách tay (Cũ)", en: "Laptop (Legacy)" },
+      Outdoor: { vi: "Dã ngoại (Cũ)", en: "Outdoor (Legacy)" },
+      Books: { vi: "Sách (Cũ)", en: "Books (Legacy)" },
+      Electronics: { vi: "Điện tử (Cũ)", en: "Electronics (Legacy)" },
     };
     return {
       value: cat,

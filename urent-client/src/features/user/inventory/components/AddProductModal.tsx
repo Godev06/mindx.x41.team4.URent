@@ -97,7 +97,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   const { t, lang } = useI18n();
   const [newProduct, setNewProduct] = useState({
     name: "",
-    category: "Electronics",
+    category: "Điện tử & Công nghệ",
     price: "",
     locationText: "",
     statusQuantities: {
@@ -207,7 +207,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
     setNewProduct({
       name: "",
-      category: "Electronics",
+      category: "Điện tử & Công nghệ",
       price: "",
       locationText: "",
       statusQuantities: { available: 1, rented: 0, overdue: 0 },
@@ -225,18 +225,19 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     { value: "Used", label: lang === "vi" ? "Đã sử dụng" : "Used" },
   ];
 
-  const defaultCategories = ["Camera", "Laptop", "Outdoor", "Books", "Electronics"];
-  const uniqueCategories = PRODUCTS.length > 0
-    ? Array.from(new Set(PRODUCTS.map((p) => p.category)))
-    : defaultCategories;
+  const defaultCategories = [
+    "Điện tử & Công nghệ",
+    "Du lịch & Dã ngoại",
+    "Đồ dùng học tập",
+    "Thời trang & Đời sống",
+  ];
 
-  const categoryOptions = uniqueCategories.map((cat) => {
+  const categoryOptions = defaultCategories.map((cat) => {
     const labels: Record<string, { vi: string; en: string }> = {
-      Camera: { vi: "Máy ảnh", en: "Camera" },
-      Laptop: { vi: "Máy tính xách tay", en: "Laptop" },
-      Outdoor: { vi: "Dã ngoại", en: "Outdoor" },
-      Books: { vi: "Sách", en: "Books" },
-      Electronics: { vi: "Điện tử", en: "Electronics" },
+      "Điện tử & Công nghệ": { vi: "Điện tử & Công nghệ", en: "Electronics & Tech" },
+      "Du lịch & Dã ngoại": { vi: "Du lịch & Dã ngoại", en: "Travel & Outdoors" },
+      "Đồ dùng học tập": { vi: "Đồ dùng học tập", en: "School supplies" },
+      "Thời trang & Đời sống": { vi: "Thời trang & Đời sống", en: "Fashion & Lifestyle" },
     };
     return {
       value: cat,

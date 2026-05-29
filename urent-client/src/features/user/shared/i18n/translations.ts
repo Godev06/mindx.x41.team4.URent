@@ -466,9 +466,12 @@ export const translations = {
     productListingAllCategory: "Tất cả",
     productListingResultsLabel: "Kết quả",
     productListingCatAll: "Tất cả",
-    productListingCatElectronics: "Điện tử",
-    productListingCatTextbooks: "Giáo trình",
-    productListingCatAppliances: "Đồ gia dụng",
+    productListingCatElectronics: "Điện tử & Công nghệ",
+    productListingCatTextbooks: "Đồ dùng học tập",
+    productListingCatAppliances: "Thời trang & Đời sống",
+    productListingCatTravel: "Du lịch & Dã ngoại",
+    productListingCatStudy: "Đồ dùng học tập",
+    productListingCatLifestyle: "Thời trang & Đời sống",
 
     // inventory
     inventoryTitle: "Quản lý Kho hàng",
@@ -1062,9 +1065,12 @@ export const translations = {
     productListingAllCategory: "All",
     productListingResultsLabel: "Results",
     productListingCatAll: "All",
-    productListingCatElectronics: "Electronics",
-    productListingCatTextbooks: "Textbooks",
-    productListingCatAppliances: "Home appliances",
+    productListingCatElectronics: "Electronics & Tech",
+    productListingCatTextbooks: "School Supplies",
+    productListingCatAppliances: "Fashion & Lifestyle",
+    productListingCatTravel: "Travel & Outdoors",
+    productListingCatStudy: "School Supplies",
+    productListingCatLifestyle: "Fashion & Lifestyle",
 
     // inventory
     inventoryTitle: "Inventory Management",
