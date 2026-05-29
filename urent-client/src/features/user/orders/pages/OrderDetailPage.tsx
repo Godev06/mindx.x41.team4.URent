@@ -258,104 +258,154 @@ export function OrderDetailPage() {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center text-center space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
-        <p className="text-slate-500">{t.orderDetailLoading || "Đang tải chi tiết đơn hàng..."}</p>
+        <p className="text-slate-500">{t.orderDetailLoading || "Đang tải..."}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-5 pb-10">
-      <OrderHeader
-        title={t.orderDetailTitle}
-        subtitle={t.orderDetailSubtitle}
-        statusNow={t.orderDetailStatusNow}
-        statusBadge={getStatusText(order.status)}
-      />
+    <div className="space-y-6 pb-12">
+      {/* Premium Header Widget */}
+      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-teal-500/10 via-amber-500/5 to-purple-500/10 border border-slate-200/50 dark:border-slate-800/40 shadow-xs">
+        <OrderHeader
+          title={t.orderDetailTitle}
+          subtitle={t.orderDetailSubtitle}
+          statusNow={t.orderDetailStatusNow}
+          statusBadge={getStatusText(order.status)}
+        />
+      </div>
 
-      {/* Dynamic Stepper */}
-      <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-900/4 dark:border-slate-700/80 dark:bg-slate-900/70 dark:ring-white/10 glass-card">
-        <div className="grid grid-cols-4 gap-2">
+      {/* Dynamic Premium Stepper Timeline Progress Bar */}
+      <section className="rounded-3xl border border-slate-200/90 bg-white dark:border-slate-800/80 dark:bg-slate-900/60 p-6 shadow-sm ring-1 ring-slate-900/4 dark:ring-white/4 backdrop-blur-md">
+        <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
+          
+          {/* Connecting Line between Steps */}
+          <div className="absolute top-[24px] left-[12%] right-[12%] h-[3px] bg-slate-100 dark:bg-slate-800 hidden md:block z-0 rounded-full">
+            <div 
+              className="h-full bg-teal-500 transition-all duration-700 ease-out rounded-full" 
+              style={{ 
+                width: order.status === "delivered" 
+                  ? "100%" 
+                  : order.status === "shipped" 
+                  ? "66%" 
+                  : order.status === "confirmed"
+                  ? "33%" 
+                  : "0%" 
+              }}
+            />
+          </div>
+
           {/* Step 1: Meetup */}
-          <div className="text-center">
-            <div className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-300 ${
-              (order.status === "confirmed" || order.status === "shipped" || order.status === "delivered") ? "bg-teal-600" : (order.status === "pending" || order.status === "confirmed") ? "bg-amber-500 scale-110 shadow-md shadow-amber-500/20 animate-pulse" : "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300"
+          <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
+              (order.status === "confirmed" || order.status === "shipped" || order.status === "delivered") 
+                ? "bg-teal-600 ring-teal-500/20" 
+                : (order.status === "pending") 
+                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse" 
+                : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
             }`}>
-              <PackageCheck size={16} />
+              <PackageCheck size={18} />
             </div>
-            <p className={`text-[11px] font-semibold transition-colors duration-300 ${
-              (order.status === "confirmed" || order.status === "shipped" || order.status === "delivered") ? "text-teal-600" : (order.status === "pending" || order.status === "confirmed") ? "text-amber-600" : "text-slate-500 dark:text-slate-300"
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
+              (order.status === "confirmed" || order.status === "shipped" || order.status === "delivered") 
+                ? "text-teal-600 dark:text-teal-400" 
+                : (order.status === "pending") 
+                ? "text-amber-600 dark:text-amber-400" 
+                : "text-slate-500 dark:text-slate-400"
             }`}>
               {t.orderDetailMeetup}
-            </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            </h4>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
               {order.startDate}
             </p>
           </div>
 
           {/* Step 2: Received */}
-          <div className="text-center">
-            <div className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-300 ${
-              (order.status === "shipped" || order.status === "delivered") ? "bg-teal-600" : order.status === "confirmed" ? "bg-amber-500 scale-110 shadow-md shadow-amber-500/20 animate-pulse" : "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300"
+          <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
+              (order.status === "shipped" || order.status === "delivered") 
+                ? "bg-teal-600 ring-teal-500/20" 
+                : order.status === "confirmed" 
+                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse" 
+                : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
             }`}>
-              <QrCode size={16} />
+              <QrCode size={18} />
             </div>
-            <p className={`text-[11px] font-semibold transition-colors duration-300 ${
-              (order.status === "shipped" || order.status === "delivered") ? "text-teal-600" : order.status === "confirmed" ? "text-amber-600" : "text-slate-500 dark:text-slate-300"
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
+              (order.status === "shipped" || order.status === "delivered") 
+                ? "text-teal-600 dark:text-teal-400" 
+                : order.status === "confirmed" 
+                ? "text-amber-600 dark:text-amber-400" 
+                : "text-slate-500 dark:text-slate-400"
             }`}>
               {t.orderDetailReceived}
-            </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            </h4>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold leading-tight">
               {order.status === "pending" ? t.orderDetailNotReached : order.status === "confirmed" ? t.orderDetailVerifyingQr : t.orderCardConfirmed}
             </p>
           </div>
 
           {/* Step 3: Returning */}
-          <div className="text-center">
-            <div className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-300 ${
-              order.status === "delivered" ? "bg-teal-600" : order.status === "shipped" ? "bg-amber-500 scale-110 shadow-md shadow-amber-500/20 animate-pulse" : "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300"
+          <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
+              order.status === "delivered" 
+                ? "bg-teal-600 ring-teal-500/20" 
+                : order.status === "shipped" 
+                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse" 
+                : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
             }`}>
-              <Clock3 size={16} />
+              <Clock3 size={18} />
             </div>
-            <p className={`text-[11px] font-semibold transition-colors duration-300 ${
-              order.status === "delivered" ? "text-teal-600" : order.status === "shipped" ? "text-amber-600" : "text-slate-500 dark:text-slate-300"
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
+              order.status === "delivered" 
+                ? "text-teal-600 dark:text-teal-400" 
+                : order.status === "shipped" 
+                ? "text-amber-600 dark:text-amber-400" 
+                : "text-slate-500 dark:text-slate-400"
             }`}>
               {t.orderDetailReturning}
-            </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            </h4>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
               {order.status === "delivered" ? t.orderCardDelivered : order.status === "shipped" ? "Đang sử dụng" : t.orderDetailNotReached}
             </p>
           </div>
 
           {/* Step 4: Completed */}
-          <div className="text-center">
-            <div className={`mx-auto mb-2 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all duration-300 ${
-              order.status === "delivered" ? "bg-teal-600 scale-110 shadow-md shadow-teal-500/20" : "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300"
+          <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
+              order.status === "delivered" 
+                ? "bg-teal-600 ring-teal-500/20 scale-110 shadow-md shadow-teal-500/25" 
+                : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
             }`}>
-              <CheckCircle2 size={16} />
+              <CheckCircle2 size={18} />
             </div>
-            <p className={`text-[11px] font-semibold transition-colors duration-300 ${
-              order.status === "delivered" ? "text-teal-600 font-bold" : "text-slate-500 dark:text-slate-300"
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
+              order.status === "delivered" 
+                ? "text-teal-600 dark:text-teal-400 font-extrabold" 
+                : "text-slate-500 dark:text-slate-400"
             }`}>
               {t.orderDetailCompleted}
-            </p>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500">
+            </h4>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
               {order.status === "delivered" ? "Đã hoàn thành" : t.orderDetailNotConfirmed}
             </p>
           </div>
+
         </div>
       </section>
 
-      {/* Control Center Card */}
-      <section className="grid gap-5 xl:grid-cols-12">
-        <article className="rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-900/4 xl:col-span-8 dark:border-slate-700/80 dark:bg-slate-900/70 dark:ring-white/10">
-          <div className="flex flex-col h-full justify-between">
+      {/* Control Center & Support Columns */}
+      <section className="grid gap-6 xl:grid-cols-12">
+        {/* Left: Actions Control Card */}
+        <article className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm ring-1 ring-slate-900/4 xl:col-span-8 dark:border-slate-800/80 dark:bg-slate-900/60 dark:ring-white/4">
+          <div className="flex flex-col h-full justify-between gap-6">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <ShieldCheck className="text-teal-600 h-5 w-5" />
+              <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <ShieldCheck className="text-teal-600 h-5.5 w-5.5" />
                 Hành động & Tiến trình giao nhận
               </h2>
               
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="mt-3 text-sm text-slate-600 dark:text-slate-350 leading-relaxed font-semibold">
                 {isRenter && order.status === "pending" && "Chờ chủ sở hữu duyệt yêu cầu thuê của bạn. Bạn có thể chọn hủy yêu cầu nếu không còn nhu cầu."}
                 {isRenter && order.status === "confirmed" && "Chủ sở hữu đã duyệt yêu cầu thuê! Hai bên vui lòng gặp mặt tại điểm hẹn, kiểm tra thiết bị, sau đó chủ sở hữu sẽ bấm xác nhận giao đồ để kích hoạt thời gian thuê."}
                 {isRenter && order.status === "shipped" && "Đơn hàng đang trong trạng thái sử dụng. Sau khi dùng xong và trả thiết bị đầy đủ, hãy bấm 'Xác nhận hoàn tất đơn hàng'."}
@@ -372,20 +422,20 @@ export function OrderDetailPage() {
               </p>
             </div>
 
-            {/* QR or Illustration Container */}
-            <div className="my-6 flex flex-col items-center justify-center">
+            {/* QR or Illustration Area */}
+            <div className="flex flex-col items-center justify-center py-4">
               {(order.status === "pending" || order.status === "confirmed") ? (
                 <div className="flex flex-col items-center text-center space-y-4">
-                  <div className="rounded-2xl border-2 border-dashed border-teal-500/40 bg-teal-50/20 p-4 dark:border-teal-500/25 dark:bg-teal-500/5">
+                  <div className="rounded-3xl border-2 border-dashed border-teal-500/40 bg-teal-50/20 p-4 dark:border-teal-500/25 dark:bg-teal-500/5 transition-transform hover:scale-102 duration-300 shadow-inner">
                     <img
                       src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(order.id)}`}
                       alt="Order QR Code"
-                      className="h-44 w-44 object-contain rounded-lg shadow-sm"
+                      className="h-40 w-40 object-contain rounded-xl shadow-xs"
                     />
                   </div>
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50/80 px-3 py-1 text-[11px] font-bold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20">
                     <QrCode size={14} />
-                    Mã đơn hàng: <span className="font-bold">{order.id}</span>
+                    Mã đơn hàng: <span className="font-extrabold">{order.id}</span>
                   </div>
                 </div>
               ) : order.status === "shipped" ? (
@@ -393,32 +443,32 @@ export function OrderDetailPage() {
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-teal-100 text-teal-600 dark:bg-teal-500/20 dark:text-teal-400 animate-pulse">
                     <Clock3 size={32} />
                   </div>
-                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Thiết bị đang được sử dụng</h3>
-                  <p className="text-xs text-slate-500 max-w-sm">Hệ thống đang bảo vệ giao dịch của bạn. Hãy liên hệ với đối tác nếu cần hỗ trợ.</p>
+                  <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-200">Thiết bị đang được sử dụng</h3>
+                  <p className="text-xs text-slate-500 max-w-xs font-medium leading-relaxed">Hệ thống đang bảo vệ giao dịch của bạn. Hãy liên hệ với đối tác nếu cần hỗ trợ.</p>
                 </div>
               ) : order.status === "delivered" ? (
                 <div className="flex flex-col items-center text-center py-6 space-y-3">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                     <CheckCircle2 size={32} />
                   </div>
-                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Giao dịch đã hoàn tất</h3>
-                  <p className="text-xs text-slate-500 max-w-sm">Hợp đồng điện tử đã được lưu giữ an toàn trên U-Rent.</p>
+                  <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-200">Giao dịch đã hoàn tất</h3>
+                  <p className="text-xs text-slate-500 max-w-sm font-medium leading-relaxed">Hợp đồng điện tử đã được lưu giữ an toàn và giao dịch được hoàn tất trọn vẹn.</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center text-center py-6 space-y-3">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
                     <AlertTriangle size={32} />
                   </div>
-                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Giao dịch đã bị hủy</h3>
-                  <p className="text-xs text-slate-500 max-w-sm">Yêu cầu giao dịch này đã đóng và không thể thực hiện thêm hành động nào.</p>
+                  <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-200">Giao dịch đã bị hủy</h3>
+                  <p className="text-xs text-slate-500 max-w-sm font-medium leading-relaxed">Yêu cầu giao dịch này đã đóng và không thể thực hiện thêm hành động nào.</p>
                 </div>
               )}
             </div>
 
-            {/* Action Buttons Section */}
-            <div className="mt-4 flex flex-wrap gap-3 items-center justify-center border-t border-slate-100 dark:border-slate-850 pt-5">
+            {/* Action Buttons Row */}
+            <div className="flex flex-wrap gap-3 items-center justify-center border-t border-slate-100 dark:border-slate-800/80 pt-5">
               {isUpdatingStatus ? (
-                <div className="flex items-center gap-2 text-slate-500 text-sm py-2">
+                <div className="flex items-center gap-2 text-slate-500 text-sm py-2 font-bold">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-500 border-t-transparent" />
                   <span>Đang cập nhật trạng thái...</span>
                 </div>
@@ -429,13 +479,13 @@ export function OrderDetailPage() {
                     <>
                       <button
                         onClick={() => handleUpdateStatus("confirmed")}
-                        className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-600/25 transition cursor-pointer"
+                        className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-teal-600/20 transition cursor-pointer"
                       >
                         Chấp nhận yêu cầu thuê
                       </button>
                       <button
                         onClick={() => handleUpdateStatus("cancelled")}
-                        className="rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 dark:border-rose-950 dark:bg-rose-950/20 px-5 py-2.5 text-sm font-bold text-rose-600 dark:text-rose-400 transition cursor-pointer"
+                        className="rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 dark:border-rose-950 dark:bg-rose-950/20 px-5 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 transition cursor-pointer"
                       >
                         Từ chối yêu cầu
                       </button>
@@ -446,7 +496,7 @@ export function OrderDetailPage() {
                   {isOwner && order.status === "confirmed" && (
                     <button
                       onClick={() => handleUpdateStatus("shipped")}
-                      className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-600/25 transition cursor-pointer"
+                      className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-teal-600/20 transition cursor-pointer"
                     >
                       Xác nhận đã bàn giao đồ
                     </button>
@@ -456,7 +506,7 @@ export function OrderDetailPage() {
                   {isRenter && order.status === "pending" && (
                     <button
                       onClick={() => handleUpdateStatus("cancelled")}
-                      className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 text-slate-600 dark:text-slate-300 px-5 py-2.5 text-sm font-bold shadow-sm transition cursor-pointer"
+                      className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 dark:border-slate-850 dark:bg-slate-900 text-slate-600 dark:text-slate-300 px-5 py-2.5 text-xs font-bold shadow-xs transition cursor-pointer"
                     >
                       Hủy yêu cầu thuê
                     </button>
@@ -466,7 +516,7 @@ export function OrderDetailPage() {
                   {isRenter && order.status === "shipped" && (
                     <button
                       onClick={() => handleUpdateStatus("delivered")}
-                      className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-teal-600/25 transition cursor-pointer"
+                      className="rounded-xl bg-teal-600 hover:bg-teal-700 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-teal-600/20 transition cursor-pointer"
                     >
                       Xác nhận nhận đồ & Hoàn tất đơn hàng
                     </button>
@@ -477,42 +527,48 @@ export function OrderDetailPage() {
           </div>
         </article>
 
+        {/* Right Sidebar: Protection & Support */}
         <aside className="space-y-4 xl:col-span-4">
-          <div className="rounded-2xl bg-linear-to-br from-teal-600 to-teal-700 p-5 text-white shadow-lg">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold">
-                {t.orderDetailProtectTitle}
+          {/* U-Rent Protection Gradient Banner */}
+          <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-teal-600 via-teal-700 to-indigo-900 p-6 text-white shadow-md border border-teal-500/20">
+            <div className="absolute right-0 top-0 -mr-6 -mt-6 w-32 h-32 bg-white/5 rounded-full blur-xl" />
+            <div className="relative z-10 flex items-center justify-between">
+              <h3 className="text-xs font-extrabold tracking-wide uppercase">
+                {t.orderDetailProtectTitle || "U-Rent Protect"}
               </h3>
-              <ShieldCheck size={16} />
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white">
+                <ShieldCheck size={16} />
+              </div>
             </div>
-            <ul className="mt-3 space-y-2 text-xs text-teal-100">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 size={14} className="mt-0.5" />
+            <ul className="mt-4 space-y-3 text-[11px] text-teal-50/90 leading-relaxed font-semibold">
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-teal-300" />
                 {t.orderDetailProtectLine1}
               </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 size={14} className="mt-0.5" />
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-teal-300" />
                 {t.orderDetailProtectLine2}
               </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 size={14} className="mt-0.5" />
+              <li className="flex items-start gap-2.5">
+                <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-teal-300" />
                 {t.orderDetailProtectLine3}
               </li>
             </ul>
-            <button className="mt-4 w-full rounded-lg bg-white px-3 py-2 text-xs font-semibold text-teal-600 hover:text-amber-500">
+            <button className="relative z-10 mt-5 w-full rounded-xl bg-white hover:bg-slate-50 px-4 py-2.5 text-xs font-black text-teal-700 hover:text-amber-500 transition-colors shadow-xs cursor-pointer">
               {t.orderDetailProtectBtn}
             </button>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/4 dark:border-slate-700/80 dark:bg-slate-900/70 dark:ring-white/10">
-            <div className="border-b border-slate-200/80 bg-linear-to-r from-slate-50 to-teal-50/70 px-5 py-4 dark:border-slate-700/80 dark:from-slate-900 dark:to-teal-500/10">
+          {/* Support Panel */}
+          <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/4 dark:border-slate-800/80 dark:bg-slate-900/60 dark:ring-white/4">
+            <div className="border-b border-slate-250 bg-linear-to-r from-slate-50 to-teal-50/70 px-5 py-4 dark:border-slate-800 dark:from-slate-900 dark:to-teal-500/10">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
                   {t.orderDetailSupportTitle}
                 </h3>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  {t.orderDetailSupportOnline}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  ONLINE
                 </span>
               </div>
               <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -520,21 +576,22 @@ export function OrderDetailPage() {
               </p>
             </div>
 
-            <div className="p-5">
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-700 dark:bg-slate-800/70">
-                <p className="text-[11px] leading-5 text-slate-600 dark:text-slate-300">
+            <div className="p-5 space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-800/20">
+                <p className="text-[11px] leading-5 text-slate-600 dark:text-slate-300 font-medium">
                   {t.orderDetailSupportDesc}
                 </p>
               </div>
 
-              <div className="mt-4 space-y-2.5">
+              {/* Chat action rows */}
+              <div className="space-y-2.5">
                 <button
                   type="button"
                   disabled={isConnectingSupport}
                   onClick={handleChatWithExpert}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-teal-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="group flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40 dark:border-slate-850 dark:bg-slate-800/30 dark:hover:border-teal-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300">
+                  <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300 shrink-0">
                     {isConnectingSupport ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-700 border-t-transparent dark:border-teal-300" />
                     ) : (
@@ -543,14 +600,11 @@ export function OrderDetailPage() {
                   </span>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
                       {isConnectingSupport ? "Đang kết nối..." : t.orderDetailChatExpert}
                     </p>
-
-                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
-                      {isConnectingSupport
-                        ? "Đang kết nối tới tổng đài viên..."
-                        : t.orderDetailChatExpertDesc}
+                    <p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 leading-normal">
+                      {isConnectingSupport ? "Đang kết nối tới tổng đài viên..." : t.orderDetailChatExpertDesc}
                     </p>
                   </div>
                 </button>
@@ -558,9 +612,9 @@ export function OrderDetailPage() {
                 <button
                   disabled={isConnectingSupport}
                   onClick={handleChatWithPartner}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/40 dark:border-blue-700 dark:bg-blue-800/70 dark:hover:border-blue-500/40 dark:hover:bg-blue-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="group flex w-full items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/40 dark:border-blue-700 dark:bg-blue-800/30 dark:hover:border-blue-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">
+                  <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 shrink-0">
                     {isConnectingSupport ? (
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-700 border-t-transparent dark:border-blue-300" />
                     ) : (
@@ -568,12 +622,12 @@ export function OrderDetailPage() {
                     )}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
                       {isConnectingSupport
                         ? "Đang kết nối..."
                         : (isOwner ? "Chat với Người thuê" : t.orderDetailChatOwner)}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400 leading-normal">
                       {isConnectingSupport
                         ? (isOwner ? "Đang kết nối tới người thuê..." : "Đang kết nối tới chủ sở hữu...")
                         : (isOwner ? "Liên hệ trực tiếp với người thuê qua tin nhắn" : t.orderDetailChatOwnerDesc)}
@@ -584,16 +638,16 @@ export function OrderDetailPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/messages")}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/80 px-3.5 py-3 text-left transition hover:bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10"
+                  className="group flex w-full items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/60 px-3.5 py-3 text-left transition hover:bg-rose-50/90 dark:border-rose-500/30 dark:bg-rose-500/10"
                 >
-                  <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300">
+                  <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 shrink-0">
                     <AlertTriangle size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+                    <p className="text-xs font-bold text-rose-700 dark:text-rose-300">
                       {t.orderDetailReportViolation}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-rose-700/80 dark:text-rose-200/90">
+                    <p className="mt-0.5 text-[10px] text-rose-700/80 dark:text-rose-300/80 leading-normal">
                       {t.orderDetailReportViolationDesc}
                     </p>
                   </div>
@@ -604,43 +658,47 @@ export function OrderDetailPage() {
         </aside>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-12">
-        <article className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-900/4 xl:col-span-8 dark:border-slate-700/80 dark:bg-slate-900/70 dark:ring-white/10">
-          <div className="grid gap-4 md:grid-cols-[1fr_1.2fr]">
-            <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+      {/* Product & Payment & Maps Segment */}
+      <section className="grid gap-6 xl:grid-cols-12">
+        {/* Product & Billing details card */}
+        <article className="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-sm ring-1 ring-slate-900/4 xl:col-span-8 dark:border-slate-800/80 dark:bg-slate-900/60 dark:ring-white/4">
+          <div className="grid gap-6 md:grid-cols-[1.1fr_1fr]">
+            {/* Product details */}
+            <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800/80 flex flex-col justify-between gap-5 bg-slate-50/20 dark:bg-slate-900/10">
+              
               {/* Product Info Block */}
               <div className="flex items-start gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-linear-to-br from-slate-100 dark:from-slate-800 to-slate-50 dark:to-slate-750 ring-1 ring-slate-200/80 dark:ring-slate-700/80 flex items-center justify-center shadow-inner">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-linear-to-br from-slate-100 dark:from-slate-850 to-slate-50 dark:to-slate-750 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center shadow-inner group">
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-108"
                     />
                   ) : (
                     <span className="text-4xl">{order.image || "🛒"}</span>
                   )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
-                  <h3 className="text-base font-bold leading-snug text-slate-900 dark:text-slate-100 truncate">
+                  <h3 className="text-sm font-black leading-snug text-slate-900 dark:text-slate-100 truncate">
                     {product.name}
                   </h3>
-                  <span className="inline-flex rounded-full bg-teal-50 px-2 py-0.5 text-xs font-semibold text-teal-700 dark:bg-teal-500/10 dark:text-teal-300">
+                  <span className="inline-flex rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-700 dark:bg-teal-500/10 dark:text-teal-300">
                     {product.category || "Thiết bị & Công nghệ"}
                   </span>
                 </div>
               </div>
 
               {/* Partner Profile Block */}
-              <div className="mt-4">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
                   {isOwner ? "Thông tin khách hàng (Người thuê)" : "Thông tin đối tác (Chủ sở hữu)"}
                 </p>
                 
                 {isOwner ? (
                   /* Renter Profile */
-                  <div className="flex items-center gap-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition duration-200 shadow-xs">
-                    <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 overflow-hidden">
+                  <div className="flex items-center gap-3.5 rounded-xl border border-slate-150 bg-slate-50/50 dark:border-slate-800/80 dark:bg-slate-800/20 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition duration-200 shadow-xs">
+                    <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 overflow-hidden font-bold">
                       {order.renter?.avatar ? (
                         <img src={order.renter.avatar} alt={order.renter?.name} className="h-full w-full object-cover" />
                       ) : (
@@ -650,18 +708,18 @@ export function OrderDetailPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                      <h4 className="text-xs font-bold text-slate-850 dark:text-slate-200 truncate">
                         {order.renter?.name || order.customerName || "Khách hàng U-Rent"}
                       </h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-semibold">
                         {order.renter?.phone ? `SĐT: ${order.renter.phone}` : "Số điện thoại đã được bảo mật"}
                       </p>
                     </div>
                   </div>
                 ) : (
                   /* Owner Profile */
-                  <div className="flex items-center gap-3.5 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition duration-200 shadow-xs">
-                    <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 overflow-hidden">
+                  <div className="flex items-center gap-3.5 rounded-xl border border-slate-150 bg-slate-50/50 dark:border-slate-800/80 dark:bg-slate-800/20 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition duration-200 shadow-xs">
+                    <div className="h-10 w-10 shrink-0 flex items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 overflow-hidden font-bold">
                       {product.owner?.avatar ? (
                         <img src={product.owner.avatar} alt={product.owner?.name} className="h-full w-full object-cover" />
                       ) : (
@@ -671,11 +729,11 @@ export function OrderDetailPage() {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                        {product.owner?.name || t.orderDetailOwnerFallback}
+                      <h4 className="text-xs font-bold text-slate-850 dark:text-slate-200 truncate">
+                        {product.owner?.name || order.owner?.name || t.orderDetailOwnerFallback}
                       </h4>
-                      <div className="flex items-center text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 gap-1.5 flex-wrap">
-                        <span className="font-semibold text-amber-500">{product.owner?.rating?.toFixed(1) || "5.0"} ★</span>
+                      <div className="flex items-center text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 gap-1.5 flex-wrap font-semibold">
+                        <span className="font-extrabold text-amber-500">{product.owner?.rating?.toFixed(1) || "5.0"} ★</span>
                         <span>·</span>
                         <span>{product.owner?.trips || 10} chuyến</span>
                         {product.owner?.phone && (
@@ -689,71 +747,87 @@ export function OrderDetailPage() {
                   </div>
                 )}
               </div>
-              <dl className="mt-4 space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                <div className="flex justify-between">
+
+              {/* Rental Duration specifications */}
+              <dl className="space-y-1.5 text-xs text-slate-650 dark:text-slate-350 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+                <div className="flex justify-between font-semibold">
                   <dt>{t.orderDetailRentalDuration}</dt>
-                  <dd className="font-medium text-slate-800 dark:text-slate-100">
-                    {days} {useI18n().lang === "vi" ? "ngày" : "days"}
+                  <dd className="font-bold text-slate-850 dark:text-slate-100">
+                    {days} {isShowVnd ? "ngày" : "days"}
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt>{t.orderDetailStartDate}</dt>
-                  <dd className="font-medium text-slate-800 dark:text-slate-100">
+                  <dd className="font-bold text-slate-850 dark:text-slate-100">
                     {order.startDate}
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt>{t.orderDetailEndDate}</dt>
-                  <dd className="font-medium text-slate-800 dark:text-slate-100">
+                  <dd className="font-bold text-slate-850 dark:text-slate-100">
                     {order.endDate}
                   </dd>
                 </div>
               </dl>
             </div>
 
-            <div className="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-              <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                {t.orderDetailPaymentDetails}
-              </h4>
-              <dl className="mt-3 space-y-2 text-xs text-slate-600 dark:text-slate-300">
-                <div className="flex justify-between">
-                  <dt>{t.orderDetailRentPerDay}</dt>
-                  <dd>{formatPrice(displayDailyPrice)}</dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>{t.orderDetailServiceFee}</dt>
-                  <dd>{formatPrice(serviceFee)}</dd>
-                </div>
-                <div className="flex justify-between text-emerald-700">
-                  <dt>{t.orderDetailDeposit}</dt>
-                  <dd>{t.wizardDepositFree}</dd>
-                </div>
-              </dl>
-              <div className="mt-3 flex items-center justify-between border-t border-slate-200 pt-3 dark:border-slate-700">
-                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+            {/* Payment Specifications */}
+            <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800/80 flex flex-col justify-between bg-slate-50/20 dark:bg-slate-900/10">
+              <div>
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                  {t.orderDetailPaymentDetails}
+                </h4>
+                <dl className="space-y-2.5 text-xs text-slate-650 dark:text-slate-350">
+                  <div className="flex justify-between font-semibold">
+                    <dt>{t.orderDetailRentPerDay}</dt>
+                    <dd className="text-slate-800 dark:text-slate-200">{formatPrice(displayDailyPrice)}</dd>
+                  </div>
+                  <div className="flex justify-between font-semibold">
+                    <dt>{t.orderDetailServiceFee}</dt>
+                    <dd className="text-slate-800 dark:text-slate-200">{formatPrice(serviceFee)}</dd>
+                  </div>
+                  <div className="flex justify-between font-bold text-emerald-700 dark:text-emerald-400">
+                    <dt>{t.orderDetailDeposit}</dt>
+                    <dd>{t.wizardDepositFree}</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-200/85 pt-4 dark:border-slate-800">
+                <span className="text-sm font-black text-slate-850 dark:text-slate-100">
                   {t.orderDetailTotal}
                 </span>
-                <span className="text-xl font-bold text-teal-600">
-                  {formatPrice(displayTotalPrice)}
-                </span>
+                <div className="bg-teal-50 dark:bg-teal-500/10 px-3 py-1 rounded-xl shadow-inner border border-teal-200/20">
+                  <span className="text-xl font-black text-teal-600 dark:text-teal-400 tracking-tight">
+                    {formatPrice(displayTotalPrice)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </article>
 
-        <aside className="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-sm ring-1 ring-slate-900/4 xl:col-span-4 dark:border-slate-700/80 dark:bg-slate-900/70 dark:ring-white/10">
-          <div className="flex h-full min-h-55 flex-col overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800/80">
-            <div className="flex flex-1 items-center justify-center">
-              <MapPin
-                size={84}
-                className="text-slate-400 dark:text-slate-500"
-              />
+        {/* Right: Map Widget */}
+        <aside className="rounded-3xl border border-slate-200/90 bg-white shadow-sm overflow-hidden xl:col-span-4 dark:border-slate-800/80 dark:bg-slate-900/60 p-3">
+          <div className="relative flex h-full min-h-55 flex-col overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800/60">
+            {/* Grid Pattern Background mimicking coordinates map */}
+            <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:16px_16px] dark:bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)]" />
+            
+            {/* Soft pulsing halo and pin in center */}
+            <div className="relative flex-1 flex flex-col items-center justify-center">
+              <div className="absolute h-20 w-20 rounded-full bg-teal-500/10 dark:bg-teal-400/10 animate-ping duration-3000" />
+              <div className="absolute h-10 w-10 rounded-full bg-teal-500/20 dark:bg-teal-400/20 animate-pulse" />
+              <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-md shadow-teal-500/30">
+                <MapPin size={28} className="animate-bounce" />
+              </div>
             </div>
-            <div className="border-t border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900/80">
-              <p className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                {t.orderDetailPickupLocation}
+            
+            {/* Address bar block */}
+            <div className="relative z-10 border-t border-slate-200 bg-white/90 backdrop-blur-md px-4 py-3.5 dark:border-slate-800 dark:bg-slate-950/80">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                {t.orderDetailPickupLocation || "ĐỊA ĐIỂM GIAO NHẬN"}
               </p>
-              <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
+              <p className="mt-1 text-xs font-extrabold text-slate-850 dark:text-slate-200 leading-relaxed">
                 {product.locationText || t.orderDetailPickupAddress}
               </p>
             </div>

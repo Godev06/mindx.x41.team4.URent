@@ -20,7 +20,7 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
   const { t, lang } = useI18n();
   const { user } = useAuth();
   const { theme } = useTheme();
-  
+
   const isShowVnd = lang === "vi";
   const isDbVnd = order.totalPrice > 1000;
 
@@ -55,7 +55,7 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
       const end = new Date(order.rawEndDate || order.endDate);
       const today = new Date();
 
-      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 50; 
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) return 50;
       if (today < start) return 0;
       if (today > end) return 100;
 
@@ -65,7 +65,7 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
       const elapsed = today.getTime() - start.getTime();
       return Math.min(100, Math.max(0, Math.round((elapsed / totalDuration) * 100)));
     } catch {
-      return 50; 
+      return 50;
     }
   };
 
@@ -110,15 +110,13 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
   return (
     <article
       onClick={onClick}
-      className={`group relative overflow-hidden rounded-2xl border p-5 shadow-xs transition-all duration-320 hover:shadow-md hover:-translate-y-0.5 ${
-        theme === "dark"
-          ? "border-slate-800 bg-slate-900/60 ring-1 ring-white/5"
-          : "border-slate-200 bg-white"
-      } ${
-        onClick
+      className={`group relative overflow-hidden rounded-2xl border p-5 shadow-xs transition-all duration-320 hover:shadow-md hover:-translate-y-0.5 ${theme === "dark"
+        ? "border-slate-800 bg-slate-900/60 ring-1 ring-white/5"
+        : "border-slate-200 bg-white"
+        } ${onClick
           ? `cursor-pointer hover:border-slate-350 dark:hover:border-slate-700 ${status.glow}`
           : ""
-      }`}
+        }`}
     >
       <div className="flex flex-col sm:flex-row gap-5">
         {/* Left: Product Image Container */}
@@ -132,17 +130,16 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
           ) : (
             <span className="text-4xl transform transition-transform duration-500 group-hover:scale-110">{order.image || "🛒"}</span>
           )}
-          
+
           {/* Subtle category or tag highlight */}
           <div className="absolute top-1 left-1 flex items-center">
             {user && (
-              <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ${
-                String(order.ownerId) === String(user.id)
-                  ? 'bg-teal-500 text-white shadow-xs'
-                  : String(order.renterId) === String(user.id)
+              <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase ${String(order.ownerId) === String(user.id)
+                ? 'bg-teal-500 text-white shadow-xs'
+                : String(order.renterId) === String(user.id)
                   ? 'bg-purple-500 text-white shadow-xs'
                   : 'bg-slate-500 text-white shadow-xs'
-              }`}>
+                }`}>
                 {String(order.ownerId) === String(user.id) ? 'CHO THUÊ' : 'THUÊ'}
               </span>
             )}
@@ -157,12 +154,12 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
               <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">
                 {order.productName}
               </h3>
-              
+
               <span className="text-base font-black tracking-tight text-slate-900 dark:text-slate-100">
                 {formatPrice(displayPrice)}
               </span>
             </div>
-            
+
             {/* Metadata Info Row */}
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
               <span>
@@ -190,17 +187,16 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
                   {order.status === "pending" || order.status === "confirmed"
                     ? "Chờ nhận thiết bị"
                     : order.status === "shipped"
-                    ? "Đang sử dụng thiết bị"
-                    : "Đã hoàn thành"}
+                      ? "Đang sử dụng thiết bị"
+                      : "Đã hoàn thành"}
                 </span>
                 <span>{progressValue}%</span>
               </div>
               <div className="relative w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   style={{ width: `${progressValue}%` }}
-                  className={`h-full rounded-full transition-all duration-500 ease-out ${status.barBg} ${
-                    order.status === "shipped" ? "animate-pulse" : ""
-                  }`}
+                  className={`h-full rounded-full transition-all duration-500 ease-out ${status.barBg} ${order.status === "shipped" ? "animate-pulse" : ""
+                    }`}
                 />
               </div>
             </div>
@@ -212,13 +208,6 @@ export function OrderCard({ order, imageUrl, onClick }: OrderCardProps) {
               className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-extrabold tracking-wider uppercase ${status.bg}`}
             >
               {status.label}
-            </span>
-            
-            <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              {lang === "vi" ? "Người giao dịch:" : "Partner:"}{" "}
-              <span className="font-bold text-slate-700 dark:text-slate-200">
-                {String(order.ownerId) === String(user?.id) ? order.customerName : t.orderDetailOwnerFallback || "Đối tác"}
-              </span>
             </span>
           </div>
         </div>

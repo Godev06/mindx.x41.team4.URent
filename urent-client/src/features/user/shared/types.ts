@@ -64,6 +64,17 @@ export interface Order {
   status: OrderStatus;
   ownerId?: string;
   renterId?: string;
+  // New optional detailed partner info
+  owner?: {
+    id?: string;
+    name: string;
+    avatar?: string;
+  };
+  renter?: {
+    id?: string;
+    name: string;
+    avatar?: string;
+  };
 }
 
 export interface Notification {
