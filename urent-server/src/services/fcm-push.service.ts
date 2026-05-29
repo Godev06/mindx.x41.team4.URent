@@ -54,7 +54,8 @@ export const fcmPushService = {
       };
 
       // 3. Thực hiện gửi multicast
-      const response = await admin.messaging().sendEachForMulticast(messagePayload);
+      // Use sendEachForMulticast if available (firebase-admin >=11), otherwise fallback to sendMulticast
+      const response = await ((admin.messaging() as any).sendEachForMulticast?.(messagePayload) ?? (admin.messaging() as any).sendMulticast(messagePayload));
       
       console.info(`[FCM] Sent message to ${tokens.length} devices of user ${userId}. Success: ${response.successCount}, Fail: ${response.failureCount}`);
 
@@ -62,9 +63,9 @@ export const fcmPushService = {
       if (response.failureCount > 0) {
         const tokensToRemove: string[] = [];
         
-        response.responses.forEach((res, idx) => {
+        response.responses.forEach((res: admin.messaging.SendResponse, idx: number) => {
           if (!res.success && res.error) {
-            const code = res.error.code;
+            const code = (res.error as any).code;
             // Token không còn hợp lệ hoặc đã hủy đăng ký
             if (
               code === 'messaging/invalid-registration-token' ||

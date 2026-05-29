@@ -155,20 +155,20 @@ export const getSessions = async (req: Request, res: Response) => {
 
 export const revokeSession = async (req: Request, res: Response) => {
   const userId = req.user?.sub;
-  const sessionId = req.params.id;
+  const sessionIdStr = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   if (!userId) {
     throw new AppError(401, "UNAUTHORIZED", "Unauthorized");
   }
 
   const revokedSet = getRevokedSet(userId);
-  revokedSet.add(sessionId);
+  revokedSet.add(sessionIdStr);
 
   // Map session to human device names
   const deviceNames: Record<string, string> = {
     sess_mac: "MacBook Pro (Firefox)",
     sess_iphone: "Apple iPhone 15 (Safari Mobile)",
   };
-  const targetDevice = deviceNames[sessionId] || "Thiết bị phụ";
+  const targetDevice = deviceNames[sessionIdStr] || "Thiết bị phụ";
 
   // Log revocation event
   const ip = getClientIp(req);

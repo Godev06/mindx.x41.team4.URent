@@ -159,7 +159,7 @@ export const createLinkedActivityNotification = async (
         }
 
         // Populate activityLogId so that the client receives a fully detailed notification object
-        const populatedNotification = await createdNotification.populate('activityLogId', 'action description type timestamp');
+        const populatedNotification = await (createdNotification as any).populate('activityLogId', 'action description type timestamp') as NotificationDocument & { activityLogId: ActivityLogDocument };
 
         // 2. Kênh In-App (WebSocket Real-time) - Dựa hoàn toàn vào cấu hình thông báo màn hình và fine-grained pref
         const canSendInApp =
