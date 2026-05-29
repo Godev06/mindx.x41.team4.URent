@@ -1,4 +1,5 @@
 import { ProductModel } from '../models/product.model';
+import { UserModel } from '../models/user.model';
 
 export const listProducts = async (options: { 
   limit?: number; 
@@ -63,26 +64,98 @@ export const listProducts = async (options: {
   }
 
   const rows = await ProductModel.find(query)
+    .populate('ownerId', 'displayName avatarUrl trustScore')
     .sort({ updatedAt: -1, _id: -1 })
     .limit(limit)
     .lean();
 
-  const items = rows.map((row) => ({
-    id: String(row._id),
-    name: row.name,
-    category: row.category,
-    price: row.price,
-    status: row.status,
-    statusQuantities: row.statusQuantities || { available: 0, rented: 0, overdue: 0 },
-    condition: row.condition,
-    image: row.image,
-    imageUrl: row.imageUrl ?? null,
-    description: row.description,
-    location: row.locationText || 'Chưa cập nhật vị trí',
-    coordinates: row.location?.coordinates || null, // <-- THÊM DÒNG NÀY ĐỂ FRONTEND TÍNH TOÁN
-    rating: row.rating,
-    reviewsCount: row.reviewsCount
-  }));
+  const items = rows.map((row) => {
+    const ownerDoc = row.ownerId as any;
+    return {
+      id: String(row._id),
+      name: row.name,
+      category: row.category,
+      price: row.price,
+      status: row.status,
+      statusQuantities: row.statusQuantities || { available: 0, rented: 0, overdue: 0 },
+      condition: row.condition,
+      imageUrl: row.imageUrl || 'https://placehold.co/150',
+      description: row.description,
+      locationText: row.locationText || 'Chưa cập nhật vị trí',
+      coordinates: row.location?.coordinates || null,
+      rating: row.rating,
+      reviewsCount: row.reviewsCount,
+      owner: ownerDoc ? {
+        id: String(ownerDoc._id),
+        name: ownerDoc.displayName || 'URent User',
+        avatar: ownerDoc.avatarUrl || null,
+        rating: ownerDoc.trustScore ?? 100,
+      } : null,
+    };
+  });
+
+  return { items, limit, hasMore: rows.length === limit };
+};
+
+/**
+ * Get products owned by a specific user (for inventory management)
+ */
+export const listMyProducts = async (ownerId: string, options: {
+  limit?: number;
+  q?: string;
+  category?: string;
+}) => {
+  const limit = options.limit ?? 100;
+
+  const query: Record<string, any> = {
+    ownerId,
+    isArchived: false,
+  };
+
+  if (options.category) {
+    query.category = options.category;
+  }
+
+  if (options.q) {
+    const escaped = options.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'i');
+    query.$or = [
+      { name: regex },
+      { category: regex },
+      { description: regex }
+    ];
+  }
+
+  const rows = await ProductModel.find(query)
+    .populate('ownerId', 'displayName avatarUrl trustScore')
+    .sort({ updatedAt: -1, _id: -1 })
+    .limit(limit)
+    .lean();
+
+  const items = rows.map((row) => {
+    const ownerDoc = row.ownerId as any;
+    return {
+      id: String(row._id),
+      name: row.name,
+      category: row.category,
+      price: row.price,
+      status: row.status,
+      statusQuantities: row.statusQuantities || { available: 1, rented: 0, overdue: 0 },
+      condition: row.condition,
+      imageUrl: row.imageUrl || 'https://placehold.co/150',
+      description: row.description,
+      locationText: row.locationText || 'Chưa cập nhật vị trí',
+      coordinates: row.location?.coordinates || null,
+      rating: row.rating,
+      reviewsCount: row.reviewsCount,
+      owner: ownerDoc ? {
+        id: String(ownerDoc._id),
+        name: ownerDoc.displayName || 'URent User',
+        avatar: ownerDoc.avatarUrl || null,
+        rating: ownerDoc.trustScore ?? 100,
+      } : null,
+    };
+  });
 
   return { items, limit, hasMore: rows.length === limit };
 };
@@ -99,10 +172,9 @@ export const getProductById = async (id: string) => {
     status: product.status,
     statusQuantities: product.statusQuantities,
     condition: product.condition,
-    image: product.image,
-    imageUrl: product.imageUrl,
+    imageUrl: product.imageUrl || 'https://placehold.co/150',
     description: product.description,
-    location: product.locationText || 'Chưa cập nhật vị trí',
+    locationText: product.locationText || 'Chưa cập nhật vị trí',
     coordinates: product.location?.coordinates || null, // <-- THÊM DÒNG NÀY
     rating: product.rating,
     reviewsCount: product.reviewsCount,
@@ -110,13 +182,50 @@ export const getProductById = async (id: string) => {
   };
 };
 
-export const createProduct = async (data: any) => {
+export const createProduct = async (data: any, ownerId?: string) => {
+  // Fetch owner display info to embed in response
+  let ownerInfo: { id: string; name: string; avatar: string | null; rating: number } | null = null;
+  if (ownerId) {
+    try {
+      const ownerUser = await UserModel.findById(ownerId).select('displayName avatarUrl trustScore').lean();
+      if (ownerUser) {
+        ownerInfo = {
+          id: String(ownerUser._id),
+          name: ownerUser.displayName || 'URent User',
+          avatar: ownerUser.avatarUrl || null,
+          rating: ownerUser.trustScore ?? 100,
+        };
+      }
+    } catch (e) {
+      console.warn('[createProduct] Could not fetch owner info:', e);
+    }
+  }
+
   const product = new ProductModel({
     ...data,
-    image: data.image || data.imageUrl || 'https://placehold.co/150'
+    ownerId: ownerId || undefined,
+    imageUrl: data.imageUrl || 'https://placehold.co/150',
+    image: data.imageUrl || 'https://placehold.co/150'
   });
   await product.save();
-  return product;
+
+  // Return normalized object (same shape as listMyProducts)
+  return {
+    id: String(product._id),
+    name: product.name,
+    category: product.category,
+    price: product.price,
+    status: product.status,
+    statusQuantities: product.statusQuantities || { available: 1, rented: 0, overdue: 0 },
+    condition: product.condition,
+    imageUrl: product.imageUrl || 'https://placehold.co/150',
+    description: product.description,
+    locationText: product.locationText || 'Chưa cập nhật vị trí',
+    coordinates: product.location?.coordinates || null,
+    rating: product.rating,
+    reviewsCount: product.reviewsCount,
+    owner: ownerInfo,
+  };
 };
 
 export const updateProduct = async (id: string, data: any) => {

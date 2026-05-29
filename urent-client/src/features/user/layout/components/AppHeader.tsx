@@ -46,6 +46,9 @@ export function AppHeader() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  // Track previous auth state to only call revokeToken on a real logout (true → false),
+  // not during initial mount or React Strict Mode unmount/remount cycles.
+  const wasAuthenticatedRef = useRef<boolean | null>(null);
   const { notifications } = useNotifications({ limit: 3 });
   const { unreadCount } = useUnreadCount();
   const unreadMessagesCount = useUnreadMessagesCount();
@@ -53,6 +56,8 @@ export function AppHeader() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // Update tracking ref whenever user is authenticated
+      wasAuthenticatedRef.current = true;
       if ("serviceWorker" in navigator) {
         const firebaseConfig = {
           apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
@@ -78,9 +83,14 @@ export function AppHeader() {
           });
       }
     } else {
-      import("../../notifications/services/fcm").then(({ fcmService }) => {
-        fcmService.revokeToken();
-      });
+      // Only revoke the token when transitioning from authenticated → unauthenticated
+      // (i.e., a real logout), not on initial mount where wasAuthenticatedRef is null.
+      if (wasAuthenticatedRef.current === true) {
+        wasAuthenticatedRef.current = false;
+        import("../../notifications/services/fcm").then(({ fcmService }) => {
+          fcmService.revokeToken();
+        });
+      }
     }
   }, [isAuthenticated]);
 
@@ -472,8 +482,12 @@ export function AppHeader() {
                     aria-label={t.headerProfileMenuAria}
                     aria-expanded={isProfileOpen}
                   >
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white shadow-inner ${colorClass}`}>
-                      {initials}
+                    <div className={`flex h-8 w-8 items-center justify-center overflow-hidden rounded-full text-xs font-bold text-white shadow-inner ${user?.avatarUrl ? '' : colorClass}`}>
+                      {user?.avatarUrl ? (
+                        <img src={user.avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+                      ) : (
+                        initials
+                      )}
                     </div>
                     <div className="hidden text-left lg:block">
                       <p className="text-xs font-semibold text-slate-800 dark:text-white">
@@ -827,11 +841,15 @@ export function AppSidebar() {
       <div className="relative mt-6" ref={profileRef}>
         <button
           type="button"
-          className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-sm font-bold text-white ring-1 ring-white/30 transition hover:scale-110 ${colorClass}`}
+          className={`flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white ring-1 ring-white/30 transition hover:scale-110 ${user?.avatarUrl ? '' : colorClass}`}
           onClick={() => setIsProfileOpen(!isProfileOpen)}
           aria-label={t.headerProfileMenuAria}
         >
-          {initials}
+          {user?.avatarUrl ? (
+            <img src={user.avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+          ) : (
+            initials
+          )}
         </button>
 
         {isProfileOpen && (

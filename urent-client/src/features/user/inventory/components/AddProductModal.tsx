@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   X,
   Plus,
@@ -14,11 +14,26 @@ import {
   Layers,
   ChevronDown,
   Map,
+  Minus,
+  Tag,
+  AlignLeft,
+  Coins,
+  Check,
 } from "lucide-react";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { useToast } from "../../shared/hooks/useToast";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { apiClient } from "../../../../lib/api/apiClient";
 import { normalizeApiError } from "../../../../lib/api/apiError";
 import { AddressSelector } from "../../shared/components/AddressSelector";
+import {
+  analyzeProductWithGemini,
+  analyzeProductWithGeminiFile,
+  fileToBase64,
+  resizeAndCompressImage,
+  parseQuotaError,
+} from "../../../../lib/ai/geminiService";
+import type { QuotaErrorDetails } from "../../../../lib/ai/geminiService";
 
 interface AddProductModalProps {
   isOpen: boolean;
@@ -36,7 +51,7 @@ interface AddProductModalProps {
     condition: string;
     imageUrl?: string;
     description?: string[];
-  }) => void;
+  }) => Promise<void> | void;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -45,8 +60,13 @@ type ProductAiSuggestion = {
   name?: string;
   category?: string;
   price?: number;
+  priceMin?: number;
+  priceMax?: number;
+  priceReason?: string;
   condition?: string;
   description?: string[];
+  confidence?: "high" | "medium" | "low";
+  aiPowered?: boolean;
 };
 
 const isRecord = (value: unknown): value is UnknownRecord => {
@@ -65,6 +85,15 @@ const toStringArray = (value: unknown): string[] | undefined => {
   return items.length > 0 ? items : undefined;
 };
 
+const toNum = (v: unknown): number | undefined => {
+  if (typeof v === "number" && Number.isFinite(v) && v > 0) return Math.round(v);
+  if (typeof v === "string" && v.trim()) {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+  }
+  return undefined;
+};
+
 const parseAiSuggestion = (payload: unknown): ProductAiSuggestion | null => {
   const root = isRecord(payload) ? payload : null;
   if (!root) {
@@ -78,30 +107,35 @@ const parseAiSuggestion = (payload: unknown): ProductAiSuggestion | null => {
     toStringArray(data.specs) ??
     toStringArray(data.suggestedSpecs);
 
-  const rawPrice = data.price;
-  const parsedPrice =
-    typeof rawPrice === "number"
-      ? rawPrice
-      : typeof rawPrice === "string" && rawPrice.trim()
-        ? Number(rawPrice)
-        : undefined;
-
   const suggestion: ProductAiSuggestion = {
     name: typeof data.name === "string" ? data.name.trim() : undefined,
     category:
       typeof data.category === "string" ? data.category.trim() : undefined,
-    price:
-      typeof parsedPrice === "number" && Number.isFinite(parsedPrice)
-        ? parsedPrice
-        : undefined,
+    price: toNum(data.price),
+    priceMin: toNum(data.priceMin),
+    priceMax: toNum(data.priceMax),
+    priceReason: typeof data.priceReason === "string" ? data.priceReason.trim() : undefined,
     condition:
       typeof data.condition === "string" ? data.condition.trim() : undefined,
     description,
+    confidence: ["high", "medium", "low"].includes(data.confidence as string)
+      ? (data.confidence as "high" | "medium" | "low")
+      : undefined,
+    aiPowered: data.aiPowered === true,
   };
 
   return Object.values(suggestion).some((value) => value !== undefined)
     ? suggestion
     : null;
+};
+
+const parseDescriptionToArray = (descStr: string): string[] => {
+  if (!descStr) return [];
+  return descStr
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .map((s) => (s.startsWith("-") ? s.substring(1).trim() : s))
+    .filter(Boolean);
 };
 
 export const AddProductModal: React.FC<AddProductModalProps> = ({
@@ -110,6 +144,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   onAdd,
 }) => {
   const { t, lang } = useI18n();
+  const { showToast } = useToast();
+  const { user } = useAuth();
   const [newProduct, setNewProduct] = useState({
     name: "",
     category: "Điện tử & Công nghệ",
@@ -128,6 +164,16 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
   const [aiError, setAiError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [aiSuccessToast, setAiSuccessToast] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false); // Premium Custom Checkbox state
+  const [aiInsight, setAiInsight] = useState<{
+    priceMin?: number;
+    priceMax?: number;
+    priceReason?: string;
+    confidence?: "high" | "medium" | "low";
+    aiPowered?: boolean;
+  } | null>(null);
+  const [quotaDetails, setQuotaDetails] = useState<QuotaErrorDetails | null>(null);
 
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -137,9 +183,28 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const selectedFileRef = useRef<File | null>(null); // Keep File ref for AI analyze (avoids CORS blob URL)
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Track which fields were AI-filled for flash animation
+  const [aiFilledFields, setAiFilledFields] = useState<Set<string>>(new Set());
+
+  const flashField = useCallback((fields: string[]) => {
+    setAiFilledFields(new Set(fields));
+    setAiSuccessToast(true);
+    setTimeout(() => setAiFilledFields(new Set()), 1800);
+    setTimeout(() => setAiSuccessToast(false), 2800);
+  }, []);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      if (user?.address) {
+        setNewProduct((prev) => ({
+          ...prev,
+          locationText: user.address || "",
+        }));
+      }
+    } else {
       setError("");
       setAiError("");
       setIsAnalyzing(false);
@@ -148,8 +213,29 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       setIsSearchingAddress(false);
       setShowAdminAddress(false);
       setIsCategoryDropdownOpen(false);
+      setAiInsight(null);
+      setAiFilledFields(new Set());
+      setAiSuccessToast(false);
+      setIsConfirmed(false);
+      selectedFileRef.current = null;
+      setQuotaDetails(null);
+
+      // Abort active Gemini analysis when modal closes
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
+
+  // Abort running requests if component unmounts
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Click outside to close category dropdown
   useEffect(() => {
@@ -199,84 +285,186 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     }
   }, [newProduct.locationText, selectedFromSuggestions]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsUploading(true);
+      selectedFileRef.current = file; // Store file for AI analyze
       setError("");
       // Show local preview immediately
       setNewProduct((prev) => ({
         ...prev,
         imageUrl: URL.createObjectURL(file),
       }));
-
-      try {
-        const uploadData = new FormData();
-        uploadData.append("image", file);
-        const res = await apiClient.post<{ success: boolean; url: string }>("/api/v1/upload", uploadData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        const url = res.data.url;
-        setNewProduct((prev) => ({
-          ...prev,
-          imageUrl: url.startsWith("http") ? url : `${apiClient.defaults.baseURL}${url}`,
-        }));
-      } catch (err: any) {
-        setError(lang === "vi" ? "Lỗi tải ảnh. Vui lòng thử lại!" : "Upload error");
-      } finally {
-        setIsUploading(false);
-      }
     }
   };
 
   const handleAIAnalyze = async () => {
-    if (!newProduct.imageUrl) {
+    if (isAnalyzing) return;
+    if (!newProduct.imageUrl && !selectedFileRef.current) return;
+
+    // Cancel any active running request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setAiError("");
+    setQuotaDetails(null);
+    setIsAnalyzing(true);
+
+    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+    // Helper to apply AI result to form fields
+    const applyResult = (result: {
+      name: string;
+      category: string;
+      price: number;
+      condition: string;
+      description: string[];
+      priceMin: number;
+      priceMax: number;
+      priceReason: string;
+      confidence: "high" | "medium" | "low";
+      aiPowered?: boolean;
+    }) => {
+      const filled: string[] = [];
+      setNewProduct((prev) => {
+        const next = { ...prev };
+        if (result.name) { next.name = result.name; filled.push("name"); }
+        if (result.category) { next.category = result.category; filled.push("category"); }
+        if (result.price > 0) { next.price = String(result.price); filled.push("price"); }
+        if (result.condition) { next.condition = result.condition; filled.push("condition"); }
+        if (result.description.length > 0) {
+          next.description = result.description.map(d => `- ${d}`).join("\n");
+          filled.push("description");
+        }
+        return next;
+      });
+      setAiInsight({
+        priceMin: result.priceMin,
+        priceMax: result.priceMax,
+        priceReason: result.priceReason,
+        confidence: result.confidence,
+        aiPowered: result.aiPowered !== false,
+      });
+      flashField(filled);
+    };
+
+    let usedRealAi = false;
+    let finalResult: any = null;
+    let capturedErrorMsg = "";
+
+    if (geminiKey) {
+      try {
+        // Prefer File object (avoids CORS issues with blob: URLs)
+        finalResult = selectedFileRef.current
+          ? await analyzeProductWithGeminiFile(selectedFileRef.current, geminiKey, controller.signal)
+          : await analyzeProductWithGemini(newProduct.imageUrl, geminiKey, controller.signal);
+        usedRealAi = true;
+      } catch (geminiErr: any) {
+        if (geminiErr.name === "AbortError") {
+          console.log("[Gemini] Analysis request aborted.");
+          return; // Stop execution, don't fallback or show error
+        }
+        console.warn("[Gemini Direct] Failed, attempting backend fallback...", geminiErr?.message || geminiErr);
+        capturedErrorMsg = geminiErr?.message || String(geminiErr);
+      }
+    }
+
+    // Attempt backend server-side AI fallback if client call failed or wasn't made
+    if (!finalResult) {
+      try {
+        console.log("[AddProductModal] Client Gemini API failed/quota exceeded. Trying server-side AI analysis fallback...");
+        let base64 = "";
+        let mimeType = "";
+        let fileName = "";
+        if (selectedFileRef.current) {
+          try {
+            console.log("[AddProductModal] Compressing file for backend fallback payload...");
+            const compressed = await resizeAndCompressImage(selectedFileRef.current, 768, 0.7);
+            base64 = compressed.base64;
+            mimeType = compressed.mimeType;
+            fileName = selectedFileRef.current.name;
+            console.log(`[AddProductModal] Compressed fallback payload successfully: ~${Math.round((base64.length * 3) / 4 / 1024)} KB`);
+          } catch (compressErr) {
+            console.warn("[AddProductModal] Canvas compression failed, using raw base64 instead:", compressErr);
+            const base64Res = await fileToBase64(selectedFileRef.current);
+            base64 = base64Res.base64;
+            mimeType = base64Res.mimeType;
+            fileName = selectedFileRef.current.name;
+          }
+        }
+
+        const response = await apiClient.post("/api/v1/products/ai/analyze", {
+          imageUrl: newProduct.imageUrl && !newProduct.imageUrl.startsWith("blob:") ? newProduct.imageUrl : "",
+          imageBase64: base64,
+          mimeType: mimeType,
+          fileName: fileName,
+        }, {
+          signal: controller.signal
+        });
+
+        if (response.data && response.data.success && response.data.data) {
+          const data = response.data.data;
+          if (data.aiPowered) {
+            console.log("[AddProductModal] Server-side AI analysis succeeded!");
+            finalResult = data;
+            usedRealAi = true;
+          } else {
+            console.log("[AddProductModal] Server-side fallback returned offline mock data. Bypassing.");
+            usedRealAi = false;
+            if (data.aiError) {
+              capturedErrorMsg = data.aiError;
+            }
+          }
+        }
+      } catch (backendErr: any) {
+        if (backendErr.name === "AbortError") {
+          console.log("[Gemini Backend Fallback] Request aborted.");
+          return;
+        }
+        console.warn("[Gemini Backend Fallback] Failed:", backendErr?.message || backendErr);
+        capturedErrorMsg = backendErr?.message || String(backendErr);
+      }
+    }
+
+    if (usedRealAi && finalResult) {
+      applyResult(finalResult);
+      setQuotaDetails(null);
+      setIsAnalyzing(false);
+      abortControllerRef.current = null;
       return;
     }
 
-    setAiError("");
-    setIsAnalyzing(true);
-
+    // --- Direct Local Smart Fallback replaced with Manual Input Warning ---
     try {
-      const response = await apiClient.post<unknown>(
-        "/api/v1/products/ai/analyze",
-        {
-          imageUrl: newProduct.imageUrl,
-        },
-      );
-
-      const suggestion = parseAiSuggestion(response.data);
-      if (!suggestion) {
-        setAiError(t.addProductAiInvalid);
+      if (controller.signal.aborted) {
         return;
       }
 
-      setNewProduct((prev) => ({
-        ...prev,
-        name: suggestion.name ?? prev.name,
-        category: suggestion.category ?? prev.category,
-        price:
-          typeof suggestion.price === "number"
-            ? String(Math.round(suggestion.price))
-            : prev.price,
-        condition: suggestion.condition ?? prev.condition,
-        description: suggestion.description?.join(", ") ?? prev.description,
-      }));
-    } catch (error: unknown) {
-      const apiError = normalizeApiError(error);
-      if (apiError.statusCode === 404 || apiError.statusCode === 405) {
-        setAiError(t.addProductAiUnavailable);
-      } else {
-        setAiError(apiError.message);
-      }
+      const parsedDetails = parseQuotaError(capturedErrorMsg, lang as any);
+      setQuotaDetails(parsedDetails);
+
+      showToast({
+        title: lang === "vi" ? "Hạn ngạch AI đã hết" : "AI Quota Exceeded",
+        description: parsedDetails.resetTimeMessage,
+        variant: "error",
+      });
+
+      setAiError(parsedDetails.resetTimeMessage);
+    } catch (err: any) {
+      if (controller.signal.aborted) return;
     } finally {
       setIsAnalyzing(false);
+      abortControllerRef.current = null;
     }
   };
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (
@@ -293,30 +481,57 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       return;
     }
 
-    onAdd({
-      name: newProduct.name,
-      category: newProduct.category,
-      price: Number(newProduct.price),
-      locationText: newProduct.locationText,
-      statusQuantities: newProduct.statusQuantities,
-      condition: newProduct.condition,
-      imageUrl: newProduct.imageUrl || undefined,
-      description: newProduct.description
-        ? newProduct.description.split(",").map((s) => s.trim())
-        : undefined,
-    });
+    setIsUploading(true);
+    try {
+      let finalImageUrl = newProduct.imageUrl;
 
-    setNewProduct({
-      name: "",
-      category: "Điện tử & Công nghệ",
-      price: "",
-      locationText: "",
-      statusQuantities: { available: 1, rented: 0, overdue: 0 },
-      condition: "New",
-      imageUrl: "",
-      description: "",
-    });
-    onClose();
+      // Upload image to Cloudinary first (if local file selected)
+      if (selectedFileRef.current && newProduct.imageUrl.startsWith("blob:")) {
+        const uploadData = new FormData();
+        uploadData.append("image", selectedFileRef.current);
+        const res = await apiClient.post<{ success: boolean; url: string }>("/api/v1/upload", uploadData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const url = res.data.url;
+        finalImageUrl = url.startsWith("http") ? url : `${apiClient.defaults.baseURL}${url}`;
+      }
+
+      // Call parent handler (includes geocoding + API create)
+      await onAdd({
+        name: newProduct.name,
+        category: newProduct.category,
+        price: Number(newProduct.price),
+        locationText: newProduct.locationText,
+        statusQuantities: newProduct.statusQuantities,
+        condition: newProduct.condition,
+        imageUrl: finalImageUrl || undefined,
+        description: newProduct.description
+          ? parseDescriptionToArray(newProduct.description)
+          : undefined,
+      });
+
+      // Success — reset form and close
+      setNewProduct({
+        name: "",
+        category: "Điện tử & Công nghệ",
+        price: "",
+        locationText: "",
+        statusQuantities: { available: 1, rented: 0, overdue: 0 },
+        condition: "New",
+        imageUrl: "",
+        description: "",
+      });
+      selectedFileRef.current = null;
+      onClose();
+    } catch (err: any) {
+      const apiMsg = err?.response?.data?.error?.message || err?.message;
+      setError(
+        apiMsg ||
+        (lang === "vi" ? "Lỗi tải ảnh hoặc tạo sản phẩm. Vui lòng thử lại!" : "Upload or product creation error. Please try again.")
+      );
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const categories = [
@@ -406,6 +621,15 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
         .dark .neo-shadow {
           box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.35);
         }
+        @keyframes ai-flash {
+          0%   { box-shadow: 0 0 0 0 rgba(20,184,166,0.0); border-color: transparent; }
+          20%  { box-shadow: 0 0 0 6px rgba(20,184,166,0.35); border-color: rgba(20,184,166,0.7); background-color: rgba(20,184,166,0.06); }
+          60%  { box-shadow: 0 0 0 3px rgba(20,184,166,0.15); border-color: rgba(20,184,166,0.4); }
+          100% { box-shadow: 0 0 0 0 rgba(20,184,166,0.0); border-color: transparent; background-color: transparent; }
+        }
+        .ai-filled {
+          animation: ai-flash 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
       `}</style>
       <div
         className="absolute inset-0 bg-slate-955/40 backdrop-blur-xl transition-opacity duration-300"
@@ -429,7 +653,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             />
             {newProduct.imageUrl ? (
               <div className="space-y-4 relative z-10">
-                <div className="group relative aspect-square w-full overflow-hidden rounded-3xl shadow-2xl border-2 border-white dark:border-slate-850 bg-slate-100 dark:bg-slate-800">
+                <div className="group relative aspect-square w-full overflow-hidden rounded-3xl shadow-2xl border-2 border-white dark:border-slate-855 bg-slate-100 dark:bg-slate-800">
                   <img
                     src={newProduct.imageUrl}
                     alt="Preview"
@@ -446,7 +670,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="h-10 w-10 rounded-full bg-white/90 dark:bg-slate-900/90 text-teal-650 dark:text-teal-400 flex items-center justify-center shadow-xl backdrop-blur-md hover:scale-110 active:scale-95 transition-all duration-200 border border-white/20"
+                      className="h-10 w-10 rounded-full bg-white/90 dark:bg-slate-900/90 text-teal-655 dark:text-teal-400 flex items-center justify-center shadow-xl backdrop-blur-md hover:scale-110 active:scale-95 transition-all duration-200 border border-white/20"
                     >
                       <Zap size={18} />
                     </button>
@@ -468,20 +692,25 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                   )}
                 </div>
 
-                {!isAnalyzing && (
-                  <button
-                    type="button"
-                    onClick={handleAIAnalyze}
-                    className="w-full flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[1.2px] shadow-md shadow-purple-500/10 hover:shadow-purple-500/20 active:scale-98 transition-all duration-300 group overflow-hidden"
-                  >
-                    <div className="w-full bg-white dark:bg-slate-900 rounded-[14px] py-3 flex items-center justify-center gap-2 group-hover:bg-transparent transition-colors duration-300">
+                <button
+                  type="button"
+                  onClick={handleAIAnalyze}
+                  disabled={isAnalyzing}
+                  className="w-full flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[1.2px] hover:shadow-[0_0_25px_rgba(168,85,247,0.4)] active:scale-98 transition-all duration-300 group overflow-hidden disabled:opacity-50 disabled:pointer-events-none relative shadow-xl shadow-purple-500/10 animate-[pulse_2s_infinite] hover:animate-none"
+                >
+                  <div className="w-full bg-white dark:bg-slate-900 rounded-[14px] py-3 flex items-center justify-center gap-2 group-hover:bg-transparent transition-colors duration-300">
+                    {isAnalyzing ? (
+                      <Loader2 size={14} className="animate-spin text-purple-500 group-hover:text-white" />
+                    ) : (
                       <Sparkles size={14} className="text-purple-500 group-hover:text-white" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-700 dark:text-slate-200 group-hover:text-white transition-colors">
-                        {t.addProductAiAnalyze}
-                      </span>
-                    </div>
-                  </button>
-                )}
+                    )}
+                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-700 dark:text-slate-200 group-hover:text-white transition-colors">
+                      {isAnalyzing
+                        ? (lang === "vi" ? "ĐANG PHÂN TÍCH..." : "ANALYZING...")
+                        : t.addProductAiAnalyze}
+                    </span>
+                  </div>
+                </button>
               </div>
             ) : (
               <div
@@ -500,16 +729,34 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                 <p className="mt-3.5 text-[11px] font-black text-slate-400 group-hover:text-teal-500 dark:group-hover:text-teal-400 uppercase tracking-[0.2em] transition-colors">
                   {isUploading ? (lang === "vi" ? "ĐANG TẢI..." : "UPLOADING...") : t.addProductUploadFile}
                 </p>
-                <p className="mt-1 text-[8px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.1em]">
-                  JPG, PNG, WEBP • TỐI ĐA 10MB
+                <p className="mt-1.5 text-[8px] font-extrabold text-slate-450 dark:text-slate-550 uppercase tracking-[0.08em] px-2.5 py-0.5 bg-slate-100/50 dark:bg-slate-900/40 rounded-full border border-slate-200/10">
+                  {lang === "vi" ? "✨ Mở khóa Gemini AI Auto-Fill" : "✨ Unlock Gemini AI Auto-Fill"}
                 </p>
               </div>
             )}
           </div>
 
           {/* Form Panel (Right Column - Wider & More Spacious with Grid) */}
-          <div className="flex-1 p-8 md:p-10 overflow-y-auto no-scrollbar flex flex-col justify-between">
+          <div className="flex-1 p-8 md:p-10 overflow-y-auto no-scrollbar flex flex-col justify-between relative">
             <div>
+              {/* Glassmorphic AI Success Banner */}
+              {aiSuccessToast && (
+                <div className="absolute top-4 right-4 z-[100] flex items-center gap-2.5 rounded-2xl bg-teal-500/10 dark:bg-teal-500/20 backdrop-blur-xl border border-teal-500/35 px-4.5 py-3 shadow-lg shadow-teal-500/10 animate-in slide-in-from-top-5 duration-300">
+                  <div className="h-7 w-7 rounded-xl bg-teal-500 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+                    <Sparkles size={14} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-teal-700 dark:text-teal-400">
+                      AI Auto-Filled
+                    </h4>
+                    <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400">
+                      {lang === "vi" 
+                        ? "Đã điền tự động các thông tin phân tích từ ảnh!" 
+                        : "Automatically filled product analysis from image!"}
+                    </p>
+                  </div>
+                </div>
+              )}
               <header className="mb-6 flex items-start justify-between">
                 <div>
                   <h3 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
@@ -523,10 +770,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                 </div>
                 <button
                   type="button"
-                  className="h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-105 flex items-center justify-center text-slate-450 hover:text-slate-750 dark:hover:text-white transition-all duration-200 border border-slate-100/50 dark:border-slate-750"
+                  className="group h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 hover:bg-rose-500/10 hover:text-rose-500 dark:hover:bg-rose-500/25 flex items-center justify-center text-slate-450 transition-all duration-300 border border-slate-100/50 dark:border-slate-750"
                   onClick={onClose}
                 >
-                  <X size={16} />
+                  <X size={16} className="transition-transform duration-300 group-hover:rotate-90" />
                 </button>
               </header>
 
@@ -535,15 +782,21 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                 
                 {/* Row 1: Name (full width) */}
                 <div className="col-span-12 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    {t.addProductName} *
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <Tag size={10} className="text-teal-500" />
+                    <span>{t.addProductName} *</span>
                   </label>
-                  <input
-                    className="w-full rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-3 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all duration-200 h-[46px]"
-                    placeholder={t.addProductPlaceholderName}
-                    value={newProduct.name}
-                    onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))}
-                  />
+                  <div className="relative group/name">
+                    <input
+                      className={`w-full rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 pl-11 pr-4 py-3 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all duration-200 h-[46px] ${aiFilledFields.has("name") ? "ai-filled" : ""}`}
+                      placeholder={t.addProductPlaceholderName}
+                      value={newProduct.name}
+                      onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))}
+                    />
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors group-focus-within/name:text-teal-500">
+                      <Tag size={15} />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Row 2: Category Dropdown (6 cols) & Condition Pill Selector (6 cols) */}
@@ -555,7 +808,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                    className="w-full flex items-center justify-between rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-3 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all duration-200 h-[46px]"
+                    className={`w-full flex items-center justify-between rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-3 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all duration-200 h-[46px] ${aiFilledFields.has("category") ? "ai-filled" : ""}`}
                   >
                     <div className="flex items-center gap-2.5">
                       <div className={`p-1 rounded-lg ${activeCat.iconBg}`}>
@@ -601,7 +854,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
                     {t.addProductCondition} *
                   </label>
-                  <div className="grid grid-cols-4 gap-1 bg-slate-50/40 dark:bg-slate-950/30 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-850 h-[46px] items-center">
+                  <div className={`grid grid-cols-4 gap-1 bg-slate-50/40 dark:bg-slate-950/30 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-850 h-[46px] items-center ${aiFilledFields.has("condition") ? "ai-filled" : ""}`}>
                     {conditionOptions.map((opt) => {
                       const isSelected = newProduct.condition === opt.value;
                       return (
@@ -639,11 +892,11 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                           },
                         }))
                       }
-                      className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors shadow-sm text-sm font-black active:scale-85 border border-slate-100 dark:border-slate-750/50"
+                      className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-550 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750 transition-all shadow-sm active:scale-85 border border-slate-100 dark:border-slate-750/50 hover:text-red-500 dark:hover:text-red-400"
                     >
-                      -
+                      <Minus size={13} />
                     </button>
-                    <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200 tabular-nums">
+                    <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200 tabular-nums select-none">
                       {newProduct.statusQuantities.available}
                     </span>
                     <button
@@ -657,9 +910,9 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                           },
                         }))
                       }
-                      className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-450 hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors shadow-sm text-sm font-black active:scale-85 border border-slate-100 dark:border-slate-750/50"
+                      className="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center text-slate-550 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-750 transition-all shadow-sm active:scale-85 border border-slate-100 dark:border-slate-750/50 hover:text-teal-500 dark:hover:text-teal-400"
                     >
-                      +
+                      <Plus size={13} />
                     </button>
                   </div>
                 </div>
@@ -673,9 +926,13 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAdminAddress(!showAdminAddress)}
-                      className="text-[9px] font-black tracking-widest text-teal-600 dark:text-teal-400 hover:underline uppercase flex items-center gap-0.5"
+                      className={`text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 shadow-sm ${
+                        showAdminAddress
+                          ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30 shadow-teal-500/5 scale-102"
+                          : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-450 border-slate-200/60 dark:border-slate-700/80 hover:text-slate-700 dark:hover:text-slate-200 hover:scale-102"
+                      }`}
                     >
-                      <Map size={9} />
+                      <Map size={10} className={showAdminAddress ? "animate-pulse text-teal-500" : ""} />
                       {showAdminAddress 
                         ? (lang === "vi" ? "Gõ Địa Chỉ Nhanh" : "Quick Text Input") 
                         : (lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative")}
@@ -717,74 +974,115 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                       ))}
                     </div>
                   )}
-
-                  {/* HIGH-END ABSOLUTE FLOATING POPOVER: Pick address via 3-step dropdown lists */}
-                  {showAdminAddress && (
-                    <div className="absolute z-[100] left-0 right-0 top-full mt-2 p-5 rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-150 dark:border-slate-800/80 animate-in fade-in slide-in-from-top-3 duration-300 ring-1 ring-black/5">
-                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                          <MapPin size={13} className="text-teal-500 animate-pulse" />
-                          {lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative"}
-                        </span>
-                        <button 
-                          type="button" 
-                          onClick={() => setShowAdminAddress(false)}
-                          className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition-colors"
-                        >
-                          {lang === "vi" ? "Đóng" : "Close"}
-                        </button>
-                      </div>
-                      <AddressSelector
-                        lang={lang as any}
-                        onSelect={(fullAddress) => {
-                          setNewProduct((prev) => ({ ...prev, locationText: fullAddress }));
-                          setShowAdminAddress(false);
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
+
+                {/* HIGH-END INLINE ACCORDION: Pick address via 3-step dropdown lists */}
+                {showAdminAddress && (
+                  <div className="col-span-12 mt-1 p-5 rounded-3xl bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800/60 shadow-inner animate-in fade-in slide-in-from-top-3 duration-300 ring-1 ring-black/5 w-full">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/60 dark:border-slate-800">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <MapPin size={13} className="text-teal-500 animate-pulse" />
+                        {lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative Address"}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowAdminAddress(false)}
+                        className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-650 transition-colors"
+                      >
+                        {lang === "vi" ? "Đóng" : "Close"}
+                      </button>
+                    </div>
+                    <AddressSelector
+                      lang={lang as any}
+                      onSelect={(fullAddress) => {
+                        setNewProduct((prev) => ({ ...prev, locationText: fullAddress }));
+                        setShowAdminAddress(false);
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Row 4: Description (12 cols - Sleek height of 2 rows) */}
                 <div className="col-span-12 space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    {t.addProductDescription}
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                    <AlignLeft size={10} className="text-teal-500" />
+                    <span>{t.addProductDescription}</span>
                   </label>
-                  <textarea
-                    className="w-full rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-2.5 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all resize-none"
-                    rows={2}
-                    placeholder={t.addProductDescriptionPlaceholder}
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct((p) => ({ ...p, description: e.target.value }))}
-                  />
+                  <div className="relative group/desc">
+                    <textarea
+                      className={`w-full rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 pl-11 pr-4 py-2.5 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all resize-none h-[64px] ${aiFilledFields.has("description") ? "ai-filled" : ""}`}
+                      placeholder={t.addProductDescriptionPlaceholder}
+                      value={newProduct.description}
+                      onChange={(e) => setNewProduct((p) => ({ ...p, description: e.target.value }))}
+                    />
+                    <div className="absolute left-4 top-[14px] text-slate-400 dark:text-slate-500 pointer-events-none transition-colors group-focus-within/desc:text-teal-500">
+                      <AlignLeft size={15} />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Row 5: Truth Commitment Checkbox */}
-                <div className="col-span-12 flex items-center gap-3 pt-1">
-                  <input
-                    type="checkbox"
-                    id="confirmTruth"
-                    className="h-4.5 w-4.5 rounded border-slate-300 dark:border-slate-700 text-teal-600 focus:ring-teal-500 dark:bg-slate-800 cursor-pointer transition-colors"
-                    required
-                  />
+                <div className="col-span-12 flex items-start gap-3 pt-2">
+                  <div className="relative flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      id="confirmTruth"
+                      className="sr-only peer"
+                      required
+                      checked={isConfirmed}
+                      onChange={(e) => setIsConfirmed(e.target.checked)}
+                    />
+                    <div
+                      onClick={() => setIsConfirmed(!isConfirmed)}
+                      className={`w-5 h-5 rounded-lg border transition-all duration-200 flex items-center justify-center cursor-pointer ${
+                        isConfirmed
+                          ? "bg-teal-500 border-teal-500 shadow-md shadow-teal-500/20 scale-102"
+                          : "border-slate-350 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:border-slate-455"
+                      }`}
+                    >
+                      <Check
+                        size={12}
+                        className={`text-white font-black transition-transform duration-200 ${
+                          isConfirmed ? "scale-100" : "scale-0"
+                        }`}
+                      />
+                    </div>
+                  </div>
                   <label
                     htmlFor="confirmTruth"
-                    className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 cursor-pointer select-none transition-colors"
+                    onClick={() => setIsConfirmed(!isConfirmed)}
+                    className="text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 cursor-pointer select-none transition-colors mt-0.5"
                   >
                     {t.addProductConfirmTruth}
                   </label>
                 </div>
 
-                {/* Alerts */}
-                {aiError && (
-                  <div className="col-span-12 text-rose-500 text-[10px] font-bold tracking-wider text-center py-2 bg-amber-500/10 rounded-2xl border border-amber-500/20">
-                    ⚠️ {aiError}
-                  </div>
-                )}
-
-                {error && (
-                  <div className="col-span-12 text-rose-500 text-[10px] font-bold tracking-wider text-center py-2 bg-rose-500/10 rounded-2xl border border-rose-500/20 animate-bounce">
-                    🚫 {error}
+                {/* Quota Exhausted Warning Banner */}
+                {quotaDetails && (
+                  <div className="col-span-12 overflow-hidden rounded-3xl bg-gradient-to-br from-red-500/10 via-amber-500/5 to-transparent border border-red-500/20 dark:border-red-500/30 p-5 shadow-lg shadow-red-500/5 animate-in fade-in slide-in-from-top-3 duration-300 relative">
+                    <div className="absolute top-0 right-0 h-24 w-24 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
+                    <div className="flex items-start gap-4">
+                      <div className="h-10 w-10 rounded-2xl bg-red-500/15 dark:bg-red-500/25 flex items-center justify-center text-red-500 shrink-0 border border-red-500/20">
+                        <Sparkles size={18} className="text-red-500 animate-pulse" />
+                      </div>
+                      <div className="space-y-1.5 flex-1">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                          {lang === "vi" ? "Hạn ngạch AI tạm thời hết" : "AI Quota Exhausted"}
+                          <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
+                        </h4>
+                        <p className="text-xs font-extrabold text-slate-700 dark:text-slate-200 leading-relaxed">
+                          {quotaDetails.resetTimeMessage}
+                        </p>
+                        <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                            ℹ️ {lang === "vi" ? "Kỹ thuật:" : "Technical:"} {quotaDetails.type === "day" ? "DAILY_LIMIT_EXCEEDED" : quotaDetails.type === "minute" ? "MINUTE_LIMIT_EXCEEDED" : "API_QUOTA_EXHAUSTED"}
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-850 text-slate-500 dark:text-slate-400 border border-slate-200/5 dark:border-slate-850">
+                            ✍️ {lang === "vi" ? "Vui lòng tự điền thông tin" : "Please fill details manually"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -801,34 +1099,50 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                         💰
                         <span>{lang === "vi" ? "Giá thuê / ngày" : "Rental price / day"} *</span>
                       </label>
-                      {newProduct.price && (
-                        <div className="flex items-center gap-1.5">
-                          <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      <div className="flex items-center gap-2">
+                        {aiInsight?.aiPowered && (
+                          <span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-500/15 to-indigo-500/15 text-purple-650 dark:text-purple-400 border border-purple-500/20">
+                            <Sparkles size={8} />
+                            Gemini AI
                           </span>
-                          <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                            {lang === "vi" ? "Đã nhập" : "Set"}
+                        )}
+                        {aiInsight && !aiInsight.aiPowered && (
+                          <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                            {lang === "vi" ? "Ước tính" : "Estimate"}
                           </span>
-                        </div>
-                      )}
+                        )}
+                        {newProduct.price && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                            </span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                              {lang === "vi" ? "Đã nhập" : "Set"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Input row */}
                     <div className="px-3 pb-3 flex items-center gap-3">
-                      <div className="relative flex-1">
+                      <div className="relative flex-1 group/price">
                         <input
-                          className={`w-full rounded-xl border px-4 py-2.5 text-xl font-black outline-none tabular-nums tracking-tight transition-all duration-300 h-[52px] ${
+                          className={`w-full rounded-xl border pl-11 pr-16 py-2.5 text-xl font-black outline-none tabular-nums tracking-tight transition-all duration-300 h-[52px] ${
                             newProduct.price
                               ? "border-emerald-300/60 dark:border-emerald-700/50 bg-white/80 dark:bg-slate-900/80 text-emerald-800 dark:text-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
                               : "border-slate-200/85 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 text-slate-800 dark:text-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
-                          }`}
+                          } ${aiFilledFields.has("price") ? "ai-filled" : ""}`}
                           placeholder="0"
                           value={newProduct.price}
                           onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))}
                           type="number"
                           min="0"
                         />
+                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors group-focus-within/price:text-teal-500">
+                          <Coins size={15} />
+                        </div>
                         <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg pointer-events-none border transition-all duration-300 ${
                           newProduct.price
                             ? "bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
@@ -837,8 +1151,52 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                           ₫/ngày
                         </span>
                       </div>
-
                     </div>
+
+                    {/* AI Price Insight Panel */}
+                    {aiInsight && (aiInsight.priceMin || aiInsight.priceMax || aiInsight.priceReason) && (
+                      <div className="mx-3 mb-3 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800/50 p-3 space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {aiInsight.priceMin && aiInsight.priceMax && (
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                                <Sparkles size={8} className="text-purple-400" />
+                                {lang === "vi" ? "Khoảng giá AI đề xuất" : "AI Suggested Price Range"}
+                              </span>
+                              {aiInsight.confidence && (
+                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                                  aiInsight.confidence === "high"
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                    : aiInsight.confidence === "medium"
+                                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                    : "bg-slate-500/15 text-slate-500"
+                                }`}>
+                                  {lang === "vi"
+                                    ? aiInsight.confidence === "high" ? "🎯 Tin cao" : aiInsight.confidence === "medium" ? "〜 Vừa" : "? Thấp"
+                                    : aiInsight.confidence}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 tabular-nums whitespace-nowrap">
+                                {new Intl.NumberFormat("vi-VN").format(aiInsight.priceMin)}₫
+                              </span>
+                              <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-indigo-400 to-teal-400 rounded-full" />
+                              </div>
+                              <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 tabular-nums whitespace-nowrap">
+                                {new Intl.NumberFormat("vi-VN").format(aiInsight.priceMax)}₫
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                        {aiInsight.priceReason && (
+                          <p className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800/50 pt-2">
+                            💡 {aiInsight.priceReason}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -848,7 +1206,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
             <footer className="mt-8 flex gap-3 border-t border-slate-100/80 dark:border-slate-800/80 pt-5">
               <button
                 type="button"
-                className="flex-1 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors duration-200"
+                className="flex-1 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all duration-200"
                 onClick={onClose}
               >
                 {t.addProductCancel}
@@ -856,7 +1214,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
               <button
                 type="submit"
                 disabled={isUploading || isAnalyzing}
-                className="flex-[2] flex items-center justify-center gap-2 rounded-full bg-slate-900 hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500 px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-xl hover:scale-[1.02] active:scale-95 transition-all duration-200 hover:shadow-2xl border border-transparent disabled:opacity-50"
+                className="flex-[2] flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 dark:from-teal-600 dark:to-emerald-500 px-6 py-3.5 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-xl hover:shadow-teal-500/10 dark:hover:shadow-teal-500/20 hover:scale-[1.02] active:scale-95 transition-all duration-300 border border-transparent disabled:opacity-50"
               >
                 {(isUploading || isAnalyzing) && <Loader2 size={13} className="animate-spin" />}
                 {t.addProductSave}

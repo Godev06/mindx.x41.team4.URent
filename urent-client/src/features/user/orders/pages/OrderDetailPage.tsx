@@ -81,7 +81,7 @@ export function OrderDetailPage() {
           price: ord.productId?.price || Math.round(ord.totalPrice / 3),
           status: ord.productId?.status || "Available",
           image: "🛒",
-          imageUrl: ord.productId?.image || ord.productId?.imageUrl || "",
+          imageUrl: ord.productId?.imageUrl || "",
           rating: ord.productId?.rating || 5.0,
           reviews: ord.productId?.reviewsCount || 0,
           owner: ord.productId?.owner || { name: "URent Partner", avatar: "", rating: 5.0, trips: 10 },

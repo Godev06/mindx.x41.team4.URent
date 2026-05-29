@@ -38,7 +38,7 @@ export function OrdersPage() {
           endDate: new Date(ord.endDate).toLocaleDateString("vi-VN"),
           totalPrice: ord.totalPrice,
           status: ord.status,
-          imageUrl: ord.productId?.image || ord.productId?.imageUrl || ord.imageUrl || "",
+          imageUrl: ord.productId?.imageUrl || ord.imageUrl || "",
           image: "🛒",
         }));
         setOrders(mapped);

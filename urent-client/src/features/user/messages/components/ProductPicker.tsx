@@ -122,7 +122,9 @@ export function ProductPicker({
                       className="h-12 w-12 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="text-2xl">{product.image}</div>
+                    <div className="flex h-12 w-12 items-center justify-center text-slate-400 bg-slate-100 rounded-lg">
+                      <Package size={20} />
+                    </div>
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-slate-900 text-sm truncate">

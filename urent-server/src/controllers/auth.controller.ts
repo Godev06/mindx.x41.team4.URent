@@ -531,7 +531,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   const userRecord = await UserModel.findOne({ email: normalizedEmail });
   const isCreatePassword = userRecord
     ? !userRecord.password ||
-      isGoogleOnlyAccount(userRecord.authProviders, userRecord.username)
+    isGoogleOnlyAccount(userRecord.authProviders, userRecord.username)
     : false;
 
   const user = await issueResetToken(normalizedEmail, isCreatePassword);
@@ -628,6 +628,7 @@ export const getMe = async (req: Request, res: Response) => {
       avatarUrl: req.user.avatarUrl ?? null,
       phone: req.user.phoneNumber ?? null,
       bio: null,
+      address: null,
       trustScore: 100,
       role: "user",
       createdAt: null,
@@ -647,6 +648,7 @@ export const getMe = async (req: Request, res: Response) => {
     avatarUrl: user.avatarUrl,
     bio: user.bio,
     phone: user.phone,
+    address: user.address,
     trustScore: user.trustScore ?? 100,
     role: user.role ?? "user",
     createdAt: user.createdAt ?? null,

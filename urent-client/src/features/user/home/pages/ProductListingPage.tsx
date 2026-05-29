@@ -97,13 +97,7 @@ function buildProductMeta(product: Product, userLocation: { lat: number; lng: nu
   };
 }
 
-function normalizeCategory(category?: string): Exclude<CategoryKey, "all"> {
-  const normalized = category?.toLowerCase();
-  if (normalized?.includes("du lịch") || normalized?.includes("dã ngoại") || normalized === "travel" || normalized === "outdoor") return "travel";
-  if (normalized?.includes("học tập") || normalized?.includes("sách") || normalized === "study" || normalized === "textbooks" || normalized === "books") return "study";
-  if (normalized?.includes("thời trang") || normalized?.includes("đời sống") || normalized === "lifestyle") return "lifestyle";
-  return "electronics";
-}
+
 
 interface FilterPanelProps {
   sortBy: SortType;

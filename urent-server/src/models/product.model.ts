@@ -4,6 +4,7 @@ const productStatusValues = ['Available', 'Active', 'Completed'] as const;
 type ProductStatus = (typeof productStatusValues)[number];
 
 export interface ProductDocument extends mongoose.Document {
+  ownerId?: mongoose.Types.ObjectId | string;
   name: string;
   category: string;
   price: number;
@@ -15,8 +16,7 @@ export interface ProductDocument extends mongoose.Document {
   };
   isArchived: boolean;
   lastUpdated: Date;
-  image: string;
-  imageUrl?: string;
+  imageUrl: string;
   description?: string[];
   condition?: string;
   locationText?: string; // Giữ lại dạng chuỗi để hiển thị text
@@ -31,6 +31,7 @@ export interface ProductDocument extends mongoose.Document {
 
 const productSchema = new Schema<ProductDocument>(
   {
+    ownerId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
     name: { type: String, required: true, trim: true },
     category: { type: String, required: true, trim: true },
     price: { type: Number, required: true, min: 0 },
@@ -42,8 +43,8 @@ const productSchema = new Schema<ProductDocument>(
     },
     isArchived: { type: Boolean, default: false },
     lastUpdated: { type: Date, default: Date.now },
-    image: { type: String, required: true, default: 'https://placehold.co/150' },
-    imageUrl: { type: String },
+    image: { type: String, default: 'https://placehold.co/150' },
+    imageUrl: { type: String, required: true, default: 'https://placehold.co/150' },
     description: [{ type: String, trim: true }],
     condition: { type: String, default: 'New' },
     locationText: { type: String, trim: true, default: 'Chưa cập nhật vị trí' },

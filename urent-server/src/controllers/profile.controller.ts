@@ -24,7 +24,9 @@ export const getProfile = async (req: Request, res: Response) => {
 
 export const updateProfile = async (req: Request, res: Response) => {
   const userId = req.user?.sub;
+  console.log('[backend] updateProfile req.body:', req.body);
   const { displayName, bio, phone, address, currentPassword, newPassword } = req.body as UpdateProfileInput;
+  console.log('[backend] extracted address:', address);
 
   const user = await UserModel.findById(userId);
   if (!user) return res.status(404).json({ message: 'User not found' });

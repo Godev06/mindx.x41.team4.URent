@@ -18,6 +18,7 @@ import { settingsRouter } from "./routes/settings.route";
 import userRouter from "./routes/user.route";
 import { activityRouter } from "./routes/activity.route";
 import { uploadRouter } from "./routes/upload.route";
+import { urentAiRouter } from "./routes/urent-ai.route";
 
 // Register event listeners
 import "./events/user-events";
@@ -30,7 +31,8 @@ app.use(
   }),
 );
 
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 
 app.use(async (_req, _res, next) => {
@@ -105,6 +107,7 @@ app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1", userRouter);
 app.use("/api/v1", uploadRouter);
+app.use("/api", urentAiRouter);
 
 // 2. Middleware bẫy lỗi 404 Fallback cho tất cả các route không tồn tại công khai hơn
 app.use((req, res, _next) => {

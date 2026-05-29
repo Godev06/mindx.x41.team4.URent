@@ -24,5 +24,6 @@ export const env = {
   get firebaseProjectId() { return process.env.FIREBASE_PROJECT_ID; },
   get firebaseClientEmail() { return process.env.FIREBASE_CLIENT_EMAIL; },
   get firebasePrivateKey() { return process.env.FIREBASE_PRIVATE_KEY; },
-  get firebaseApiKey() { return process.env.FIREBASE_API_KEY ?? ''; }
+  get firebaseApiKey() { return process.env.FIREBASE_API_KEY ?? ''; },
+  get geminiApiKey() { return process.env.GEMINI_API_KEY ?? ''; }
 };

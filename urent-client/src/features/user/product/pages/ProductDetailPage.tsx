@@ -101,9 +101,9 @@ export function ProductDetailPage({
         {t.productDetailBack}
       </button>
 
-      {(product.imageUrl || product.image) && (
+      {product.imageUrl && (
         <div className="relative mb-8 h-64 w-full overflow-hidden rounded-3xl sm:h-80 md:h-96">
-          <img src={product.imageUrl || product.image} alt={product.name} className="h-full w-full object-cover" />
+          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/10 to-transparent" />
           <span className="absolute top-4 left-4 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md">{product.category}</span>
           <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200 backdrop-blur-md">
@@ -147,7 +147,7 @@ export function ProductDetailPage({
           <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm ring-1 ring-slate-900/4 dark:border-white/8 dark:bg-[#101a2a] dark:ring-white/4">
             <div className="h-1.5 w-full bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500" />
             <div className="p-6 sm:p-8">
-              {!product.imageUrl && !product.image && <h1 className="mb-4 text-balance text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">{product.name}</h1>}
+              {!product.imageUrl && <h1 className="mb-4 text-balance text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">{product.name}</h1>}
               <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
                 {product.summary ?? t.productDetailDefaultDescription}
               </p>

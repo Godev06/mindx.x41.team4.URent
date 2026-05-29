@@ -47,7 +47,7 @@ export const saveFcmTokenSchema = z.object({
 });
 
 export const deleteFcmTokenSchema = z.object({
-  body: z.object({
+  query: z.object({
     token: z.string().min(1, 'Token is required')
   })
 });

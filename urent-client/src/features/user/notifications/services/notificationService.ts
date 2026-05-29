@@ -78,7 +78,7 @@ export const notificationService = {
   async deleteFcmToken(token: string) {
     const res = await apiClient.delete<ApiResponse<{ success: boolean }>>(
       "/api/v1/notifications/fcm-token",
-      { data: { token } }
+      { params: { token } }
     );
     return res.data;
   },

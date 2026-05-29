@@ -11,8 +11,7 @@ export interface ApiProduct {
   category: string;
   price: number;
   status: "Available" | "Active" | "Completed";
-  image: string;
-  imageUrl: string | null;
+  imageUrl: string;
   rating: number | null;
   reviews: number | null;
 }

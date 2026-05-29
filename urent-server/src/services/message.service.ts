@@ -729,7 +729,7 @@ export const sendConversationMessage = async (
       }
 
       const product = await ProductModel.findById(productId)
-        .select("name price image imageUrl category")
+        .select("name price imageUrl category")
         .lean();
       if (!product) {
         throw new AppError(404, "PRODUCT_NOT_FOUND", "Product not found");
@@ -740,7 +740,7 @@ export const sendConversationMessage = async (
         snapshot: {
           name: product.name,
           pricePerDay: product.price,
-          imageUrl: product.imageUrl ?? product.image,
+          imageUrl: product.imageUrl,
           category: product.category,
         },
       };

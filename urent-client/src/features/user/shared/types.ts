@@ -20,7 +20,6 @@ export interface Product {
   status: ProductStatus;
   isArchived?: boolean;
   imageUrl?: string;
-  image?: string;
   condition?: string;
   location?: any;
   locationText?: string;
@@ -87,6 +86,8 @@ export interface InventoryItem {
   lastUpdated: string;
   description?: string[];
   imageUrl?: string;
+  locationText?: string;
+  location?: string;
 }
 
 export interface ActivityLog {

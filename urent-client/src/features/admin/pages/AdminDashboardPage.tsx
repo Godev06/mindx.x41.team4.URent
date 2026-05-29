@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "../layout/AdminLayout";
 import { TrustChart } from "../components/TrustChart";
-import { 
-  Users as UsersIcon, 
-  ShoppingBag, 
-  Box, 
-  Clock, 
-  CheckCircle, 
-  AlertTriangle, 
+import {
+  Users as UsersIcon,
+  ShoppingBag,
+  Box,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
   ArrowRight,
   TrendingUp,
   TrendingDown,
@@ -40,7 +40,7 @@ export function AdminDashboardPage() {
         <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-r from-[#0d1f33] via-[#0b2b3a] to-[#070b19] p-8 shadow-2xl shadow-cyan-950/10">
           <div className="absolute top-0 right-0 -mt-10 -mr-10 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
           <div className="absolute bottom-0 left-1/3 -mb-10 h-64 w-64 rounded-full bg-teal-500/5 blur-3xl" />
-          
+
           <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div className="space-y-2">
               <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
@@ -52,7 +52,7 @@ export function AdminDashboardPage() {
             </div>
 
             <button className="flex items-center justify-center gap-2 self-start rounded-2xl bg-cyan-500 px-6 py-3.5 text-xs font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition duration-300 hover:-translate-y-0.5 hover:bg-cyan-400 hover:shadow-cyan-400/30 active:translate-y-0">
-              View Analytics 
+              View Analytics
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>

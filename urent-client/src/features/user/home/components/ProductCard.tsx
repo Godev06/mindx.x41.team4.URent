@@ -77,8 +77,8 @@ export function ProductCard({
   // 2. Khắc phục lệch key Đánh giá: ưu tiên reviewsCount từ DB
   const reviewsCount = product.reviewsCount ?? product.reviews ?? 0;
 
-  // 3. Linh hoạt hình ảnh: hỗ trợ cả imageUrl và image
-  const imageSrc = product.imageUrl || product.image;
+  // 3. Linh hoạt hình ảnh: hỗ trợ imageUrl
+  const imageSrc = product.imageUrl;
   const isImageUrl =
     typeof imageSrc === "string" &&
     (imageSrc.startsWith("http://") ||
@@ -89,7 +89,7 @@ export function ProductCard({
       /\.(jpg|jpeg|png|webp|gif|svg)/i.test(imageSrc));
 
   // Tự động fallback sang thông tin từ product document trong MongoDB nếu không truyền prop
-  const displayLocation = normalizeLocation(location) ?? normalizeLocation(product.location);
+  const displayLocation = normalizeLocation(location) ?? normalizeLocation(product.locationText);
   const displayCondition = conditionLabel || product.condition;
 
   return (

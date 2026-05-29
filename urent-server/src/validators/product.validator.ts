@@ -21,7 +21,6 @@ export const createProductSchema = z.object({
   price: z.coerce.number().min(0, 'Giá thuê phải lớn hơn hoặc bằng 0'),
   condition: z.string().optional().default('New'),
   description: z.array(z.string()).optional().default([]),
-  image: z.string().optional(),
   imageUrl: z.string().optional(),
   locationText: z.string().min(1, 'Vui lòng nhập địa chỉ/vị trí hiển thị của sản phẩm'),
   location: z.object({
@@ -30,7 +29,12 @@ export const createProductSchema = z.object({
   }).optional().default({
     type: 'Point',
     coordinates: [105.8342, 21.0278] // Tọa độ mặc định (Hà Nội) nếu không truyền GPS
-  })
+  }),
+  statusQuantities: z.object({
+    available: z.coerce.number().min(0).default(1),
+    rented: z.coerce.number().min(0).default(0),
+    overdue: z.coerce.number().min(0).default(0),
+  }).optional().default({ available: 1, rented: 0, overdue: 0 }),
 });
 
 // Validator cho API Cập nhật sản phẩm

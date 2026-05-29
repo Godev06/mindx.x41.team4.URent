@@ -30,6 +30,18 @@ export const productService = {
     return res.data.data;
   },
 
+  /** Fetch only the products owned by the authenticated user (inventory) */
+  async getMyProducts(params?: {
+    q?: string;
+    category?: string;
+    limit?: number;
+  }): Promise<Product[]> {
+    const res = await apiClient.get<ApiResponse<Product[]>>("/api/v1/products/my", {
+      params,
+    });
+    return res.data.data;
+  },
+
   async getProductById(id: string | number): Promise<Product> {
     const res = await apiClient.get<ApiResponse<Product>>(`/api/v1/products/${id}`);
     return res.data.data;

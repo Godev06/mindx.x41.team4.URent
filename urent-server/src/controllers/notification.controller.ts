@@ -131,7 +131,7 @@ export const saveFcmToken = async (req: Request, res: Response) => {
 
 export const deleteFcmToken = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
-  const { token } = deleteFcmTokenSchema.parse(req).body;
+  const { token } = deleteFcmTokenSchema.parse(req).query;
 
   await FcmTokenModel.findOneAndDelete({ token, userId });
 

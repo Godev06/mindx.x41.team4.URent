@@ -30,7 +30,9 @@ const buildProfileUpdatePayload = (payload: ProfileUpdatePayload) => {
 
 export const profileService = {
   async updateProfile(payload: ProfileUpdatePayload): Promise<AuthUser> {
+    console.log('[frontend] updateProfile raw payload:', payload);
     const requestPayload = buildProfileUpdatePayload(payload);
+    console.log('[frontend] updateProfile serialized requestPayload:', requestPayload);
     const response = await apiClient.patch<unknown>(
       "/api/v1/profile",
       requestPayload,

@@ -38,8 +38,13 @@ type ProductAiSuggestion = {
   name?: string;
   category?: string;
   price?: number;
+  priceMin?: number;
+  priceMax?: number;
+  priceReason?: string;
   condition?: string;
   description?: string[];
+  confidence?: "high" | "medium" | "low";
+  aiPowered?: boolean;
 };
 
 const isRecord = (value: unknown): value is UnknownRecord => {
@@ -58,6 +63,15 @@ const toStringArray = (value: unknown): string[] | undefined => {
   return items.length > 0 ? items : undefined;
 };
 
+const toNum = (v: unknown): number | undefined => {
+  if (typeof v === "number" && Number.isFinite(v) && v > 0) return Math.round(v);
+  if (typeof v === "string" && v.trim()) {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
+  }
+  return undefined;
+};
+
 const parseAiSuggestion = (payload: unknown): ProductAiSuggestion | null => {
   const root = isRecord(payload) ? payload : null;
   if (!root) {
@@ -71,30 +85,35 @@ const parseAiSuggestion = (payload: unknown): ProductAiSuggestion | null => {
     toStringArray(data.specs) ??
     toStringArray(data.suggestedSpecs);
 
-  const rawPrice = data.price;
-  const parsedPrice =
-    typeof rawPrice === "number"
-      ? rawPrice
-      : typeof rawPrice === "string" && rawPrice.trim()
-        ? Number(rawPrice)
-        : undefined;
-
   const suggestion: ProductAiSuggestion = {
     name: typeof data.name === "string" ? data.name.trim() : undefined,
     category:
       typeof data.category === "string" ? data.category.trim() : undefined,
-    price:
-      typeof parsedPrice === "number" && Number.isFinite(parsedPrice)
-        ? parsedPrice
-        : undefined,
+    price: toNum(data.price),
+    priceMin: toNum(data.priceMin),
+    priceMax: toNum(data.priceMax),
+    priceReason: typeof data.priceReason === "string" ? data.priceReason.trim() : undefined,
     condition:
       typeof data.condition === "string" ? data.condition.trim() : undefined,
     description,
+    confidence: ["high", "medium", "low"].includes(data.confidence as string)
+      ? (data.confidence as "high" | "medium" | "low")
+      : undefined,
+    aiPowered: data.aiPowered === true,
   };
 
   return Object.values(suggestion).some((value) => value !== undefined)
     ? suggestion
     : null;
+};
+
+const parseDescriptionToArray = (descStr: string): string[] => {
+  if (!descStr) return [];
+  return descStr
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .map((s) => (s.startsWith("-") ? s.substring(1).trim() : s))
+    .filter(Boolean);
 };
 
 export const EditProductModal: React.FC<EditProductModalProps> = ({
@@ -106,6 +125,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   const { lang, t } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const selectedFileRef = useRef<File | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -121,10 +141,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
   });
 
   const [error, setError] = useState("");
-  const [aiError, setAiError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -141,7 +161,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         condition: product.condition || "New",
         locationText: product.locationText || (typeof product.location === "string" ? product.location : ""),
         imageUrl: product.imageUrl || "",
-        description: product.description ? product.description.join(", ") : "",
+        description: product.description ? product.description.map(d => `- ${d}`).join("\n") : "",
         available: product.statusQuantities?.available ?? 1,
         rented: product.statusQuantities?.rented ?? 0,
         overdue: product.statusQuantities?.overdue ?? 0,
@@ -149,6 +169,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       setError("");
       setAiError("");
       setIsAnalyzing(false);
+      selectedFileRef.current = null;
       setAddressSuggestions([]);
       setIsSearchingAddress(false);
       setShowAdminAddress(false);
@@ -204,73 +225,12 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
     }
   }, [formData.locationText, selectedFromSuggestions]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setIsUploading(true);
+      selectedFileRef.current = file;
       setError("");
       setFormData((prev) => ({ ...prev, imageUrl: URL.createObjectURL(file) }));
-      try {
-        const uploadData = new FormData();
-        uploadData.append("image", file);
-        const res = await apiClient.post<{ success: boolean; url: string }>("/api/v1/upload", uploadData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
-        const url = res.data.url;
-        setFormData((prev) => ({
-          ...prev,
-          imageUrl: url.startsWith("http") ? url : `${apiClient.defaults.baseURL}${url}`,
-        }));
-      } catch (err) {
-        setError(lang === "vi" ? "Lỗi tải ảnh. Vui lòng thử lại!" : "Upload error");
-      } finally {
-        setIsUploading(false);
-      }
-    }
-  };
-
-  const handleAIAnalyze = async () => {
-    if (!formData.imageUrl) {
-      return;
-    }
-
-    setAiError("");
-    setIsAnalyzing(true);
-
-    try {
-      const response = await apiClient.post<unknown>(
-        "/api/v1/products/ai/analyze",
-        {
-          imageUrl: formData.imageUrl,
-        }
-      );
-
-      const suggestion = parseAiSuggestion(response.data);
-      if (!suggestion) {
-        setAiError(t.addProductAiInvalid);
-        return;
-      }
-
-      setFormData((prev) => ({
-        ...prev,
-        name: suggestion.name ?? prev.name,
-        category: suggestion.category ?? prev.category,
-        price:
-          typeof suggestion.price === "number"
-            ? String(Math.round(suggestion.price))
-            : prev.price,
-        condition: suggestion.condition ?? prev.condition,
-        description: suggestion.description?.join(", ") ?? prev.description,
-      }));
-    } catch (error: unknown) {
-      const apiError = normalizeApiError(error);
-      if (apiError.statusCode === 404 || apiError.statusCode === 405) {
-        setAiError(t.addProductAiUnavailable);
-      } else {
-        setAiError(apiError.message);
-      }
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
@@ -283,6 +243,19 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
     setIsSaving(true);
     try {
+      let finalImageUrl = formData.imageUrl;
+
+      // Defer image upload to Cloudinary until Save is clicked
+      if (selectedFileRef.current && formData.imageUrl.startsWith("blob:")) {
+        const uploadData = new FormData();
+        uploadData.append("image", selectedFileRef.current);
+        const res = await apiClient.post<{ success: boolean; url: string }>("/api/v1/upload", uploadData, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        const url = res.data.url;
+        finalImageUrl = url.startsWith("http") ? url : `${apiClient.defaults.baseURL}${url}`;
+      }
+
       let lng = 105.8342, lat = 21.0278;
       try {
         const geoRes = await fetch(
@@ -306,21 +279,21 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         condition: formData.condition,
         locationText: formData.locationText,
         location: { type: "Point", coordinates: [lng, lat] },
-        image: formData.imageUrl,
-        imageUrl: formData.imageUrl,
+        imageUrl: finalImageUrl,
         statusQuantities: {
           available: Number(formData.available),
           rented: Number(formData.rented),
           overdue: Number(formData.overdue),
         },
         description: formData.description
-          ? formData.description.split(",").map((s) => s.trim())
+          ? parseDescriptionToArray(formData.description)
           : undefined,
       };
 
       if (!product) return;
 
       await productService.updateProduct(product.id, submitData as any);
+      selectedFileRef.current = null;
       onSuccess();
     } catch (err: any) {
       setError(err.message || "Lỗi khi lưu");
@@ -465,36 +438,18 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                     </button>
                   </div>
 
-                  {/* Neon AI Scanner Overlay */}
-                  {(isAnalyzing || isUploading) && (
+                  {/* Neon Upload Overlay */}
+                  {isUploading && (
                     <div className="absolute inset-0 bg-slate-955/30 backdrop-blur-[2px] flex flex-col items-center justify-center overflow-hidden">
-                      <div className="absolute left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-teal-400 to-transparent shadow-[0_0_15px_rgba(45,212,191,1)] animate-scan-laser" />
                       <div className="h-12 w-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/25 animate-pulse shadow-2xl">
                         <Loader2 size={20} className="animate-spin text-teal-400" />
                       </div>
                       <span className="mt-3 text-[9px] font-black uppercase tracking-[0.25em] text-teal-400 bg-slate-900/90 px-3.5 py-1.5 rounded-full shadow-2xl border border-teal-500/30">
-                        {isUploading
-                          ? (lang === "vi" ? "ĐANG TẢI..." : "UPLOADING...")
-                          : t.addProductAiAnalyzing}
+                        {lang === "vi" ? "ĐANG TẢI..." : "UPLOADING..."}
                       </span>
                     </div>
                   )}
                 </div>
-
-                {!isAnalyzing && (
-                  <button
-                    type="button"
-                    onClick={handleAIAnalyze}
-                    className="w-full flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-[1.2px] shadow-md shadow-purple-500/10 hover:shadow-purple-500/20 active:scale-98 transition-all duration-300 group overflow-hidden"
-                  >
-                    <div className="w-full bg-white dark:bg-slate-900 rounded-[14px] py-3 flex items-center justify-center gap-2 group-hover:bg-transparent transition-colors duration-300">
-                      <Sparkles size={14} className="text-purple-500 group-hover:text-white" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-700 dark:text-slate-200 group-hover:text-white transition-colors">
-                        {t.addProductAiAnalyze}
-                      </span>
-                    </div>
-                  </button>
-                )}
               </div>
             ) : (
               <div
@@ -591,6 +546,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                     </span>
                   </div>
                 )}
+
+
 
                 {/* Row 2: Category Dropdown (6 cols) & Condition Pill Selector (6 cols) */}
                 <div className="col-span-12 md:col-span-6 space-y-1.5 relative" ref={categoryDropdownRef}>
@@ -728,7 +685,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                   </div>
                 </div>
 
-                {/* Row 4: Display Location (with absolute AddressSelector popover) */}
+                {/* Row 4: Display Location (with inline AddressSelector accordion) */}
                 <div className="col-span-12 space-y-1.5 relative">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center justify-between gap-1 w-full">
                     <span className="flex items-center gap-1.5">
@@ -738,9 +695,13 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAdminAddress(!showAdminAddress)}
-                      className="text-[9px] font-black tracking-widest text-teal-600 dark:text-teal-400 hover:underline uppercase flex items-center gap-0.5"
+                      className={`text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 shadow-sm ${
+                        showAdminAddress
+                          ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30 shadow-teal-500/5 scale-102"
+                          : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-455 border-slate-200/60 dark:border-slate-700/80 hover:text-slate-700 dark:hover:text-slate-200 hover:scale-102"
+                      }`}
                     >
-                      <Map size={9} />
+                      <Map size={10} className={showAdminAddress ? "animate-pulse text-teal-500" : ""} />
                       {showAdminAddress 
                         ? (lang === "vi" ? "Gõ Địa Chỉ Nhanh" : "Quick Text Input") 
                         : (lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative")}
@@ -782,35 +743,33 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                       ))}
                     </div>
                   )}
-
-                  {/* HIGH-END ABSOLUTE FLOATING POPOVER: Pick address via 3-step dropdown lists */}
-                  {showAdminAddress && (
-                    <div className="absolute z-[100] left-0 right-0 top-full mt-2 p-5 rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-150 dark:border-slate-800/80 animate-in fade-in slide-in-from-top-3 duration-300 ring-1 ring-black/5">
-                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                          <MapPin size={13} className="text-teal-500 animate-pulse" />
-                          {lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative"}
-                        </span>
-                        <button 
-                          type="button" 
-                          onClick={() => setShowAdminAddress(false)}
-                          className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-650 transition-colors"
-                        >
-                          {lang === "vi" ? "Đóng" : "Close"}
-                        </button>
-                      </div>
-                      <AddressSelector
-                        lang={lang as any}
-                        onSelect={(fullAddress) => {
-                          setFormData((prev) => ({ ...prev, locationText: fullAddress }));
-                          setShowAdminAddress(false);
-                        }}
-                      />
-                    </div>
-                  )}
                 </div>
 
-                {/* Row 5: Description (12 cols - Sleek height of 2 rows) */}
+                {/* HIGH-END INLINE ACCORDION: Pick address via 3-step dropdown lists */}
+                {showAdminAddress && (
+                  <div className="col-span-12 mt-1 p-5 rounded-3xl bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800/60 shadow-inner animate-in fade-in slide-in-from-top-3 duration-300 ring-1 ring-black/5 w-full">
+                    <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/60 dark:border-slate-800">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <MapPin size={13} className="text-teal-500 animate-pulse" />
+                        {lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative Address"}
+                      </span>
+                      <button 
+                        type="button" 
+                        onClick={() => setShowAdminAddress(false)}
+                        className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-655 transition-colors"
+                      >
+                        {lang === "vi" ? "Đóng" : "Close"}
+                      </button>
+                    </div>
+                    <AddressSelector
+                      lang={lang as any}
+                      onSelect={(fullAddress) => {
+                        setFormData((prev) => ({ ...prev, locationText: fullAddress }));
+                        setShowAdminAddress(false);
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="col-span-12 space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
                     {t.addProductDescription}
