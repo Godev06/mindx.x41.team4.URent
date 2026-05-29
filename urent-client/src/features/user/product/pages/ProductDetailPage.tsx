@@ -8,7 +8,10 @@ import {
   Star,
   Truck,
   Zap,
+  Maximize2,
+  X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { ProductBookingCard } from "../components/ProductBookingCard";
@@ -16,6 +19,10 @@ import { ProductSpecRow } from "../components/ProductSpecRow";
 import { ProductReviews } from "../components/ProductReviews";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { productService } from "../services/productService";
+import { useAuth } from "../../auth/hooks/useAuth";
+import { useAuthGate } from "../../auth/context/AuthGateContext";
+import { useToast } from "../../shared/hooks/useToast";
+import { messageService } from "../../messages/services/messageService";
 
 interface ProductDetailPageProps {
   productId: string | number | null;
@@ -36,6 +43,72 @@ export function ProductDetailPage({
   const [product, setProduct] = useState<(Product & { locationText?: string }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const { guardedNavigate } = useAuthGate();
+  const { showToast } = useToast();
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsLightboxOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isLightboxOpen]);
+
+  const isOwner = useMemo(() => {
+    if (!product) return false;
+    const targetOwnerId = product.owner?.id || product.ownerId;
+    return String(targetOwnerId) === String(user?.id);
+  }, [product, user]);
+
+  const handleContactOwner = async () => {
+    if (!product) return;
+    const targetOwnerId = product.owner?.id || product.ownerId;
+    if (!targetOwnerId) {
+      showToast({
+        title: "Thông báo",
+        description: "Không thể xác định thông tin chủ sở hữu.",
+        variant: "error",
+      });
+      return;
+    }
+
+    if (!isAuthenticated) {
+      guardedNavigate(`/messages`);
+      return;
+    }
+
+    if (String(user?.id) === String(targetOwnerId)) {
+      showToast({
+        title: "Thông báo",
+        description: "Bạn không thể tự nhắn tin cho chính mình.",
+        variant: "error",
+      });
+      return;
+    }
+
+    try {
+      setIsCreatingChat(true);
+      const conversation = await messageService.createConversation(String(targetOwnerId));
+      navigate(`/messages/${conversation.id}`);
+    } catch (err: any) {
+      console.error("Failed to create/open conversation:", err);
+      showToast({
+        title: "Lỗi kết nối",
+        description: err.response?.data?.error?.message || err.message || "Không thể mở hộp thoại tin nhắn.",
+        variant: "error",
+      });
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -102,14 +175,39 @@ export function ProductDetailPage({
       </button>
 
       {product.imageUrl && (
-        <div className="relative mb-8 h-64 w-full overflow-hidden rounded-3xl sm:h-80 md:h-96">
-          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-slate-900/10 to-transparent" />
-          <span className="absolute top-4 left-4 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md">{product.category}</span>
-          <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200 backdrop-blur-md">
+        <div
+          onClick={() => setIsLightboxOpen(true)}
+          className="group relative mb-8 h-64 w-full overflow-hidden rounded-3xl sm:h-80 md:h-96 cursor-zoom-in active:scale-[0.99] transition-transform duration-300 bg-slate-950 flex items-center justify-center"
+        >
+          {/* Blurred Background Underlay - keeps the box fully filled with matching colors without cropping the product */}
+          <img
+            src={product.imageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover filter blur-2xl opacity-40 scale-110 pointer-events-none"
+            aria-hidden="true"
+          />
+
+          {/* Centered Foreground Product Image - standard proportion, never cropped */}
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="h-full w-auto max-w-full object-contain relative z-10 transition-transform duration-500 ease-out group-hover:scale-[1.02] pointer-events-none"
+          />
+
+          {/* Interactive Zoom Overlay */}
+          <div className="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 backdrop-blur-[1px] flex items-center justify-center pointer-events-none z-30">
+            <div className="flex items-center gap-2 rounded-2xl bg-white/25 border border-white/30 px-5 py-2.5 text-sm font-semibold text-white shadow-xl backdrop-blur-md scale-95 group-hover:scale-100 transition-transform duration-300">
+              <Maximize2 size={16} strokeWidth={2.5} />
+              <span>Xem ảnh toàn màn hình</span>
+            </div>
+          </div>
+
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent pointer-events-none z-20" />
+          <span className="absolute top-4 left-4 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white backdrop-blur-md pointer-events-none z-20">{product.category}</span>
+          <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-200 backdrop-blur-md pointer-events-none z-20">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />{t.bookingReady}
           </span>
-          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 pointer-events-none z-20">
             <h1 className="text-2xl font-bold tracking-tight text-white drop-shadow sm:text-3xl md:text-4xl">{product.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
               <div className="inline-flex items-center gap-1 font-semibold text-amber-300">
@@ -167,7 +265,23 @@ export function ProductDetailPage({
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Chủ sở hữu</p>
                 <p className="mt-0.5 text-base font-bold text-slate-900 dark:text-white">{product.owner.name}</p>
               </div>
-              <button type="button" className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-slate-500 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5"><MessageCircle size={18} strokeWidth={2} /></button>
+              <button
+                type="button"
+                onClick={handleContactOwner}
+                disabled={isCreatingChat || isOwner}
+                className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isOwner
+                    ? "border-slate-200 bg-slate-100 text-slate-400 dark:border-white/5 dark:bg-white/5 dark:text-slate-500"
+                    : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-teal-500/30 dark:hover:bg-teal-500/10 dark:hover:text-teal-400"
+                }`}
+              >
+                {isCreatingChat ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />
+                ) : (
+                  <MessageCircle size={18} strokeWidth={2} />
+                )}
+                <span>{isOwner ? "Sản phẩm của bạn" : "Nhắn tin"}</span>
+              </button>
             </div>
           )}
         </div>
@@ -176,6 +290,48 @@ export function ProductDetailPage({
           <ProductBookingCard product={product} />
         </div>
       </div>
+
+      {/* Immersive Full-Screen Lightbox Modal */}
+      {isLightboxOpen && product.imageUrl && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-300 animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* Backdrop with extreme blur and dark tint */}
+          <div
+            className="absolute inset-0 bg-slate-950/90 backdrop-blur-xl transition-opacity duration-300 cursor-zoom-out"
+            onClick={() => setIsLightboxOpen(false)}
+          />
+
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-5 right-5 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white backdrop-blur-md shadow-lg transition hover:scale-105 hover:bg-white/20 active:scale-95"
+            aria-label="Đóng"
+          >
+            <X size={20} strokeWidth={2.5} />
+          </button>
+
+          {/* Image Container */}
+          <div
+            className="relative max-h-[85vh] max-w-full overflow-hidden rounded-2xl shadow-[0_32px_80px_-20px_rgba(0,0,0,0.8)] border border-white/5 bg-slate-900/40 p-2 backdrop-blur-sm animate-scaleIn select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="max-h-[75vh] max-w-full rounded-xl object-contain"
+            />
+            {/* Elegant overlay caption */}
+            <div className="mt-3 text-center px-4">
+              <p className="text-sm font-bold text-white tracking-tight">{product.name}</p>
+              <p className="mt-0.5 text-xs text-slate-400 font-medium">{product.category}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

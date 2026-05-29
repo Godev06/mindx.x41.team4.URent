@@ -20,6 +20,7 @@ import {
   Wallet,
   QrCode,
   CheckCircle2,
+  MessageSquare,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../../shared/types";
@@ -28,6 +29,8 @@ import { useAuth } from "../../auth/hooks/useAuth";
 import { APP_ROUTES } from "../../auth/constants";
 import { apiClient } from "../../../../lib/api/apiClient";
 import { useToast } from "../../shared/hooks/useToast";
+import { useAuthGate } from "../../auth/context/AuthGateContext";
+import { messageService } from "../../messages/services/messageService";
 
 interface ProductBookingCardProps {
   product: Product;
@@ -41,6 +44,50 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { guardedNavigate } = useAuthGate();
+  const [isCreatingChat, setIsCreatingChat] = useState(false);
+
+  const handleContactOwner = async () => {
+    if (!product) return;
+    const targetOwnerId = product.owner?.id || (product as any).ownerId;
+    if (!targetOwnerId) {
+      showToast({
+        title: lang === "vi" ? "Thông báo" : "Notice",
+        description: lang === "vi" ? "Không thể xác định thông tin chủ sở hữu." : "Could not identify product owner.",
+        variant: "error",
+      });
+      return;
+    }
+
+    if (!isAuthenticated) {
+      guardedNavigate(`/messages`);
+      return;
+    }
+
+    if (String(user?.id) === String(targetOwnerId)) {
+      showToast({
+        title: lang === "vi" ? "Thông báo" : "Notice",
+        description: lang === "vi" ? "Bạn không thể tự nhắn tin cho chính mình." : "You cannot rent/message your own product.",
+        variant: "error",
+      });
+      return;
+    }
+
+    try {
+      setIsCreatingChat(true);
+      const conversation = await messageService.createConversation(String(targetOwnerId));
+      navigate(`/messages/${conversation.id}`);
+    } catch (err: any) {
+      console.error("Failed to create/open conversation:", err);
+      showToast({
+        title: lang === "vi" ? "Lỗi kết nối" : "Connection error",
+        description: err.response?.data?.error?.message || err.message || (lang === "vi" ? "Không thể mở hộp thoại tin nhắn." : "Could not open chat room."),
+        variant: "error",
+      });
+    } finally {
+      setIsCreatingChat(false);
+    }
+  };
 
   const isOwner = useMemo(() => {
     if (!isAuthenticated || !user || !product) return false;
@@ -840,6 +887,22 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
               t.bookingRentRequest
             )}
           </button>
+
+          {!isOwner && (
+            <button
+              type="button"
+              onClick={handleContactOwner}
+              disabled={isCreatingChat}
+              className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3.5 text-sm font-bold text-slate-700 shadow-sm transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-teal-500/30 dark:hover:bg-teal-500/10 dark:hover:text-teal-400 disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.99]"
+            >
+              {isCreatingChat ? (
+                <Loader2 size={16} strokeWidth={2.5} className="animate-spin" />
+              ) : (
+                <MessageSquare size={16} strokeWidth={2} />
+              )}
+              <span>{lang === "vi" ? "Nhắn tin cho chủ xe" : "Message owner"}</span>
+            </button>
+          )}
 
           {isOwner && (
             <p className="mt-2.5 text-center text-xs font-semibold text-rose-500 dark:text-rose-450 animate-fadeIn">
