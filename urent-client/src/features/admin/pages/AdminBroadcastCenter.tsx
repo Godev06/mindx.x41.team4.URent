@@ -12,7 +12,7 @@ export function AdminBroadcastCenter() {
     description: "",
     type: "system" as "promotion" | "system",
     actionUrl: "",
-    target: "all" as "all" | "lessors" | "lessees",
+    target: "all" as "all",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -93,7 +93,7 @@ export function AdminBroadcastCenter() {
         {/* Banner Header */}
         <section className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl">
           <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
-          
+
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-teal-500/20 bg-teal-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-teal-300">
@@ -118,7 +118,7 @@ export function AdminBroadcastCenter() {
               <Send size={18} className="text-teal-400" />
               Soạn thảo thông điệp
             </h2>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -146,8 +146,6 @@ export function AdminBroadcastCenter() {
                     className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white shadow-sm outline-none transition focus:border-teal-500"
                   >
                     <option value="all">Tất cả người dùng (All Users)</option>
-                    <option value="lessors">Chỉ Chủ xe (Lessors)</option>
-                    <option value="lessees">Chỉ Khách thuê (Lessees)</option>
                   </select>
                 </div>
               </div>
@@ -161,7 +159,7 @@ export function AdminBroadcastCenter() {
                   name="title"
                   value={formData.title}
                   onChange={handleChange}
-                  placeholder="Nhập tiêu đề ngắn gọn (ví dụ: Khuyến mãi 20% đặt xe cuối tuần!)"
+                  placeholder="Nhập tiêu đề ngắn gọn"
                   className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-white placeholder-slate-500 shadow-sm outline-none transition focus:border-teal-500"
                 />
               </div>
@@ -203,7 +201,7 @@ export function AdminBroadcastCenter() {
                   <Eye size={16} />
                   Xem thử Toast
                 </button>
-                
+
                 <button
                   type="submit"
                   disabled={loading}
@@ -223,13 +221,13 @@ export function AdminBroadcastCenter() {
                 <Eye size={18} className="text-teal-400" />
                 Bản xem trước trực quan
               </h2>
-              
+
               <div className="rounded-2xl border border-slate-800 bg-slate-950 p-4 space-y-4">
                 <p className="text-xs text-slate-500 uppercase tracking-widest font-semibold">Giao diện thông báo In-App</p>
-                
+
                 <div className="relative border border-slate-800 bg-[#0f172a] rounded-2xl p-4 overflow-hidden shadow-inner flex items-start gap-3">
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-teal-400 to-cyan-500" />
-                  
+
                   <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-400 ring-1 ring-teal-500/20`}>
                     {formData.type === "promotion" ? <BadgeInfo size={16} /> : <ShieldAlert size={16} />}
                   </div>

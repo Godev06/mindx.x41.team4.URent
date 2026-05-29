@@ -6,6 +6,11 @@ import {
   ShoppingCart,
   User,
   Shield,
+  Sparkles,
+  Compass,
+  Gift,
+  ArrowRight,
+  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -17,6 +22,7 @@ import { SidebarItem } from "../../shared/components/SidebarItem";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { getAvatarStyle } from "../../shared/utils/avatar";
 import { useNotifications, useUnreadCount } from "../../notifications/hooks/useNotifications";
+import { useUnreadMessagesCount } from "../../messages/hooks/useUnreadMessagesCount";
 import { useToast } from "../../shared/hooks/useToast";
 import { MAIN_NAV_ITEMS } from "../constants/navItems";
 import { audioChimeService } from "../../notifications/services/audioChimeService";
@@ -35,13 +41,15 @@ export function AppHeader() {
   const { pathname } = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const { guardedNavigate } = useAuthGate();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const { notifications } = useNotifications({ limit: 3 });
   const { unreadCount } = useUnreadCount();
+  const unreadMessagesCount = useUnreadMessagesCount();
   const { showToast } = useToast();
 
   // 1. Tự động đăng ký Service Worker và đồng bộ FCM Token khi đăng nhập
@@ -133,6 +141,29 @@ export function AppHeader() {
       window.removeEventListener("notification.created", handleNotificationCreated);
     };
   }, [isAuthenticated, showToast, navigate]);
+
+  // 3. Tự động hiển thị Alert chào mừng đối với tài khoản mới tạo (First time login)
+  useEffect(() => {
+    if (isAuthenticated && user && user.id) {
+      const key = `welcome_alert_shown_${user.id}`;
+      const isShown = localStorage.getItem(key);
+      if (!isShown) {
+        // Kiểm tra nếu tài khoản được tạo gần đây (trong vòng 24 giờ) để tránh hiện cho user cũ
+        const createdTime = user.createdAt ? new Date(user.createdAt).getTime() : Date.now();
+        const oneDay = 24 * 60 * 60 * 1000;
+        if (Date.now() - createdTime < oneDay) {
+          // Trì hoãn 1.5 giây để giao diện Dashboard tải xong hoàn toàn
+          const timer = setTimeout(() => {
+            setShowWelcomeModal(true);
+          }, 1500);
+          return () => clearTimeout(timer);
+        } else {
+          // Nếu đã tạo lâu hơn 24 giờ, đánh dấu đã hiển thị để không hiện lại
+          localStorage.setItem(key, "true");
+        }
+      }
+    }
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -237,7 +268,8 @@ export function AppHeader() {
   const isMobilePanelOpen = isNotifOpen || isProfileOpen;
 
   return (
-    <nav className="sticky top-0 z-50 rounded-3xl border border-white/65 bg-white/85 px-4 py-3 shadow-[0_14px_44px_-20px_rgba(15,23,42,0.34)] ring-1 ring-white/70 backdrop-blur-2xl sm:px-5 lg:px-6 dark:border-white/14 dark:bg-[#0b1220]/78 dark:shadow-[0_22px_58px_-26px_rgba(2,8,23,0.9)] dark:ring-white/10">
+    <>
+      <nav className="sticky top-0 z-50 rounded-3xl border border-white/65 bg-white/85 px-4 py-3 shadow-[0_14px_44px_-20px_rgba(15,23,42,0.34)] ring-1 ring-white/70 backdrop-blur-2xl sm:px-5 lg:px-6 dark:border-white/14 dark:bg-[#0b1220]/78 dark:shadow-[0_22px_58px_-26px_rgba(2,8,23,0.9)] dark:ring-white/10">
       {isMobilePanelOpen ? (
         <button
           type="button"
@@ -308,7 +340,14 @@ export function AppHeader() {
                     : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/6 dark:hover:text-slate-100"
                     }`}
                 >
-                  <Icon size={18} strokeWidth={2} />
+                  <div className="relative">
+                    <Icon size={18} strokeWidth={2} />
+                    {item.path === "/messages" && unreadMessagesCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-slate-100 dark:ring-slate-900">
+                        {unreadMessagesCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="hidden text-sm xl:block">
                     {navLabelMap[item.path] ?? item.label}
                   </span>
@@ -333,7 +372,9 @@ export function AppHeader() {
                   >
                     <Bell size={20} strokeWidth={2} />
                     {unreadCount > 0 && (
-                      <span className="absolute top-2 right-2 h-2 w-2 rounded-full border-2 border-white bg-red-500 dark:border-[#0b1220]" />
+                      <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-[#0b1220]">
+                        {unreadCount}
+                      </span>
                     )}
                   </button>
 
@@ -529,7 +570,117 @@ export function AppHeader() {
           </div>
         </div>
       )}
-    </nav>
+      </nav>
+
+      {/* Elegant Welcome Dialog Modal */}
+      {showWelcomeModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+        >
+          {/* Backdrop with premium blur */}
+          <div
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-300"
+            onClick={() => {
+              setShowWelcomeModal(false);
+              if (user?.id) localStorage.setItem(`welcome_alert_shown_${user.id}`, "true");
+            }}
+          />
+
+          {/* Premium Card with Glassmorphism and slide-up animation */}
+          <div className="relative w-full max-w-lg overflow-hidden rounded-[2.5rem] border border-white/20 bg-white/95 shadow-[0_32px_120px_-20px_rgba(15,23,42,0.6)] backdrop-blur-xl dark:border-white/10 dark:bg-[#0c1322]/95 animate-in fade-in zoom-in-95 duration-300">
+            {/* Top glowing gradient line */}
+            <div className="h-2 w-full bg-gradient-to-r from-teal-400 via-cyan-400 to-teal-500" />
+            
+            <div className="p-8 sm:p-10">
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWelcomeModal(false);
+                  if (user?.id) localStorage.setItem(`welcome_alert_shown_${user.id}`, "true");
+                }}
+                className="absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 dark:bg-white/5 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
+                aria-label="Close"
+              >
+                <X size={18} strokeWidth={2.5} />
+              </button>
+
+              {/* Glowing Icon Container */}
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-xl shadow-teal-500/30 ring-4 ring-teal-500/10 dark:ring-teal-400/20">
+                <Sparkles size={36} strokeWidth={2} className="text-white animate-pulse" />
+              </div>
+
+              {/* Welcome Headers */}
+              <div className="text-center">
+                <h2 className="bg-gradient-to-r from-slate-900 via-teal-800 to-cyan-900 bg-clip-text text-2xl font-black tracking-tight text-transparent dark:from-white dark:via-teal-300 dark:to-cyan-200 sm:text-3xl">
+                  {lang === "vi" ? "Chào mừng đến với URent! 🎉" : "Welcome to URent! 🎉"}
+                </h2>
+                <p className="mt-2 text-sm font-semibold tracking-wider text-teal-600 uppercase dark:text-teal-400">
+                  {lang === "vi" ? "Tài khoản của bạn đã sẵn sàng" : "Your account is ready"}
+                </p>
+              </div>
+
+              {/* Body Content */}
+              <div className="mt-6 text-center text-slate-600 dark:text-slate-300">
+                <p className="text-[15px] leading-relaxed">
+                  {lang === "vi"
+                    ? "Hệ thống quản trị URent rất vui mừng được đồng hành cùng bạn. Tại đây, bạn có thể dễ dàng tìm kiếm, thuê nhanh các món đồ tiện ích hoặc đăng tin cho thuê các thiết bị nhàn rỗi một cách nhanh chóng và an toàn."
+                    : "URent administration system is very excited to accompany you. Here, you can easily search, quickly rent convenient items, or post rental listings for your idle equipment quickly and safely."}
+                </p>
+              </div>
+
+              {/* Key Features Grid */}
+              <div className="mt-8 grid grid-cols-1 gap-4 text-left sm:grid-cols-2">
+                <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-slate-50 dark:border-white/5 dark:bg-white/3 dark:hover:bg-white/5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400">
+                    <Compass size={16} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {lang === "vi" ? "Khám phá thông minh" : "Smart Discovery"}
+                    </h4>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      {lang === "vi" ? "Hàng ngàn thiết bị chất lượng cao chờ đón." : "Thousands of premium devices ready."}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/50 p-4 transition-all hover:bg-slate-50 dark:border-white/5 dark:bg-white/3 dark:hover:bg-white/5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                    <Gift size={16} strokeWidth={2.5} />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                      {lang === "vi" ? "Đăng tin dễ dàng" : "Easy Listings"}
+                    </h4>
+                    <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+                      {lang === "vi" ? "Kiếm thêm thu nhập từ đồ nhàn rỗi." : "Earn income from your idle assets."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Close Button / Call To Action */}
+              <div className="mt-8">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowWelcomeModal(false);
+                    if (user?.id) localStorage.setItem(`welcome_alert_shown_${user.id}`, "true");
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-teal-500 to-cyan-500 py-4 text-sm font-bold text-white shadow-xl shadow-teal-500/25 transition-all hover:from-teal-600 hover:to-cyan-600 hover:shadow-teal-500/35 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                >
+                  <span>{lang === "vi" ? "Bắt đầu khám phá ngay" : "Start Exploring Now"}</span>
+                  <ArrowRight size={16} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -537,6 +688,7 @@ export function MobileBottomNav() {
   const { pathname } = useLocation();
   const { t } = useI18n();
   const { guardedNavigate } = useAuthGate();
+  const unreadMessagesCount = useUnreadMessagesCount();
 
   const navLabelMap: Record<string, string> = {
     "/": t.headerHome,
@@ -564,7 +716,14 @@ export function MobileBottomNav() {
                   }`}
                 aria-current={isActive ? "page" : undefined}
               >
-                <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
+                <div className="relative">
+                  <Icon size={18} strokeWidth={isActive ? 2.25 : 2} />
+                  {item.path === "/messages" && unreadMessagesCount > 0 && (
+                    <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+                      {unreadMessagesCount}
+                    </span>
+                  )}
+                </div>
                 <span className="text-[11px] font-semibold leading-none tracking-tight">
                   {navLabelMap[item.path] ?? item.label}
                 </span>

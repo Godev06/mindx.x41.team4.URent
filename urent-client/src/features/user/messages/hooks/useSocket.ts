@@ -7,6 +7,8 @@ import React, {
   useState,
 } from "react";
 import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
+import { useAuth } from "../../auth/hooks/useAuth";
+
 
 const ENV_BASE_URL = (
   (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL) as
@@ -54,7 +56,9 @@ export function SocketProvider({
 }: {
   children: React.ReactNode;
 }): React.ReactElement {
+  const { token } = useAuth();
   const socketRef = useRef<WebSocket | null>(null);
+
   const reconnectTimeoutRef = useRef<number | null>(null);
   const reconnectDelayRef = useRef(INITIAL_RECONNECT_DELAY);
   const mountedRef = useRef(false);
@@ -184,7 +188,29 @@ export function SocketProvider({
     mountedRef.current = true;
     shouldReconnectRef.current = true;
 
-    connect();
+    if (token) {
+      connect();
+    } else {
+      // Disconnect immediately on logout
+      const socket = socketRef.current;
+      if (socket) {
+        socket.onopen = null;
+        socket.onmessage = null;
+        socket.onerror = null;
+        socket.onclose = null;
+
+        if (
+          socket.readyState === WebSocket.OPEN ||
+          socket.readyState === WebSocket.CONNECTING
+        ) {
+          socket.close();
+        }
+      }
+      socketRef.current = null;
+      setIsConnected(false);
+      setSocket(null);
+      console.log("[WS] Disconnected due to missing token");
+    }
 
     return () => {
       mountedRef.current = false;
@@ -211,7 +237,7 @@ export function SocketProvider({
       setSocket(null);
       console.log("[WS] Cleaned up global context");
     };
-  }, [connect, clearReconnectTimeout]);
+  }, [token, connect, clearReconnectTimeout]);
 
   const joinConversation = useCallback(
     (conversationId: string, onError?: (code: string) => void) => {
