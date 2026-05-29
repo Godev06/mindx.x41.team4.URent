@@ -5,6 +5,7 @@ import { verifyAccessToken } from "../utils/auth-token";
 import { resolveAppIdentity } from "../services/auth-identity.service";
 import { connectDB } from "../config/db-lazy";
 import { ConversationParticipantModel } from "../models/conversation-participant.model";
+import { ConversationModel } from "../models/conversation.model";
 import { UserModel } from "../models/user.model";
 
 type RoomMap = Map<string, Set<WebSocket>>;
@@ -68,6 +69,7 @@ const handleWebSocketConnection = async (
   }
 
   let userId: string;
+  let userRole = "user";
   try {
     const identity = await verifyAccessToken(token);
     const appIdentity = await resolveAppIdentity(identity);
@@ -92,7 +94,7 @@ const handleWebSocketConnection = async (
     console.log(`[WS] Auto-joined user ${userId} to personal room user:${userId}`);
 
     const dbUser = await UserModel.findById(userId).select("role").lean();
-    const userRole = dbUser?.role || "user";
+    userRole = dbUser?.role || "user";
 
     if (userRole === "admin") {
       joinRoom(serverWs, "room:admin_pool");
@@ -147,7 +149,15 @@ const handleWebSocketConnection = async (
         }
 
         const state = await getConversationAccessState(conversationId, userId);
-        if (!state.exists || !state.isMember) {
+        let isAllowed = state.isMember;
+        if (!isAllowed && userRole === "admin") {
+          const conversation = await ConversationModel.findById(conversationId).select("type").lean();
+          if (conversation?.type === "support") {
+            isAllowed = true;
+          }
+        }
+
+        if (!state.exists || !isAllowed) {
           serverWs.send(
             JSON.stringify({
               type: "ack",

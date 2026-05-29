@@ -27,6 +27,8 @@ const buildDefaultSettings = (userId: string) => ({
   language: 'vi' as const,
   emailNotifications: true,
   screenNotifications: true,
+  pushNotifications: true,
+  soundNotifications: true,
   twoFactorEnabled: false
 });
 
@@ -97,13 +99,19 @@ export const updateSettings = async (req: Request, res: Response) => {
   const flattenedUpdate = flattenObject(updateData);
   delete flattenedUpdate.otp;
 
-  const { twoFactorEnabled: _default, ...insertDefaults } = buildDefaultSettings(userId);
+  const { twoFactorEnabled: _default, ...rawInsertDefaults } = buildDefaultSettings(userId);
+
+  // Remove any keys from $setOnInsert that are already present in $set —
+  // MongoDB throws a path-conflict error if the same path appears in both operators.
+  const insertDefaults = Object.fromEntries(
+    Object.entries(rawInsertDefaults).filter(([k]) => !(k in flattenedUpdate))
+  );
 
   const settings = await SettingsModel.findOneAndUpdate(
     { userId },
     {
       $set: flattenedUpdate,
-      $setOnInsert: insertDefaults
+      ...(Object.keys(insertDefaults).length > 0 ? { $setOnInsert: insertDefaults } : {})
     },
     { returnDocument: 'after', upsert: true, runValidators: true }
   );

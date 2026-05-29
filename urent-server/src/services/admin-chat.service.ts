@@ -4,6 +4,7 @@ import { ConversationParticipantModel } from "../models/conversation-participant
 import { UserModel } from "../models/user.model";
 import { AppError } from "../utils/app-error";
 import { decodeCursor, encodeCursor } from "../utils/cursor";
+import { SYSTEM_ADMIN_DISPLAY_NAME, SYSTEM_ADMIN_AVATAR_URL } from "../utils/admin";
 
 const DEFAULT_LIMIT = 20;
 
@@ -140,8 +141,14 @@ export const listAllSupportConversations = async (options: { cursor?: string; li
         role: p.role || "client",
         unreadCount: p.unreadCount || 0,
         lastReadAt: p.lastReadAt?.toISOString() ?? null,
-        displayName: u?.displayName ?? null,
-        avatarUrl: u?.avatarUrl ?? null,
+        displayName:
+          u?.role === "admin"
+            ? SYSTEM_ADMIN_DISPLAY_NAME
+            : (u?.displayName ?? null),
+        avatarUrl:
+          u?.role === "admin"
+            ? SYSTEM_ADMIN_AVATAR_URL
+            : (u?.avatarUrl ?? null),
         email: u?.email ?? null,
         userRole: u?.role ?? "user",
       };

@@ -161,6 +161,10 @@ const verifyOtpWithPurpose = async (
       description: "User completed email verification via OTP",
       req,
     });
+    // Gửi tin nhắn chào mừng từ Admin sau khi user xác thực email thành công (non-blocking)
+    sendWelcomeMessageFromAdmin(String(user._id));
+    // Phát sự kiện để tạo support room (Event-Driven, non-blocking)
+    authEvents.emit("user.registered", { userId: String(user._id) });
     return sendSuccess(res, { message: "Email verified successfully" });
   }
 
@@ -283,11 +287,7 @@ export const register = async (req: Request, res: Response) => {
     throw new AppError(409, "EMAIL_EXISTS", "Email already exists");
   }
 
-  // Tự động gửi tin nhắn chào mừng từ Admin (chạy ngầm - non-blocking)
-  sendWelcomeMessageFromAdmin(user._id.toString());
-
-  // Phát sự kiện user.registered để tự động tạo support chat & gửi welcome message từ Admin (Event-Driven)
-  authEvents.emit("user.registered", { userId: user._id.toString() });
+  // Phát sự kiện user.registered được chuyển sang verifyOtpWithPurpose sau khi user xác thực email OTP thành công
 
   return sendSuccess(
     res,

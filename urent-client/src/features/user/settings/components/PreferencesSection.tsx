@@ -4,8 +4,7 @@ import { SettingSwitch } from "./SettingSwitch";
 import { PageLoader } from "../../shared/components/PageLoader";
 import { SETTINGS_TOKENS } from "../utils/styleTokens";
 import { useToast } from "../../shared/hooks/useToast";
-import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
-import { notificationService } from "../../notifications/services/notificationService";
+import { settingsService } from "../services/settingsService";
 import { audioChimeService, type ChimeStyle } from "../../notifications/services/audioChimeService";
 
 interface PreferencesSectionProps {
@@ -64,36 +63,28 @@ export function PreferencesSection({
   };
 
   useEffect(() => {
-    const token = getStoredAuthToken();
-    if (!token) return;
-
-    notificationService.getNotificationSettings()
-      .then((res) => {
-        if (res.data) {
-          if (res.data.soundNotifications !== undefined) {
-            setSoundNotifications(res.data.soundNotifications);
-            localStorage.setItem("settings.soundNotifications", String(res.data.soundNotifications));
-          }
-          if (res.data.pushNotifications !== undefined) {
-            setPushNotifications(res.data.pushNotifications);
-            localStorage.setItem("settings.pushNotifications", String(res.data.pushNotifications));
-          }
+    settingsService.getFullSettings()
+      .then((settings) => {
+        if (settings.soundNotifications !== undefined) {
+          setSoundNotifications(settings.soundNotifications);
+          localStorage.setItem("settings.soundNotifications", String(settings.soundNotifications));
+        }
+        if (settings.pushNotifications !== undefined) {
+          setPushNotifications(settings.pushNotifications);
+          localStorage.setItem("settings.pushNotifications", String(settings.pushNotifications));
         }
       })
       .catch((err) => {
-        console.error("Failed to load settings in PreferencesSection:", err);
+        console.error("[PreferencesSection] Failed to load settings:", err);
       });
   }, []);
 
   const handleSoundToggle = (checked: boolean) => {
     setSoundNotifications(checked);
     localStorage.setItem("settings.soundNotifications", String(checked));
-    const token = getStoredAuthToken();
-    if (token) {
-      notificationService.updateNotificationSettings({ soundNotifications: checked }).catch((err) => {
-        console.error("Failed to update soundNotifications on BE:", err);
-      });
-    }
+    settingsService.updateSettings({ soundNotifications: checked }).catch((err) => {
+      console.error("[PreferencesSection] Failed to update soundNotifications:", err);
+    });
     showToast({
       title: "Cập nhật thành công",
       description: `Đã ${checked ? "bật" : "tắt"} âm thanh thông báo.`,
@@ -109,12 +100,9 @@ export function PreferencesSection({
         if (token) {
           setPushNotifications(true);
           localStorage.setItem("settings.pushNotifications", "true");
-          const authToken = getStoredAuthToken();
-          if (authToken) {
-            notificationService.updateNotificationSettings({ pushNotifications: true }).catch((err) => {
-              console.error("Failed to update pushNotifications on BE:", err);
-            });
-          }
+          settingsService.updateSettings({ pushNotifications: true }).catch((err) => {
+            console.error("[PreferencesSection] Failed to update pushNotifications on BE:", err);
+          });
           showToast({
             title: "Đã bật thông báo đẩy",
             description: "Trình duyệt đã đăng ký nhận thông báo đẩy thành công.",
@@ -135,12 +123,9 @@ export function PreferencesSection({
         await fcmService.revokeToken();
         setPushNotifications(false);
         localStorage.setItem("settings.pushNotifications", "false");
-        const authToken = getStoredAuthToken();
-        if (authToken) {
-          notificationService.updateNotificationSettings({ pushNotifications: false }).catch((err) => {
-            console.error("Failed to update pushNotifications on BE:", err);
-          });
-        }
+        settingsService.updateSettings({ pushNotifications: false }).catch((err) => {
+          console.error("[PreferencesSection] Failed to update pushNotifications on BE:", err);
+        });
         showToast({
           title: "Đã tắt thông báo đẩy",
           description: "Đã hủy đăng ký nhận thông báo đẩy trình duyệt.",

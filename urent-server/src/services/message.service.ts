@@ -11,6 +11,7 @@ import { UserModel } from "../models/user.model";
 import { AppError } from "../utils/app-error";
 import { decodeCursor, encodeCursor } from "../utils/cursor";
 import { createLinkedActivityNotification } from "./activity-notification.service";
+import { SYSTEM_ADMIN_DISPLAY_NAME, SYSTEM_ADMIN_AVATAR_URL, getSystemAdmin, getSystemAdminId } from "../utils/admin";
 
 const DEFAULT_LIMIT = 20;
 const ONLY_ONE_TO_ONE_MESSAGE = "Chi ho tro tin nhan cho hoi thoai 1v1";
@@ -116,20 +117,126 @@ export const getOrCreateOneToOneConversation = async (
     throw new AppError(400, "VALIDATION_ERROR", "Invalid user id");
   }
 
-  if (userId === peerUserId) {
+  const [userObj, peerObj] = await Promise.all([
+    UserModel.findById(userId).select("role").lean(),
+    UserModel.findById(peerUserId).select("role").lean(),
+  ]);
+
+  const hasAdmin = (userObj?.role === "admin") || (peerObj?.role === "admin");
+
+  if (hasAdmin) {
+    if (userObj?.role === "admin" && peerObj?.role === "admin") {
+      throw new AppError(
+        400,
+        "VALIDATION_ERROR",
+        "Khong the tao hoi thoai giua cac tai khoan Admin",
+      );
+    }
+
+    const clientUserId = userObj?.role === "admin" ? peerUserId : userId;
+    const adminUserId = userObj?.role === "admin" ? userId : peerUserId;
+
+    // Find if the client already has a support conversation
+    const clientParticipants = await ConversationParticipantModel.find({
+      userId: toObjectId(clientUserId),
+    }).select("conversationId").lean();
+
+    const conversationIds = clientParticipants.map((p) => p.conversationId);
+
+    let conversation = await ConversationModel.findOne({
+      _id: { $in: conversationIds },
+      type: "support",
+    });
+
+    if (!conversation) {
+      conversation = await ConversationModel.create({
+        type: "support",
+        conversationType: "ONE_TO_ONE",
+      });
+
+      await ConversationParticipantModel.create({
+        conversationId: conversation._id,
+        userId: toObjectId(clientUserId),
+        role: "client",
+        unreadCount: 0,
+      });
+    }
+
+    // Ensure client is active
+    await ConversationParticipantModel.updateOne(
+      { conversationId: conversation._id, userId: toObjectId(clientUserId) },
+      { $set: { deletedAt: null } }
+    );
+
+    // If the admin is starting the conversation, ensure the admin is added as participant
+    if (userObj?.role === "admin") {
+      const adminParticipantExists = await ConversationParticipantModel.exists({
+        conversationId: conversation._id,
+        userId: toObjectId(adminUserId),
+      });
+
+      if (!adminParticipantExists) {
+        await ConversationParticipantModel.create({
+          conversationId: conversation._id,
+          userId: toObjectId(adminUserId),
+          role: "admin_moderator",
+          unreadCount: 0,
+        });
+      } else {
+        await ConversationParticipantModel.updateOne(
+          { conversationId: conversation._id, userId: toObjectId(adminUserId) },
+          { $set: { deletedAt: null } }
+        );
+      }
+    }
+
+    const peerAdminUser = await UserModel.findById(adminUserId)
+      .select("displayName avatarUrl email role")
+      .lean();
+
+    const peerClientUser = await UserModel.findById(clientUserId)
+      .select("displayName avatarUrl email role")
+      .lean();
+
+    const isRequesterAdmin = userObj?.role === "admin";
+
+    return {
+      id: String(conversation._id),
+      conversationType: "ONE_TO_ONE" as const,
+      type: "support" as const,
+      lastMessage: conversation.lastMessage ?? null,
+      lastMessageAt: conversation.lastMessageAt?.toISOString() ?? null,
+      peer: isRequesterAdmin
+        ? (peerClientUser
+            ? {
+                userId: String(peerClientUser._id),
+                displayName: peerClientUser.displayName ?? null,
+                avatarUrl: peerClientUser.avatarUrl ?? null,
+                email: peerClientUser.email,
+              }
+            : null)
+        : {
+            userId: String(peerAdminUser?._id || adminUserId),
+            displayName: SYSTEM_ADMIN_DISPLAY_NAME,
+            avatarUrl: SYSTEM_ADMIN_AVATAR_URL,
+            email: peerAdminUser?.email || "support@urent.com",
+          },
+    };
+  }
+
+  let mappedUserId = userId;
+  let mappedPeerUserId = peerUserId;
+
+  if (mappedUserId === mappedPeerUserId) {
     throw new AppError(
       400,
       "VALIDATION_ERROR",
-      "Khong the tao hoi thoai 1v1 voi chinh minh",
+      "Khong the tao hoi thoai 1v1 voi chinh minh hoac giua cac tai khoan Admin",
     );
   }
 
-  const peerExists = await UserModel.exists({ _id: peerUserId });
-  if (!peerExists) {
-    throw new AppError(404, "USER_NOT_FOUND", "User not found");
-  }
-
-  const pairKey = buildOneToOnePairKey(userId, peerUserId);
+  const pairKey = buildOneToOnePairKey(mappedUserId, mappedPeerUserId);
+  const conversationTypeField = "one_to_one";
 
   let conversation = await ConversationModel.findOne({
     conversationType: "ONE_TO_ONE",
@@ -141,6 +248,7 @@ export const getOrCreateOneToOneConversation = async (
       conversation = await ConversationModel.create({
         conversationType: "ONE_TO_ONE",
         pairKey,
+        type: conversationTypeField,
       });
     } catch (error) {
       if (!isDuplicateKeyError(error)) {
@@ -164,7 +272,7 @@ export const getOrCreateOneToOneConversation = async (
 
   await Promise.all([
     ConversationParticipantModel.updateOne(
-      { conversationId: conversation._id, userId },
+      { conversationId: conversation._id, userId: mappedUserId },
       {
         $set: { deletedAt: null },
         $setOnInsert: { unreadCount: 0 },
@@ -172,14 +280,14 @@ export const getOrCreateOneToOneConversation = async (
       { upsert: true },
     ),
     ConversationParticipantModel.updateOne(
-      { conversationId: conversation._id, userId: peerUserId },
+      { conversationId: conversation._id, userId: mappedPeerUserId },
       { $setOnInsert: { unreadCount: 0, deletedAt: null } },
       { upsert: true },
     ),
   ]);
 
-  const peer = await UserModel.findById(peerUserId)
-    .select("displayName avatarUrl email")
+  const peer = await UserModel.findById(mappedPeerUserId)
+    .select("displayName avatarUrl email role")
     .lean();
 
   return {
@@ -206,7 +314,7 @@ export const getConversationPeerByEmail = async (
   const normalizedEmail = email.trim().toLowerCase();
 
   const peer = await UserModel.findOne({ email: normalizedEmail })
-    .select("displayName avatarUrl email phone")
+    .select("displayName avatarUrl email phone role")
     .lean();
 
   if (!peer) {
@@ -219,6 +327,16 @@ export const getConversationPeerByEmail = async (
       "VALIDATION_ERROR",
       "Khong the tao hoi thoai voi chinh minh",
     );
+  }
+
+  if (peer.role === "admin") {
+    return {
+      userId: String(peer._id),
+      displayName: SYSTEM_ADMIN_DISPLAY_NAME,
+      avatarUrl: SYSTEM_ADMIN_AVATAR_URL,
+      email: peer.email,
+      phone: null,
+    };
   }
 
   return {
@@ -237,7 +355,7 @@ export const getConversationPeerByPhone = async (
   const normalizedPhone = phone.trim();
 
   const peer = await UserModel.findOne({ phone: normalizedPhone })
-    .select("displayName avatarUrl email phone")
+    .select("displayName avatarUrl email phone role")
     .lean();
 
   if (!peer) {
@@ -250,6 +368,16 @@ export const getConversationPeerByPhone = async (
       "VALIDATION_ERROR",
       "Khong the tao hoi thoai voi chinh minh",
     );
+  }
+
+  if (peer.role === "admin") {
+    return {
+      userId: String(peer._id),
+      displayName: SYSTEM_ADMIN_DISPLAY_NAME,
+      avatarUrl: SYSTEM_ADMIN_AVATAR_URL,
+      email: peer.email,
+      phone: null,
+    };
   }
 
   return {
@@ -325,20 +453,35 @@ export const listConversations = async (
     return { items: [], nextCursor: null, hasMore: false, limit };
   }
 
-  const oneToOneConversationIdSet = await getOneToOneConversationIdSet(
-    memberRows.map((row) => row.conversationId),
-  );
-  const oneToOneMemberRows = memberRows.filter((row) =>
-    oneToOneConversationIdSet.has(String(row.conversationId)),
+  const allConversationIds = memberRows.map((row) => row.conversationId);
+  const conversationsList = await ConversationModel.find({
+    _id: { $in: allConversationIds },
+  }).select("_id type").lean();
+
+  const supportConvIdSet = new Set(
+    conversationsList.filter((c) => c.type === "support").map((c) => String(c._id))
   );
 
-  if (oneToOneMemberRows.length === 0) {
+  const oneToOneConversationIdSet = await getOneToOneConversationIdSet(
+    allConversationIds,
+  );
+
+  const allowedConversationIdSet = new Set([
+    ...oneToOneConversationIdSet,
+    ...supportConvIdSet,
+  ]);
+
+  const allowedMemberRows = memberRows.filter((row) =>
+    allowedConversationIdSet.has(String(row.conversationId)),
+  );
+
+  if (allowedMemberRows.length === 0) {
     return { items: [], nextCursor: null, hasMore: false, limit };
   }
 
-  const conversationIds = oneToOneMemberRows.map((row) => row.conversationId);
+  const conversationIds = allowedMemberRows.map((row) => row.conversationId);
   const memberMap = new Map(
-    oneToOneMemberRows.map((row) => [String(row.conversationId), row]),
+    allowedMemberRows.map((row) => [String(row.conversationId), row]),
   );
 
   const query: Record<string, unknown> = {
@@ -388,7 +531,7 @@ export const listConversations = async (
   );
 
   const users = await UserModel.find({ _id: { $in: uniqueOtherUserIds } })
-    .select("displayName avatarUrl email")
+    .select("displayName avatarUrl email role")
     .lean();
 
   const userMap = new Map(users.map((user) => [String(user._id), user]));
@@ -413,8 +556,14 @@ export const listConversations = async (
 
     participantByConversation.set(key, {
       userId: participantUserId,
-      displayName: participantUser.displayName ?? null,
-      avatarUrl: participantUser.avatarUrl ?? null,
+      displayName:
+        participantUser.role === "admin"
+          ? SYSTEM_ADMIN_DISPLAY_NAME
+          : (participantUser.displayName ?? null),
+      avatarUrl:
+        participantUser.role === "admin"
+          ? SYSTEM_ADMIN_AVATAR_URL
+          : (participantUser.avatarUrl ?? null),
       email: participantUser.email,
     });
   }
@@ -423,7 +572,16 @@ export const listConversations = async (
     const key = String(row._id);
     const member = memberMap.get(key);
 
-    const peer = participantByConversation.get(key) ?? null;
+    let peer = participantByConversation.get(key) ?? null;
+
+    if (row.type === "support") {
+      peer = {
+        userId: "system_admin",
+        displayName: SYSTEM_ADMIN_DISPLAY_NAME,
+        avatarUrl: SYSTEM_ADMIN_AVATAR_URL,
+        email: "support@urent.com",
+      };
+    }
 
     return {
       id: key,
@@ -652,7 +810,7 @@ export const sendConversationMessage = async (
       if (conversation?.type === "support") {
         senderName = "U-Rent Support";
       } else {
-        senderName = sender?.displayName || "Quản trị viên";
+        senderName = SYSTEM_ADMIN_DISPLAY_NAME;
       }
     }
 

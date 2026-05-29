@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { ConversationModel } from "../models/conversation.model";
+import { UserModel } from "../models/user.model";
 import {
   deleteConversationParamsSchema,
   conversationPeerQuerySchema,
@@ -28,6 +29,7 @@ import {
   emitConversationMessageCreated,
   emitConversationReadUpdated,
 } from "../realtime/socket";
+import { getSystemAdminId } from "../utils/admin";
 
 const requireUserId = (req: Request) => {
   const userId = req.user?.sub;
@@ -52,8 +54,9 @@ export const getConversations = async (req: Request, res: Response) => {
 };
 
 export const postConversation = async (req: Request, res: Response) => {
-  const userId = requireUserId(req);
+  let userId = requireUserId(req);
   const body = createOneToOneConversationBodySchema.parse(req.body);
+
 
   const conversation = await getOrCreateOneToOneConversation(
     userId,
@@ -93,9 +96,10 @@ export const getConversationMessages = async (req: Request, res: Response) => {
 };
 
 export const postConversationMessage = async (req: Request, res: Response) => {
-  const userId = requireUserId(req);
+  let userId = requireUserId(req);
   const params = listMessagesParamsSchema.parse(req.params);
   const body = sendMessageBodySchema.parse(req.body);
+
 
   try {
     const message = await sendConversationMessage(

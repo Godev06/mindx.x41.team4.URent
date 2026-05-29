@@ -11,15 +11,15 @@ import App from "./App.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <ThemeProvider>
-        <LanguageProvider>
-          <ToastProvider>
-            <AuthProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <ToastProvider>
               <App />
-            </AuthProvider>
-          </ToastProvider>
-        </LanguageProvider>
-      </ThemeProvider>
+            </ToastProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>,
 );

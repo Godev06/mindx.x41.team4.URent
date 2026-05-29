@@ -52,10 +52,18 @@ const formatCompactNumber = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+function normalizeLocation(loc: unknown): string | undefined {
+  if (!loc) return undefined;
+  if (typeof loc === "string") return loc || undefined;
+  // GeoJSON object {type, coordinates} → bỏ qua, không hiển thị tọa độ thô
+  return undefined;
+}
+
 function buildProductMeta(product: Product): ProductMeta {
+  const loc = normalizeLocation(product.location);
   return {
-    locationVi: product.location || "Chưa cập nhật",
-    locationEn: product.location || "Unknown",
+    locationVi: loc || "Chưa cập nhật",
+    locationEn: loc || "Unknown",
     distanceKm: 1.5,
     conditionVi: product.condition || "Tốt",
     conditionEn: product.condition || "Good",

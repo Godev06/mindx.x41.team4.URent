@@ -25,6 +25,12 @@ authEvents.on("user.registered", async ({ userId }: { userId: string }) => {
     // 2. Xác định System Admin ID từ helper thống nhất
     const SYSTEM_ADMIN_ID = await getSystemAdminId();
 
+    // Nếu chưa có admin nào trong DB → bỏ qua, không crash
+    if (!SYSTEM_ADMIN_ID) {
+      console.warn("[UserSupportListener] Chưa có admin nào trong DB. Bỏ qua tạo phòng support.");
+      return;
+    }
+
     // Tránh tự gửi tin nhắn support cho chính mình nếu đăng ký là Admin
     if (userId === SYSTEM_ADMIN_ID) {
       console.log("[UserSupportListener] Đăng ký mới trùng khớp với System Admin. Bỏ qua.");
@@ -42,10 +48,10 @@ authEvents.on("user.registered", async ({ userId }: { userId: string }) => {
     // 4. Nội dung tin nhắn chào mừng từ đội ngũ Admin
     const welcomeMessage =
       "Chào mừng bạn đến với bộ phận hỗ trợ khách hàng của URent!\n\n" +
-      "Tôi là trợ lý ảo từ đội ngũ Admin. Nếu bạn có bất kỳ thắc mắc nào về dịch vụ, quy trình đặt phòng, " +
+      "Hệ thống quản trị URent đã tự động kích hoạt kênh hỗ trợ này. Nếu bạn có bất kỳ thắc mắc nào về dịch vụ, quy trình thuê đồ, " +
       "thanh toán hoặc cần hỗ trợ kỹ thuật, hãy gửi tin nhắn ngay tại đây. " +
-      "Đội ngũ Admin của chúng tôi sẽ phản hồi bạn trong thời gian sớm nhất có thể!\n\n" +
-      "Chúc bạn tìm kiếm được căn phòng ưng ý cùng URent!";
+      "Đội ngũ hỗ trợ của chúng tôi sẽ phản hồi bạn trong thời gian sớm nhất có thể!\n\n" +
+      "Chúc bạn có những trải nghiệm tuyệt vời cùng URent!";
 
     // 5. Gửi tin nhắn chào mừng hệ thống
     console.log(`[UserSupportListener] Đang gửi tin nhắn chào mừng từ Admin (${SYSTEM_ADMIN_ID}) đến phòng chat (${supportConv.id})...`);

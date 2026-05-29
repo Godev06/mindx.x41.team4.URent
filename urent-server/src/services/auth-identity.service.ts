@@ -1,5 +1,6 @@
 import { type AuthProvider, UserModel } from '../models/user.model';
 import type { AuthenticatedUser } from '../utils/auth-token';
+import { sendWelcomeMessageFromAdmin } from './welcome-message.service';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -79,6 +80,8 @@ const findOrCreateUserByEmail = async (
       avatarUrl: avatarUrl || undefined,
       phone: phoneNumber || undefined
     });
+    // Gửi tin nhắn chào mừng từ Admin cho user mới đăng nhập Google lần đầu (non-blocking)
+    void sendWelcomeMessageFromAdmin(String(user._id));
     return user;
   } catch (error) {
     if (!isMongoDuplicateKeyError(error)) {

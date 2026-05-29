@@ -64,3 +64,26 @@ export const updateTrustScore = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // ⛔ Không cho phép xóa bất kỳ user nào có role "admin"
+    const target = await UserModel.findById(id).select("role").lean();
+    if (!target) {
+      return res.status(404).json({ message: "Không tìm thấy người dùng." });
+    }
+    if (target.role === "admin") {
+      return res.status(403).json({
+        message: "Không thể xóa tài khoản có quyền Admin.",
+      });
+    }
+
+    await UserModel.findByIdAndDelete(id);
+
+    return res.json({ success: true, message: "Đã xóa người dùng thành công." });
+  } catch (error) {
+    res.status(500).json({ message: "Xóa thất bại." });
+  }
+};

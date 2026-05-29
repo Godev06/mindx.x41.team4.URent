@@ -35,6 +35,15 @@ export function ProductCard({
 }: ProductCardProps) {
   const { lang } = useI18n();
 
+  // Helper: normalize location — DB cũ có thể lưu GeoJSON object {type, coordinates}
+  const normalizeLocation = (loc: unknown): string | undefined => {
+    if (!loc) return undefined;
+    if (typeof loc === "string") return loc || undefined;
+    // GeoJSON object → bỏ qua, không hiển thị tọa độ
+    if (typeof loc === "object") return undefined;
+    return String(loc) || undefined;
+  };
+
   // 1. Khắc phục logic giá tiền tệ: Phụ thuộc vào languageContext để hiển thị VND hoặc USD
   const rawPrice = priceVnd ?? product?.price;
   const hasPrice = rawPrice !== undefined && rawPrice !== null && !isNaN(Number(rawPrice));
@@ -80,7 +89,7 @@ export function ProductCard({
       /\.(jpg|jpeg|png|webp|gif|svg)/i.test(imageSrc));
 
   // Tự động fallback sang thông tin từ product document trong MongoDB nếu không truyền prop
-  const displayLocation = location || product.location;
+  const displayLocation = normalizeLocation(location) ?? normalizeLocation(product.location);
   const displayCondition = conditionLabel || product.condition;
 
   return (

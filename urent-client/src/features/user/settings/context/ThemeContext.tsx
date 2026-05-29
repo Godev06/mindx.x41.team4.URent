@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ThemeContext, type Theme } from "./ThemeContextObject";
-import { getStoredAuthToken } from "../../../../lib/api/tokenStorage";
-import { notificationService } from "../../notifications/services/notificationService";
-import { apiClient } from "../../../../lib/api/apiClient";
+import { settingsService } from "../services/settingsService";
+import { useAuth } from "../../auth/hooks/useAuth";
 
 const resolveSystemTheme = (): Theme => {
   if (
@@ -17,6 +16,8 @@ const resolveSystemTheme = (): Theme => {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const finishTransitionTimerRef = useRef<number | null>(null);
+  const { isAuthenticated } = useAuth();
+  
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark" || savedTheme === "light") {
@@ -40,49 +41,40 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    const token = getStoredAuthToken();
-    if (!token) return;
+    if (!isAuthenticated) return;
 
-    notificationService.getNotificationSettings()
-      .then((res) => {
-        if (res.data) {
-          if (res.data.emailNotifications !== undefined) {
-            setEmailNotifications(res.data.emailNotifications);
-          }
-          if (res.data.screenNotifications !== undefined) {
-            setScreenNotifications(res.data.screenNotifications);
-          }
-          if (res.data.theme !== undefined) {
-            setTheme(res.data.theme);
-          }
+    settingsService.getFullSettings()
+      .then((settings) => {
+        if (settings.emailNotifications !== undefined) {
+          setEmailNotifications(settings.emailNotifications);
+        }
+        if (settings.screenNotifications !== undefined) {
+          setScreenNotifications(settings.screenNotifications);
+        }
+        if (settings.theme) {
+          setTheme(settings.theme);
         }
       })
       .catch((err) => {
-        console.error("Failed to fetch notification settings from BE:", err);
+        console.error("[ThemeContext] Failed to fetch settings from BE:", err);
       });
-  }, []);
+  }, [isAuthenticated]);
 
   const updateEmailNotifications = async (val: boolean) => {
     setEmailNotifications(val);
-    const token = getStoredAuthToken();
-    if (token) {
-      try {
-        await notificationService.updateNotificationSettings({ emailNotifications: val });
-      } catch (err) {
-        console.error("Failed to update email settings:", err);
-      }
+    try {
+      await settingsService.updateSettings({ emailNotifications: val });
+    } catch (err) {
+      console.error("[ThemeContext] Failed to update emailNotifications:", err);
     }
   };
 
   const updateScreenNotifications = async (val: boolean) => {
     setScreenNotifications(val);
-    const token = getStoredAuthToken();
-    if (token) {
-      try {
-        await notificationService.updateNotificationSettings({ screenNotifications: val });
-      } catch (err) {
-        console.error("Failed to update screen settings:", err);
-      }
+    try {
+      await settingsService.updateSettings({ screenNotifications: val });
+    } catch (err) {
+      console.error("[ThemeContext] Failed to update screenNotifications:", err);
     }
   };
 
@@ -132,12 +124,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
         setTheme((currentTheme) => {
           const nextTheme = currentTheme === "light" ? "dark" : "light";
-          const token = getStoredAuthToken();
-          if (token) {
-            apiClient.patch("/api/v1/settings", { theme: nextTheme }).catch((err) => {
-              console.error("Failed to update theme on BE:", err);
-            });
-          }
+          settingsService.updateTheme(nextTheme).catch((err) => {
+            console.error("[ThemeContext] Failed to update theme on BE:", err);
+          });
           return nextTheme;
         });
 
