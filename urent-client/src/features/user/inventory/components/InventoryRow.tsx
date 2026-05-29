@@ -63,13 +63,13 @@ export function InventoryRow({ item, onDelete, onArchive, onEdit }: InventoryRow
         </div>
       </div>
 
-      {/* Status Breakdown (Updated for US) */}
+      {/* Status Breakdown */}
       <div className="mt-4 sm:mt-0 flex flex-wrap items-center gap-6">
         <div className="flex flex-col items-center gap-1.5">
           <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 size={14} strokeWidth={2.5} />
             <span className="text-xs font-black tabular-nums">
-              {item.statusQuantities.available}
+              {item.statusQuantities?.available ?? 0}
             </span>
           </div>
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
@@ -81,7 +81,7 @@ export function InventoryRow({ item, onDelete, onArchive, onEdit }: InventoryRow
           <div className="flex items-center gap-1.5 text-amber-500">
             <Clock size={14} strokeWidth={2.5} />
             <span className="text-xs font-black tabular-nums">
-              {item.statusQuantities.rented}
+              {item.statusQuantities?.rented ?? 0}
             </span>
           </div>
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
@@ -93,7 +93,7 @@ export function InventoryRow({ item, onDelete, onArchive, onEdit }: InventoryRow
           <div className="flex items-center gap-1.5 text-rose-500">
             <AlertCircle size={14} strokeWidth={2.5} />
             <span className="text-xs font-black tabular-nums">
-              {item.statusQuantities.overdue}
+              {item.statusQuantities?.overdue ?? 0}
             </span>
           </div>
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">

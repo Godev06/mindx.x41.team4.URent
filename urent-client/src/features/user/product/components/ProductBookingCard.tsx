@@ -14,6 +14,8 @@ import type { Product } from "../../shared/types";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { APP_ROUTES } from "../../auth/constants";
+import { apiClient } from "../../../../lib/api/apiClient";
+import { useToast } from "../../shared/hooks/useToast";
 
 interface ProductBookingCardProps {
   product: Product;
@@ -26,6 +28,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
   const { t, lang } = useI18n();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const isDbVnd = product.price > 1000;
   const isShowVnd = lang === "vi";
@@ -54,12 +57,50 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
     });
   };
 
-  const handleRentClick = () => {
-    if (isAuthenticated) {
-      // authenticated flow — proceed normally
+  const handleRentClick = async () => {
+    if (!isAuthenticated) {
+      setShowModal(true);
       return;
     }
-    setShowModal(true);
+
+    setIsLoading(true);
+    try {
+      const start = new Date();
+      const end = new Date();
+      end.setDate(start.getDate() + days);
+
+      const response = await apiClient.post("/api/v1/orders", {
+        productId: String(product._id || product.id),
+        productName: product.name,
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+        totalPrice: priceInVnd * days,
+      });
+
+      showToast({
+        title: lang === "vi" ? "Gửi yêu cầu thuê thành công!" : "Rental request submitted!",
+        description: lang === "vi"
+          ? `Đơn hàng ${response.data.data.orderCode} đã được tạo thành công.`
+          : `Order ${response.data.data.orderCode} has been successfully created.`,
+        variant: "success",
+      });
+
+      setTimeout(() => {
+        navigate("/orders");
+      }, 1000);
+    } catch (err: any) {
+      console.error("Failed to submit rental request:", err);
+      showToast({
+        title: lang === "vi" ? "Lỗi gửi yêu cầu" : "Request failed",
+        description:
+          err.response?.data?.error?.message ||
+          err.message ||
+          (lang === "vi" ? "Đã có lỗi xảy ra." : "An error occurred."),
+        variant: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleConfirmLogin = () => {

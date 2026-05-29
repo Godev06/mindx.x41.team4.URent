@@ -5,6 +5,7 @@ export interface AuthUser {
   username?: string;
   bio: string | null;
   phone: string | null;
+  address: string | null;
   avatarUrl: string | null;
   role?: "admin" | "user";
   createdAt: string | null;
@@ -62,6 +63,7 @@ export interface ProfileUpdatePayload {
   displayName: string;
   bio: string;
   phone: string;
+  address: string;
 }
 
 export interface MutationResult {

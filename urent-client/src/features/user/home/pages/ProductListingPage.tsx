@@ -17,6 +17,10 @@ import {
   Search,
   Sliders,
   X,
+  MapPin,
+  Calendar,
+  Tent,
+  Shirt,
 } from "lucide-react";
 
 import { PRODUCTS } from "../../dataset/products";
@@ -24,19 +28,20 @@ import type { Product } from "../../shared/types";
 import { ProductCard } from "../components/ProductCard";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { productService } from "../../product/services/productService";
+import { profileService } from "../../profile/services/profileService"; // <-- IMPORT THÊM CHO WISHLIST
 
 interface ProductListingPageProps {
   onProductClick: (id: string | number) => void;
   onBack: () => void;
 }
 
-type CategoryKey = "all" | "electronics" | "textbooks" | "appliances";
+type CategoryKey = "all" | "electronics" | "travel" | "study" | "lifestyle";
 type SortType = "latest" | "price-low" | "price-high";
 
 interface ProductMeta {
   locationVi: string;
   locationEn: string;
-  distanceKm: number;
+  distanceKm?: number;
   conditionVi: string;
   conditionEn: string;
 }
@@ -52,6 +57,19 @@ const formatCompactNumber = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
+// CÔNG THỨC HAVERSINE TÍNH KHOẢNG CÁCH
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Number((R * c).toFixed(1)); 
+}
+
 function normalizeLocation(loc: unknown): string | undefined {
   if (!loc) return undefined;
   if (typeof loc === "string") return loc || undefined;
@@ -59,12 +77,21 @@ function normalizeLocation(loc: unknown): string | undefined {
   return undefined;
 }
 
-function buildProductMeta(product: Product): ProductMeta {
-  const loc = normalizeLocation(product.location);
+function buildProductMeta(product: Product, userLocation: { lat: number; lng: number } | null): ProductMeta {
+  let distance: number | undefined = undefined;
+
+  if (userLocation && product.coordinates && product.coordinates.length === 2) {
+    const productLng = product.coordinates[0];
+    const productLat = product.coordinates[1];
+    distance = calculateDistance(userLocation.lat, userLocation.lng, productLat, productLng);
+  }
+
+  const loc = product.locationText || normalizeLocation(product.location);
+
   return {
     locationVi: loc || "Chưa cập nhật",
     locationEn: loc || "Unknown",
-    distanceKm: 1.5,
+    distanceKm: distance,
     conditionVi: product.condition || "Tốt",
     conditionEn: product.condition || "Good",
   };
@@ -72,19 +99,15 @@ function buildProductMeta(product: Product): ProductMeta {
 
 function normalizeCategory(category?: string): Exclude<CategoryKey, "all"> {
   const normalized = category?.toLowerCase();
-
-  if (normalized === "textbooks") return "textbooks";
-  if (normalized === "appliances") return "appliances";
-
+  if (normalized?.includes("du lịch") || normalized?.includes("dã ngoại") || normalized === "travel" || normalized === "outdoor") return "travel";
+  if (normalized?.includes("học tập") || normalized?.includes("sách") || normalized === "study" || normalized === "textbooks" || normalized === "books") return "study";
+  if (normalized?.includes("thời trang") || normalized?.includes("đời sống") || normalized === "lifestyle") return "lifestyle";
   return "electronics";
 }
 
 interface FilterPanelProps {
   sortBy: SortType;
-  sortOptions: readonly {
-    value: SortType;
-    label: string;
-  }[];
+  sortOptions: readonly { value: SortType; label: string }[];
   onSortChange: (value: SortType) => void;
   minPriceInput: string;
   maxPriceInput: string;
@@ -93,6 +116,14 @@ interface FilterPanelProps {
   onResetPrice: () => void;
   dataMinPriceVnd: number;
   dataMaxPriceVnd: number;
+  startDate: string;
+  endDate: string;
+  onStartDateChange: (val: string) => void;
+  onEndDateChange: (val: string) => void;
+  userLocation: { lat: number; lng: number } | null;
+  onGetLocation: () => void;
+  radiusKm: number;
+  onRadiusChange: (val: number) => void;
   t: any;
 }
 
@@ -107,26 +138,29 @@ function FilterPanel({
   onResetPrice,
   dataMinPriceVnd,
   dataMaxPriceVnd,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  userLocation,
+  onGetLocation,
+  radiusKm,
+  onRadiusChange,
   t,
 }: FilterPanelProps) {
   return (
     <div className="space-y-5">
+      {/* SORTING */}
       <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/80">
         <div className="mb-3 flex items-center gap-2">
-          <ArrowUpDown
-            size={16}
-            className="text-slate-600 dark:text-slate-400"
-          />
-
+          <ArrowUpDown size={16} className="text-slate-600 dark:text-slate-400" />
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-            {t.productListingSortBy}
+            {t.productListingSortBy || "Sắp xếp"}
           </h3>
         </div>
-
         <div className="space-y-2">
           {sortOptions.map(({ value, label }) => {
             const isSelected = sortBy === value;
-
             return (
               <label
                 key={value}
@@ -144,7 +178,6 @@ function FilterPanel({
                   onChange={() => onSortChange(value)}
                   className="sr-only"
                 />
-
                 <span
                   className={`text-sm font-medium transition-colors ${
                     isSelected
@@ -154,7 +187,6 @@ function FilterPanel({
                 >
                   {label}
                 </span>
-
                 <span
                   className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
                     isSelected
@@ -170,12 +202,81 @@ function FilterPanel({
         </div>
       </div>
 
+      {/* FILTER: TIME */}
+      <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
+        <div className="mb-3 flex items-center gap-2">
+          <Calendar size={16} className="text-slate-600 dark:text-slate-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            {t.productListingTime || "Thời gian thuê"}
+          </h3>
+        </div>
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+            Từ ngày
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => onStartDateChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+            />
+          </label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+            Đến ngày
+            <input
+              type="date"
+              value={endDate}
+              min={startDate}
+              onChange={(e) => onEndDateChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* FILTER: LOCATION */}
+      <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
+        <div className="mb-3 flex items-center gap-2">
+          <MapPin size={16} className="text-slate-600 dark:text-slate-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            {t.productListingLocation || "Vị trí gần tôi"}
+          </h3>
+        </div>
+        <div className="space-y-3">
+          {!userLocation ? (
+            <button
+              onClick={onGetLocation}
+              className="w-full rounded-lg border border-teal-500 bg-teal-50 py-2 text-sm font-semibold text-teal-600 hover:bg-teal-100 dark:border-teal-400/50 dark:bg-teal-900/20 dark:text-teal-400 dark:hover:bg-teal-900/40"
+            >
+              Lấy vị trí của tôi
+            </button>
+          ) : (
+            <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              ✓ Đã lấy vị trí thành công
+            </div>
+          )}
+          
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+            Bán kính: <span className="font-bold text-slate-800 dark:text-slate-200">{radiusKm} km</span>
+            <input
+              type="range"
+              min={1}
+              max={50}
+              step={1}
+              value={radiusKm}
+              disabled={!userLocation}
+              onChange={(e) => onRadiusChange(Number(e.target.value))}
+              className="mt-2 w-full accent-teal-500 disabled:opacity-50"
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* FILTER: PRICE */}
       <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white">
             {t.productListingPriceRange}
           </h3>
-
           <button
             type="button"
             onClick={onResetPrice}
@@ -188,7 +289,6 @@ function FilterPanel({
         <div className="space-y-3">
           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
             {t.productListingMinPrice}
-
             <input
               type="number"
               min={0}
@@ -197,13 +297,12 @@ function FilterPanel({
               value={minPriceInput}
               onChange={(e) => onMinChange(e.target.value)}
               placeholder={String(dataMinPriceVnd)}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-hidden focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
             />
           </label>
 
           <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
             {t.productListingMaxPrice}
-
             <input
               type="number"
               min={0}
@@ -212,15 +311,9 @@ function FilterPanel({
               value={maxPriceInput}
               onChange={(e) => onMaxChange(e.target.value)}
               placeholder={String(dataMaxPriceVnd)}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-hidden focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
             />
           </label>
-
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            {t.productListingDefaultPriceRange}:{" "}
-            {formatCompactNumber(dataMinPriceVnd)} -{" "}
-            {formatCompactNumber(dataMaxPriceVnd)} VND
-          </p>
         </div>
       </div>
     </div>
@@ -232,12 +325,10 @@ function ProductSkeleton() {
     <div className="animate-pulse rounded-3xl border border-slate-200 bg-white p-4 shadow-md dark:border-slate-700 dark:bg-slate-800">
       <div className="space-y-4">
         <div className="aspect-[5/6] w-full rounded-2xl bg-slate-200 dark:bg-slate-700" />
-
         <div className="space-y-2">
           <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700" />
           <div className="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700" />
         </div>
-
         <div className="flex items-end justify-between pt-2">
           <div className="h-6 w-20 rounded bg-slate-200 dark:bg-slate-700" />
           <div className="h-8 w-8 rounded-xl bg-slate-200 dark:bg-slate-700" />
@@ -257,6 +348,12 @@ export function ProductListingPage({
   const [sortBy, setSortBy] = useState<SortType>("latest");
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
+  
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [radiusKm, setRadiusKm] = useState<number>(5);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -264,19 +361,65 @@ export function ProductListingPage({
   const [isLoading, setIsLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
 
+  // --- STATE LƯU ID CÁC SẢN PHẨM ĐÃ THÍCH ---
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+
   const initializedPriceRef = useRef(false);
 
   const deferredMinPrice = useDeferredValue(minPriceInput);
   const deferredMaxPrice = useDeferredValue(maxPriceInput);
+  const deferredRadius = useDeferredValue(radiusKm);
+
+  // --- LẤY DANH SÁCH YÊU THÍCH KHI TRANG TẢI XONG ---
+  useEffect(() => {
+    const fetchFavorites = async () => {
+      try {
+        const favProducts = await profileService.getFavorites();
+        setFavoriteIds(favProducts.map(p => String(p._id || p.id)));
+      } catch (e) {
+        console.log("Chưa đăng nhập hoặc lỗi tải wishlist");
+      }
+    };
+    fetchFavorites();
+  }, []);
+
+  // --- HÀM XỬ LÝ KHI BẤM NÚT TRÁI TIM ---
+  const handleToggleHeart = async (productId: string | number) => {
+    try {
+      const res = await profileService.toggleFavorite(String(productId));
+      if (res.isWishlisted) {
+        setFavoriteIds(prev => [...prev, String(productId)]);
+      } else {
+        setFavoriteIds(prev => prev.filter(id => id !== String(productId)));
+      }
+    } catch (error) {
+      alert("Vui lòng đăng nhập để lưu sản phẩm yêu thích!");
+    }
+  };
+
+  const handleGetLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Lỗi lấy vị trí: ", error);
+          alert("Không thể lấy vị trí. Vui lòng cấp quyền trong trình duyệt.");
+        }
+      );
+    } else {
+      alert("Trình duyệt của bạn không hỗ trợ định vị.");
+    }
+  };
 
   useEffect(() => {
     if (!showFilters) return;
-
     document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [showFilters]);
 
   useEffect(() => {
@@ -289,76 +432,55 @@ export function ProductListingPage({
         setIsLoading(true);
 
         let categoryParam: string | undefined;
-
-        if (category === "electronics") {
-          categoryParam = "Electronics";
-        } else if (category === "textbooks") {
-          categoryParam = "Textbooks";
-        } else if (category === "appliances") {
-          categoryParam = "Appliances";
-        }
+        if (category === "electronics") categoryParam = "Điện tử & Công nghệ";
+        else if (category === "travel") categoryParam = "Du lịch & Dã ngoại";
+        else if (category === "study") categoryParam = "Đồ dùng học tập";
+        else if (category === "lifestyle") categoryParam = "Thời trang & Đời sống";
 
         const fetched = await productService.getProducts({
           category: categoryParam,
           limit: 50,
+          minPrice: deferredMinPrice ? Number(deferredMinPrice) : undefined,
+          maxPrice: deferredMaxPrice ? Number(deferredMaxPrice) : undefined,
+          lat: userLocation?.lat,
+          lng: userLocation?.lng,
+          radiusInKm: userLocation ? deferredRadius : undefined,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
         });
 
         if (!active) return;
-
         setProducts(fetched);
         setHasFetched(true);
       } catch (error) {
         console.error("Failed to load products:", error);
-
         if (!active) return;
-
         setProducts([]);
-        setHasFetched(true);
       } finally {
-        if (active) {
-          setIsLoading(false);
-        }
+        if (active) setIsLoading(false);
       }
     }
 
     loadProducts();
-
-    return () => {
-      active = false;
-    };
-  }, [category]);
+    return () => { active = false; };
+  }, [category, deferredMinPrice, deferredMaxPrice, userLocation, deferredRadius, startDate, endDate]);
 
   const activeProducts = useMemo(() => {
-    if (hasFetched) {
-      return products;
-    }
-
+    if (products.length > 0) return products;
     return PRODUCTS.filter((product) => ACTIVE_STATUSES.has(product.status));
-  }, [products, hasFetched]);
+  }, [products]);
 
   const { dataMinPriceVnd, dataMaxPriceVnd } = useMemo(() => {
     const prices = activeProducts.map((product) => toVnd(product.price));
-
-    if (prices.length === 0) {
-      return {
-        dataMinPriceVnd: 0,
-        dataMaxPriceVnd: 0,
-      };
-    }
-
-    return {
-      dataMinPriceVnd: Math.min(...prices),
-      dataMaxPriceVnd: Math.max(...prices),
-    };
+    if (prices.length === 0) return { dataMinPriceVnd: 0, dataMaxPriceVnd: 0 };
+    return { dataMinPriceVnd: Math.min(...prices), dataMaxPriceVnd: Math.max(...prices) };
   }, [activeProducts]);
 
   useEffect(() => {
     if (!hasFetched) return;
     if (initializedPriceRef.current) return;
-
     setMinPriceInput(String(dataMinPriceVnd));
     setMaxPriceInput(String(dataMaxPriceVnd));
-
     initializedPriceRef.current = true;
   }, [hasFetched, dataMinPriceVnd, dataMaxPriceVnd]);
 
@@ -368,148 +490,49 @@ export function ProductListingPage({
   }, [dataMinPriceVnd, dataMaxPriceVnd]);
 
   const categories = [
-    {
-      id: "all" as const,
-      label: t.productListingCatAll,
-      icon: House,
-    },
-    {
-      id: "electronics" as const,
-      label: t.productListingCatElectronics,
-      icon: Laptop,
-    },
-    {
-      id: "textbooks" as const,
-      label: t.productListingCatTextbooks,
-      icon: BookOpen,
-    },
-    {
-      id: "appliances" as const,
-      label: t.productListingCatAppliances,
-      icon: House,
-    },
+    { id: "all" as const, label: t.productListingCatAll, icon: House },
+    { id: "electronics" as const, label: t.productListingCatElectronics, icon: Laptop },
+    { id: "travel" as const, label: t.productListingCatTravel, icon: Tent },
+    { id: "study" as const, label: t.productListingCatStudy, icon: BookOpen },
+    { id: "lifestyle" as const, label: t.productListingCatLifestyle, icon: Shirt },
   ];
 
   const sortOptions = [
-    {
-      value: "latest" as const,
-      label: t.productListingLatest,
-    },
-    {
-      value: "price-low" as const,
-      label: t.productListingPriceLow,
-    },
-    {
-      value: "price-high" as const,
-      label: t.productListingPriceHigh,
-    },
+    { value: "latest" as const, label: t.productListingLatest },
+    { value: "price-low" as const, label: t.productListingPriceLow },
+    { value: "price-high" as const, label: t.productListingPriceHigh },
   ];
 
-  const filteredAndSortedProducts = useMemo(() => {
-    const minPrice = Number(deferredMinPrice);
-    const maxPrice = Number(deferredMaxPrice);
-
-    const effectiveMinPrice = Number.isFinite(minPrice)
-      ? minPrice
-      : dataMinPriceVnd;
-
-    const effectiveMaxPrice = Number.isFinite(maxPrice)
-      ? maxPrice
-      : dataMaxPriceVnd;
-
-    const filtered = activeProducts.filter((product) => {
-      const normalizedCategory = normalizeCategory(product.category);
-
-      const matchesCategory =
-        category === "all" || normalizedCategory === category;
-
-      const priceVnd = toVnd(product.price);
-
-      return (
-        matchesCategory &&
-        priceVnd >= effectiveMinPrice &&
-        priceVnd <= effectiveMaxPrice
-      );
+  const sortedProducts = useMemo(() => {
+    const sorted = [...activeProducts];
+    sorted.sort((a, b) => {
+      if (sortBy === "price-low") return toVnd(a.price) - toVnd(b.price);
+      if (sortBy === "price-high") return toVnd(b.price) - toVnd(a.price);
+      return 0; 
     });
+    return sorted;
+  }, [activeProducts, sortBy]);
 
-    filtered.sort((a, b) => {
-      if (sortBy === "price-low") {
-        return toVnd(a.price) - toVnd(b.price);
-      }
+  const totalPages = Math.max(1, Math.ceil(sortedProducts.length / ITEMS_PER_PAGE));
 
-      if (sortBy === "price-high") {
-        return toVnd(b.price) - toVnd(a.price);
-      }
-
-      return 0;
-    });
-
-    return filtered;
-  }, [
-    activeProducts,
-    category,
-    sortBy,
-    deferredMinPrice,
-    deferredMaxPrice,
-    dataMinPriceVnd,
-    dataMaxPriceVnd,
-  ]);
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredAndSortedProducts.length / ITEMS_PER_PAGE),
-  );
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [category, sortBy, deferredMinPrice, deferredMaxPrice]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }, [currentPage]);
+  useEffect(() => { setCurrentPage(1); }, [category, sortBy, deferredMinPrice, deferredMaxPrice, startDate, endDate, deferredRadius]);
+  useEffect(() => { if (currentPage > totalPages) setCurrentPage(totalPages); }, [currentPage, totalPages]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [currentPage]);
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-
-    return filteredAndSortedProducts.slice(
-      startIndex,
-      startIndex + ITEMS_PER_PAGE,
-    );
-  }, [filteredAndSortedProducts, currentPage]);
+    return sortedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [sortedProducts, currentPage]);
 
   const visiblePageItems = useMemo(() => {
-    if (totalPages <= 7) {
-      return Array.from({ length: totalPages }, (_, index) => index + 1);
-    }
-
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
     const pages: Array<number | string> = [1];
-
-    if (currentPage > 3) {
-      pages.push("left-ellipsis");
-    }
-
+    if (currentPage > 3) pages.push("left-ellipsis");
     const start = Math.max(2, currentPage - 1);
     const end = Math.min(totalPages - 1, currentPage + 1);
-
-    for (let page = start; page <= end; page += 1) {
-      pages.push(page);
-    }
-
-    if (currentPage < totalPages - 2) {
-      pages.push("right-ellipsis");
-    }
-
+    for (let page = start; page <= end; page += 1) pages.push(page);
+    if (currentPage < totalPages - 2) pages.push("right-ellipsis");
     pages.push(totalPages);
-
     return pages;
   }, [currentPage, totalPages]);
 
@@ -523,10 +546,7 @@ export function ProductListingPage({
               aria-label="Go back"
               className="group inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-700"
             >
-              <ChevronLeft
-                size={18}
-                className="transition-transform group-hover:-translate-x-0.5"
-              />
+              <ChevronLeft size={18} className="transition-transform group-hover:-translate-x-0.5" />
             </button>
 
             <div className="ml-auto flex min-w-0 items-center gap-2">
@@ -534,7 +554,6 @@ export function ProductListingPage({
                 {categories.map((item) => {
                   const Icon = item.icon;
                   const active = category === item.id;
-
                   return (
                     <button
                       key={item.id}
@@ -547,7 +566,6 @@ export function ProductListingPage({
                       }`}
                     >
                       <Icon size={13} className="opacity-90" />
-
                       <span className="hidden sm:inline">{item.label}</span>
                     </button>
                   );
@@ -567,26 +585,11 @@ export function ProductListingPage({
 
         {showFilters && (
           <div className="fixed inset-0 z-50 flex justify-end lg:hidden">
-            <div
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
-              onClick={() => setShowFilters(false)}
-            />
-
-            <div
-              role="dialog"
-              aria-modal="true"
-              className="relative z-10 flex h-full w-full max-w-xs flex-col overflow-y-auto bg-white p-5 shadow-2xl dark:bg-slate-900"
-            >
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => setShowFilters(false)} />
+            <div role="dialog" aria-modal="true" className="relative z-10 flex h-full w-full max-w-xs flex-col overflow-y-auto bg-white p-5 shadow-2xl dark:bg-slate-900">
               <div className="mb-5 flex items-center justify-between">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {t.productListingViewFilters}
-                </h3>
-
-                <button
-                  aria-label="Close filters"
-                  onClick={() => setShowFilters(false)}
-                  className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400"
-                >
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">{t.productListingViewFilters}</h3>
+                <button onClick={() => setShowFilters(false)} className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-400">
                   <X size={18} />
                 </button>
               </div>
@@ -603,6 +606,14 @@ export function ProductListingPage({
                   onResetPrice={resetPriceRange}
                   dataMinPriceVnd={dataMinPriceVnd}
                   dataMaxPriceVnd={dataMaxPriceVnd}
+                  startDate={startDate}
+                  endDate={endDate}
+                  onStartDateChange={setStartDate}
+                  onEndDateChange={setEndDate}
+                  userLocation={userLocation}
+                  onGetLocation={handleGetLocation}
+                  radiusKm={radiusKm}
+                  onRadiusChange={setRadiusKm}
                   t={t}
                 />
               </div>
@@ -631,6 +642,14 @@ export function ProductListingPage({
                 onResetPrice={resetPriceRange}
                 dataMinPriceVnd={dataMinPriceVnd}
                 dataMaxPriceVnd={dataMaxPriceVnd}
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                userLocation={userLocation}
+                onGetLocation={handleGetLocation}
+                radiusKm={radiusKm}
+                onRadiusChange={setRadiusKm}
                 t={t}
               />
             </div>
@@ -643,17 +662,13 @@ export function ProductListingPage({
                   <ProductSkeleton key={index} />
                 ))}
               </div>
-            ) : filteredAndSortedProducts.length > 0 ? (
+            ) : sortedProducts.length > 0 ? (
               <>
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                   {paginatedProducts.map((product) => {
-                    const meta = buildProductMeta(product);
-
-                    const location =
-                      lang === "vi" ? meta.locationVi : meta.locationEn;
-
-                    const conditionLabel =
-                      lang === "vi" ? meta.conditionVi : meta.conditionEn;
+                    const meta = buildProductMeta(product, userLocation);
+                    const location = lang === "vi" ? meta.locationVi : meta.locationEn;
+                    const conditionLabel = lang === "vi" ? meta.conditionVi : meta.conditionEn;
 
                     return (
                       <ProductCard
@@ -665,6 +680,10 @@ export function ProductListingPage({
                         location={location}
                         distanceKm={meta.distanceKm}
                         conditionLabel={conditionLabel}
+                        
+                        // ĐÃ BẬT CÔNG TẮC TRÁI TIM Ở ĐÂY
+                        isWishlisted={favoriteIds.includes(String(product._id || product.id))}
+                        onToggleWishlist={handleToggleHeart}
                       />
                     );
                   })}
@@ -675,9 +694,7 @@ export function ProductListingPage({
                     <button
                       type="button"
                       disabled={currentPage === 1}
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
-                      }
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       className="inline-flex h-9 items-center gap-1 rounded-xl px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45 dark:text-slate-200 dark:hover:bg-slate-700"
                     >
                       <ChevronLeft size={15} />
@@ -687,15 +704,11 @@ export function ProductListingPage({
                     {visiblePageItems.map((item, index) => {
                       if (typeof item !== "number") {
                         return (
-                          <span
-                            key={`${item}-${index}`}
-                            className="inline-flex h-9 min-w-9 items-center justify-center px-1 text-xs font-semibold text-slate-400 dark:text-slate-500"
-                          >
+                          <span key={`${item}-${index}`} className="inline-flex h-9 min-w-9 items-center justify-center px-1 text-xs font-semibold text-slate-400 dark:text-slate-500">
                             ...
                           </span>
                         );
                       }
-
                       return (
                         <button
                           type="button"
@@ -703,7 +716,7 @@ export function ProductListingPage({
                           onClick={() => setCurrentPage(item)}
                           className={`inline-flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-sm font-semibold transition ${
                             currentPage === item
-                              ? "bg-linear-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/30"
+                              ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/30"
                               : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
                           }`}
                         >
@@ -715,9 +728,7 @@ export function ProductListingPage({
                     <button
                       type="button"
                       disabled={currentPage === totalPages}
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                      }
+                      onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       className="inline-flex h-9 items-center gap-1 rounded-xl px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45 dark:text-slate-200 dark:hover:bg-slate-700"
                     >
                       {t.productListingNext}
@@ -727,23 +738,14 @@ export function ProductListingPage({
                 </div>
               </>
             ) : (
-              <div className="flex min-h-96 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200/80 bg-linear-to-b from-white/80 to-slate-100/40 text-center dark:border-slate-700 dark:from-slate-800/35 dark:to-slate-900/35">
+              <div className="flex min-h-96 items-center justify-center rounded-2xl border-2 border-dashed border-slate-200/80 bg-gradient-to-b from-white/80 to-slate-100/40 text-center dark:border-slate-700 dark:from-slate-800/35 dark:to-slate-900/35">
                 <div className="space-y-3">
                   <div className="flex justify-center">
-                    <Search
-                      size={48}
-                      className="text-slate-300 dark:text-slate-600"
-                    />
+                    <Search size={48} className="text-slate-300 dark:text-slate-600" />
                   </div>
-
                   <div>
-                    <p className="font-medium text-slate-600 dark:text-slate-400">
-                      {t.productListingNoResult}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">
-                      Try adjusting your filters
-                    </p>
+                    <p className="font-medium text-slate-600 dark:text-slate-400">{t.productListingNoResult}</p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-500">Hãy thử thay đổi điều kiện lọc</p>
                   </div>
                 </div>
               </div>

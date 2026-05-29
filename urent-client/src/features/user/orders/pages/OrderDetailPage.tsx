@@ -9,44 +9,115 @@ import {
   QrCode,
   ShieldCheck,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ORDERS } from "../../dataset/orders";
 import { PRODUCTS } from "../../dataset/products";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { messageService } from "../../messages/services/messageService";
+import { useAuth } from "../../auth/hooks/useAuth";
+import { apiClient } from "../../../../lib/api/apiClient";
 
 export function OrderDetailPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { isAuthenticated } = useAuth();
   const decodedOrderId = orderId ? decodeURIComponent(orderId) : "";
 
-  const order = useMemo(
-    () => ORDERS.find((item) => item.id === decodedOrderId) ?? ORDERS[0],
-    [decodedOrderId],
-  );
-
-  const product = useMemo(
-    () =>
-      PRODUCTS.find((item) => item.id === order.productId) ?? {
-        id: order.productId || 0,
-        name: order.productName || "Sản phẩm",
-        category: "Electronics",
-        price: order.totalPrice ? Math.round(order.totalPrice / 3) : 10,
-        status: "Available",
-        image: "🛒",
-        imageUrl: "",
-        rating: 5.0,
-        reviews: 0,
-        owner: { name: "URent Partner", avatar: "", rating: 5.0, trips: 10 },
-        summary: "",
-        description: [],
-      },
-    [order.productId, order.productName, order.totalPrice],
-  );
-
+  const [order, setOrder] = useState<any>(null);
+  const [product, setProduct] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isConnectingSupport, setIsConnectingSupport] = useState(false);
+
+  useEffect(() => {
+    async function loadOrderDetail() {
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(decodedOrderId);
+
+      if (!isAuthenticated || !isObjectId) {
+        // Fallback to mock data
+        const mockOrder = ORDERS.find((item) => item.id === decodedOrderId) ?? ORDERS[0];
+        const mockProduct = PRODUCTS.find((item) => item.id === mockOrder.productId) ?? {
+          id: mockOrder.productId || 0,
+          name: mockOrder.productName || "Sản phẩm",
+          category: "Điện tử & Công nghệ",
+          price: mockOrder.totalPrice ? Math.round(mockOrder.totalPrice / 3) : 10,
+          status: "Available",
+          image: "🛒",
+          imageUrl: "",
+          rating: 5.0,
+          reviews: 0,
+          owner: { name: "URent Partner", avatar: "", rating: 5.0, trips: 10 },
+          summary: "",
+          description: [],
+        };
+        setOrder(mockOrder);
+        setProduct(mockProduct);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const res = await apiClient.get(`/api/v1/orders/${decodedOrderId}`);
+        const ord = res.data.data;
+        const mappedOrder = {
+          id: ord.orderCode,
+          _id: ord._id,
+          productId: ord.productId?._id || ord.productId,
+          productName: ord.productName,
+          customerName: ord.customerName,
+          startDate: new Date(ord.startDate).toLocaleDateString("vi-VN"),
+          endDate: new Date(ord.endDate).toLocaleDateString("vi-VN"),
+          totalPrice: ord.totalPrice,
+          status: ord.status,
+          image: "🛒",
+        };
+        
+        const mappedProduct = {
+          id: ord.productId?._id || ord.productId,
+          name: ord.productName,
+          category: ord.productId?.category || "Điện tử & Công nghệ",
+          price: ord.productId?.price || Math.round(ord.totalPrice / 3),
+          status: ord.productId?.status || "Available",
+          image: "🛒",
+          imageUrl: ord.productId?.image || ord.productId?.imageUrl || "",
+          rating: ord.productId?.rating || 5.0,
+          reviews: ord.productId?.reviewsCount || 0,
+          owner: ord.productId?.owner || { name: "URent Partner", avatar: "", rating: 5.0, trips: 10 },
+          summary: ord.productId?.description?.join(", ") || "",
+          description: ord.productId?.description || [],
+        };
+
+        setOrder(mappedOrder);
+        setProduct(mappedProduct);
+      } catch (err) {
+        console.error("Failed to load order detail from BE:", err);
+        // Fallback to mock
+        const mockOrder = ORDERS.find((item) => item.id === decodedOrderId) ?? ORDERS[0];
+        const mockProduct = PRODUCTS.find((item) => item.id === mockOrder.productId) ?? {
+          id: mockOrder.productId || 0,
+          name: mockOrder.productName || "Sản phẩm",
+          category: "Điện tử & Công nghệ",
+          price: mockOrder.totalPrice ? Math.round(mockOrder.totalPrice / 3) : 10,
+          status: "Available",
+          image: "🛒",
+          imageUrl: "",
+          rating: 5.0,
+          reviews: 0,
+          owner: { name: "URent Partner", avatar: "", rating: 5.0, trips: 10 },
+          summary: "",
+          description: [],
+        };
+        setOrder(mockOrder);
+        setProduct(mockProduct);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadOrderDetail();
+  }, [decodedOrderId, isAuthenticated]);
 
   const handleChatWithExpert = async () => {
     if (isConnectingSupport) return;
@@ -60,6 +131,15 @@ export function OrderDetailPage() {
       setIsConnectingSupport(false);
     }
   };
+
+  if (isLoading || !order || !product) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center text-center space-y-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+        <p className="text-slate-500">{t.orderDetailLoading || "Đang tải chi tiết đơn hàng..."}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 pb-10">

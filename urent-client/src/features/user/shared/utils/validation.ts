@@ -56,6 +56,10 @@ export const validateProfileInput = (payload: ProfileUpdatePayload) => {
     errors.phone = "So dien thoai phai co do dai tu 7 den 20 ky tu.";
   }
 
+  if (payload.address && payload.address.trim().length > 500) {
+    errors.address = "Địa chỉ không được vượt quá 500 ký tự.";
+  }
+
   return errors;
 };
 

@@ -1,22 +1,64 @@
 import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { ORDERS } from "../../dataset/orders";
 import { PRODUCTS } from "../../dataset/products";
 import { OrderCard } from "../components/OrderCard";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { useAuth } from "../../auth/hooks/useAuth";
+import { apiClient } from "../../../../lib/api/apiClient";
 
 export function OrdersPage() {
   const { theme } = useTheme();
   const { t } = useI18n();
   const navigate = useNavigate();
-  const activeOrders = ORDERS.filter(
+  const { isAuthenticated } = useAuth();
+
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchOrders() {
+      if (!isAuthenticated) {
+        setOrders(ORDERS);
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const response = await apiClient.get("/api/v1/orders");
+        const mapped = response.data.data.map((ord: any) => ({
+          id: ord.orderCode || ord._id,
+          _id: ord._id,
+          productId: ord.productId?._id || ord.productId || "",
+          productName: ord.productName,
+          customerName: ord.customerName,
+          startDate: new Date(ord.startDate).toLocaleDateString("vi-VN"),
+          endDate: new Date(ord.endDate).toLocaleDateString("vi-VN"),
+          totalPrice: ord.totalPrice,
+          status: ord.status,
+          imageUrl: ord.productId?.image || ord.productId?.imageUrl || ord.imageUrl || "",
+          image: "🛒",
+        }));
+        setOrders(mapped);
+      } catch (err) {
+        console.error("Failed to fetch real orders, falling back to mock:", err);
+        setOrders(ORDERS);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchOrders();
+  }, [isAuthenticated]);
+
+  const activeOrders = orders.filter(
     (item) =>
       item.status === "pending" ||
       item.status === "confirmed" ||
       item.status === "shipped",
   ).length;
-  const completedOrders = ORDERS.filter(
+  const completedOrders = orders.filter(
     (item) => item.status === "delivered",
   ).length;
 
@@ -96,32 +138,45 @@ export function OrdersPage() {
       </div>
 
       <section className="space-y-4">
-        {ORDERS.map((order) => {
-          const product = PRODUCTS.find((p) => p.name === order.productName);
-          return (
-            <div key={order.id} className="space-y-2">
-              <OrderCard
-                order={order}
-                imageUrl={product?.imageUrl}
-                onClick={() =>
-                  navigate(`/orders/${encodeURIComponent(order.id)}`)
-                }
-              />
-              <div className="flex justify-end">
-                <button
-                  type="button"
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-3">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
+            <p className="text-sm text-slate-500">{t.ordersLoading || "Đang tải danh sách đơn hàng..."}</p>
+          </div>
+        ) : orders.length > 0 ? (
+          orders.map((order) => {
+            const product = PRODUCTS.find((p) => p.name === order.productName);
+            const image = order.imageUrl || product?.imageUrl;
+            const navigationId = order._id || order.id;
+            return (
+              <div key={order.id} className="space-y-2">
+                <OrderCard
+                  order={order}
+                  imageUrl={image}
                   onClick={() =>
-                    navigate(`/orders/${encodeURIComponent(order.id)}`)
+                    navigate(`/orders/${encodeURIComponent(navigationId)}`)
                   }
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 transition-colors"
-                >
-                  {t.ordersViewDetail}
-                  <ChevronRight size={14} />
-                </button>
+                />
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/orders/${encodeURIComponent(navigationId)}`)
+                    }
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-teal-600 hover:bg-amber-50 hover:text-amber-500 dark:hover:bg-amber-500/10 dark:hover:text-amber-400 transition-colors"
+                  >
+                    {t.ordersViewDetail}
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="text-center py-16 text-slate-400 font-medium">
+            {t.ordersNoOrders || "Bạn chưa có đơn hàng nào."}
+          </div>
+        )}
       </section>
     </div>
   );

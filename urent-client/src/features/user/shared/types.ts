@@ -22,7 +22,9 @@ export interface Product {
   imageUrl?: string;
   image?: string;
   condition?: string;
-  location?: string | Record<string, unknown>;
+  location?: any;
+  locationText?: string;
+  coordinates?: number[];
   rating?: number;
   reviewsCount?: number;
   reviews?: number;

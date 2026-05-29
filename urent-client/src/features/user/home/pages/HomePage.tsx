@@ -13,7 +13,7 @@ interface HomePageProps {
   onProductClick: (id: string | number) => void;
 }
 
-type CategoryKey = "all" | "electronics" | "textbooks" | "appliances";
+type CategoryKey = "all" | "electronics" | "travel" | "study" | "lifestyle";
 
 const toVnd = (price: number) => (price > 1000 ? price : price * 25_000);
 const ACTIVE_STATUSES = new Set(["Available", "Active"]);

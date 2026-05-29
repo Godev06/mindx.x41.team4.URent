@@ -66,15 +66,15 @@ export const analyzeImageAI = async (req: Request, res: Response, next: NextFunc
     
     // Dynamically derive suggestions from request input instead of static mock data
     let name = "Sản phẩm mới";
-    let category = "Electronics";
+    let category = "Điện tử & Công nghệ";
     let price = 100000;
     let description: string[] = ["Hình ảnh rõ nét", "Tình trạng tốt"];
 
     if (imageUrl) {
       const urlStr = String(imageUrl).toLowerCase();
-      if (urlStr.includes("book") || urlStr.includes("sach") || urlStr.includes("textbook")) {
-        name = "Giáo trình / Sách học thuật";
-        category = "Textbooks";
+      if (urlStr.includes("book") || urlStr.includes("sach") || urlStr.includes("textbook") || urlStr.includes("vo") || urlStr.includes("notebook")) {
+        name = "Giáo trình / Đồ dùng học tập";
+        category = "Đồ dùng học tập";
         price = 35000;
         description = ["Nội dung đầy đủ", "Giấy in rõ nét", "Ít trầy xước"];
       } else if (
@@ -84,25 +84,44 @@ export const analyzeImageAI = async (req: Request, res: Response, next: NextFunc
         urlStr.includes("macbook") || 
         urlStr.includes("camera") ||
         urlStr.includes("dien-thoai") ||
-        urlStr.includes("may-tinh")
-      ) {
-        name = "Thiết bị điện tử thông minh";
-        category = "Electronics";
-        price = 450000;
-        description = ["Hoạt động mượt mà", "Đầy đủ phụ kiện", "Pin tối ưu"];
-      } else if (
+        urlStr.includes("may-tinh") ||
         urlStr.includes("fridge") || 
         urlStr.includes("tv") || 
         urlStr.includes("fan") || 
         urlStr.includes("quat") || 
         urlStr.includes("tulanh") ||
-        urlStr.includes("may-giat") ||
-        urlStr.includes("appliances")
+        urlStr.includes("may-giat")
       ) {
-        name = "Thiết bị điện gia dụng gia đình";
-        category = "Appliances";
-        price = 280000;
-        description = ["Tiết kiệm năng lượng", "Dễ dàng vệ sinh", "Công suất ổn định"];
+        name = "Thiết bị điện tử & Công nghệ";
+        category = "Điện tử & Công nghệ";
+        price = 450000;
+        description = ["Hoạt động mượt mà", "Đầy đủ phụ kiện", "Pin tối ưu"];
+      } else if (
+        urlStr.includes("outdoor") ||
+        urlStr.includes("camp") ||
+        urlStr.includes("backpack") ||
+        urlStr.includes("tent") ||
+        urlStr.includes("le-trai") ||
+        urlStr.includes("da-ngoai") ||
+        urlStr.includes("du-lich")
+      ) {
+        name = "Đồ dùng dã ngoại & Du lịch";
+        category = "Du lịch & Dã ngoại";
+        price = 150000;
+        description = ["Chống thấm nước tốt", "Độ bền cao", "Đầy đủ phụ kiện lắp ráp"];
+      } else if (
+        urlStr.includes("fashion") ||
+        urlStr.includes("clothing") ||
+        urlStr.includes("thoi-trang") ||
+        urlStr.includes("life-style") ||
+        urlStr.includes("clothes") ||
+        urlStr.includes("giay") ||
+        urlStr.includes("dong-ho")
+      ) {
+        name = "Vật dụng thời trang & Đời sống";
+        category = "Thời trang & Đời sống";
+        price = 95000;
+        description = ["Kiểu dáng thời thượng", "Chất liệu cao cấp", "Tình trạng như mới"];
       }
     }
 

@@ -19,7 +19,12 @@ export interface ProductDocument extends mongoose.Document {
   imageUrl?: string;
   description?: string[];
   condition?: string;
-  location?: string;
+  locationText?: string; // Giữ lại dạng chuỗi để hiển thị text
+  location?: {
+    type: string;
+    coordinates: number[]; // [Kinh độ (lng), Vĩ độ (lat)]
+  };
+  unavailableDates?: { startDate: Date; endDate: Date }[]; // Các khoảng thời gian đã được thuê
   rating?: number;
   reviewsCount?: number;
 }
@@ -41,11 +46,24 @@ const productSchema = new Schema<ProductDocument>(
     imageUrl: { type: String },
     description: [{ type: String, trim: true }],
     condition: { type: String, default: 'New' },
-    location: { type: String, trim: true, default: 'Chưa cập nhật vị trí' },
+    locationText: { type: String, trim: true, default: 'Chưa cập nhật vị trí' },
+    location: {
+      type: { type: String, enum: ['Point'], default: 'Point' },
+      coordinates: { type: [Number], default: [105.8342, 21.0278] } // Default tại Hà Nội
+    },
+    unavailableDates: [
+      {
+        startDate: { type: Date },
+        endDate: { type: Date }
+      }
+    ],
     rating: { type: Number, default: 0, min: 0, max: 5 },
     reviewsCount: { type: Number, default: 0, min: 0 }
   },
   { timestamps: true }
 );
+
+// Tạo index 2dsphere để MongoDB có thể query khoảng cách
+productSchema.index({ location: '2dsphere' });
 
 export const ProductModel = mongoose.model<ProductDocument>('Product', productSchema);

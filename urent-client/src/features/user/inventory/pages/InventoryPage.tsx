@@ -2,7 +2,7 @@ import { InventoryRow } from "../components/InventoryRow";
 import { AddProductModal } from "../components/AddProductModal";
 import { EditProductModal } from "../components/EditProductModal";
 import { useI18n } from "../../shared/context/LanguageContext";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { productService } from "../../product/services/productService";
 import {
   Package,
@@ -13,9 +13,17 @@ import {
   Filter,
   Plus,
 } from "lucide-react";
-import type { InventoryItem } from "../../shared/types";
+import type { InventoryItem, Product } from "../../shared/types";
 
-
+type ExtendedProduct = Product & {
+  _id?: string;
+  locationText?: string;
+  statusQuantities?: {
+    available: number;
+    rented: number;
+    overdue: number;
+  };
+};
 
 export default function InventoryPage() {
   const { t } = useI18n();
@@ -27,50 +35,46 @@ export default function InventoryPage() {
     "all" | "Available" | "Rented" | "Overdue"
   >("all");
 
-  useEffect(() => {
-    let active = true;
-    async function fetchInventory() {
-      try {
-        const products = await productService.getProducts({ limit: 100 });
-        if (!active) return;
-        const mapped: InventoryItem[] = products.map((p) => ({
-          id: p._id || p.id || "",
-          name: p.name,
-          category: p.category,
-          price: p.price,
-          statusQuantities: p.statusQuantities || { available: 1, rented: 0, overdue: 0 },
-          condition: p.condition || "New",
-          lastUpdated: "Recently",
-          description: p.description,
-          imageUrl: p.imageUrl || p.image,
-        }));
-        setItems(mapped);
-      } catch (err) {
-        console.error("Failed to load inventory from BE:", err);
-      }
+  // Tách hàm lấy data ra để có thể gọi lại sau khi Edit xong
+  const fetchInventory = useCallback(async () => {
+    try {
+      const products = (await productService.getProducts({
+        limit: 100,
+      })) as ExtendedProduct[];
+      
+      const mapped: InventoryItem[] = products.map((p) => ({
+        id: p._id || p.id || "",
+        name: p.name,
+        category: p.category,
+        price: p.price,
+        locationText: p.locationText, 
+        statusQuantities: p.statusQuantities || {
+          available: 1,
+          rented: 0,
+          overdue: 0,
+        },
+        condition: p.condition || "New",
+        lastUpdated: "Recently",
+        description: p.description,
+        imageUrl: p.imageUrl || p.image,
+      }));
+      setItems(mapped);
+    } catch (err) {
+      console.error("Failed to load inventory from BE:", err);
     }
-    fetchInventory();
-    return () => {
-      active = false;
-    };
   }, []);
 
+  useEffect(() => {
+    fetchInventory();
+  }, [fetchInventory]);
+
   const stats = useMemo(() => {
-    const available = items.reduce(
-      (sum, i) => sum + i.statusQuantities.available,
-      0,
-    );
-    const rented = items.reduce((sum, i) => sum + i.statusQuantities.rented, 0);
-    const overdue = items.reduce(
-      (sum, i) => sum + i.statusQuantities.overdue,
-      0,
-    );
+    const available = items.reduce((sum, i) => sum + (i.statusQuantities?.available ?? 0), 0);
+    const rented = items.reduce((sum, i) => sum + (i.statusQuantities?.rented ?? 0), 0);
+    const overdue = items.reduce((sum, i) => sum + (i.statusQuantities?.overdue ?? 0), 0);
     const totalItems = items.length;
     const totalValue = items.reduce((sum, item) => {
-      const totalQty =
-        item.statusQuantities.available +
-        item.statusQuantities.rented +
-        item.statusQuantities.overdue;
+      const totalQty = (item.statusQuantities?.available ?? 0) + (item.statusQuantities?.rented ?? 0) + (item.statusQuantities?.overdue ?? 0);
       return sum + item.price * totalQty;
     }, 0);
 
@@ -79,39 +83,40 @@ export default function InventoryPage() {
 
   const filteredItems = useMemo(() => {
     if (filterStatus === "all") return items;
-    if (filterStatus === "Available")
-      return items.filter((i) => i.statusQuantities.available > 0);
-    if (filterStatus === "Rented")
-      return items.filter((i) => i.statusQuantities.rented > 0);
-    if (filterStatus === "Overdue")
-      return items.filter((i) => i.statusQuantities.overdue > 0);
+    if (filterStatus === "Available") return items.filter((i) => (i.statusQuantities?.available ?? 0) > 0);
+    if (filterStatus === "Rented") return items.filter((i) => (i.statusQuantities?.rented ?? 0) > 0);
+    if (filterStatus === "Overdue") return items.filter((i) => (i.statusQuantities?.overdue ?? 0) > 0);
     return items;
   }, [items, filterStatus]);
 
   const handleAddProduct = async (product: any) => {
     try {
-      const created = await productService.createProduct({
+      // Dùng OpenStreetMap API để lấy tọa độ thực tế (Miễn phí)
+      let lng = 105.8342, lat = 21.0278; // Mặc định Hà Nội
+      try {
+        const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(product.locationText)}`);
+        const geoData = await geoRes.json();
+        if (geoData && geoData.length > 0) {
+          lat = parseFloat(geoData[0].lat);
+          lng = parseFloat(geoData[0].lon);
+        }
+      } catch (e) {
+        console.log("Không thể chuyển đổi địa chỉ thành tọa độ, dùng tọa độ mặc định.");
+      }
+
+      const created = (await productService.createProduct({
         name: product.name,
         category: product.category,
         price: product.price,
+        locationText: product.locationText,
+        location: { type: "Point", coordinates: [lng, lat] }, // <-- Gửi Tọa độ thực tế lên Server
         statusQuantities: product.statusQuantities,
         condition: product.condition,
         imageUrl: product.imageUrl,
         description: product.description,
-      });
+      } as any)) as ExtendedProduct;
 
-      const newItem: InventoryItem = {
-        id: created._id || created.id || Date.now(),
-        name: created.name,
-        category: created.category,
-        price: created.price,
-        statusQuantities: created.statusQuantities || { available: 1, rented: 0, overdue: 0 },
-        condition: created.condition,
-        lastUpdated: "Just now",
-        description: created.description,
-        imageUrl: created.imageUrl || created.image,
-      };
-      setItems((prev) => [newItem, ...prev]);
+      fetchInventory(); 
     } catch (err) {
       console.error("Failed to add product to backend:", err);
     }
@@ -122,40 +127,7 @@ export default function InventoryPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleEditProduct = async (
-    id: string | number,
-    updatedProduct: any
-  ) => {
-    try {
-      const updated = await productService.updateProduct(id, {
-        name: updatedProduct.name,
-        category: updatedProduct.category,
-        price: updatedProduct.price,
-        statusQuantities: updatedProduct.statusQuantities,
-        condition: updatedProduct.condition,
-        imageUrl: updatedProduct.imageUrl,
-        description: updatedProduct.description,
-      });
 
-      const updatedItem: InventoryItem = {
-        id: updated._id || updated.id || id,
-        name: updated.name,
-        category: updated.category,
-        price: updated.price,
-        statusQuantities: updated.statusQuantities || { available: 1, rented: 0, overdue: 0 },
-        condition: updated.condition,
-        lastUpdated: "Just now",
-        description: updated.description,
-        imageUrl: updated.imageUrl || updated.image,
-      };
-
-      setItems((prev) =>
-        prev.map((item) => (item.id === id ? updatedItem : item))
-      );
-    } catch (err) {
-      console.error("Failed to update product on backend:", err);
-    }
-  };
 
   const handleDelete = async (id: string | number) => {
     try {
@@ -196,77 +168,25 @@ export default function InventoryPage() {
         </button>
       </header>
 
-      {/* Statistics Dashboard - Styled to match ProductCard & Showcase */}
       <section className="grid gap-4 sm:gap-6 grid-cols-2 lg:grid-cols-5 mb-12">
-        <StatCard
-          icon={<Package className="text-teal-500" />}
-          label={t.inventoryTotalProducts}
-          value={stats.total}
-        />
-        <StatCard
-          icon={<CheckCircle2 className="text-emerald-500" />}
-          label={t.inventoryAvailable}
-          value={stats.available}
-          active={filterStatus === "Available"}
-          onClick={() =>
-            setFilterStatus(filterStatus === "Available" ? "all" : "Available")
-          }
-        />
-        <StatCard
-          icon={<Clock className="text-amber-500" />}
-          label={t.inventoryRented}
-          value={stats.rented}
-          active={filterStatus === "Rented"}
-          onClick={() =>
-            setFilterStatus(filterStatus === "Rented" ? "all" : "Rented")
-          }
-        />
-        <StatCard
-          icon={<AlertCircle className="text-rose-500" />}
-          label={t.inventoryOverdue}
-          value={stats.overdue}
-          active={filterStatus === "Overdue"}
-          onClick={() =>
-            setFilterStatus(filterStatus === "Overdue" ? "all" : "Overdue")
-          }
-        />
-        <StatCard
-          icon={<DollarSign className="text-teal-600" />}
-          label={t.inventoryTotalValue}
-          value={`${(stats.totalValue / 1000000).toFixed(1)}M`}
-        />
+        <StatCard icon={<Package className="text-teal-500" />} label={t.inventoryTotalProducts} value={stats.total} />
+        <StatCard icon={<CheckCircle2 className="text-emerald-500" />} label={t.inventoryAvailable} value={stats.available} active={filterStatus === "Available"} onClick={() => setFilterStatus(filterStatus === "Available" ? "all" : "Available")} />
+        <StatCard icon={<Clock className="text-amber-500" />} label={t.inventoryRented} value={stats.rented} active={filterStatus === "Rented"} onClick={() => setFilterStatus(filterStatus === "Rented" ? "all" : "Rented")} />
+        <StatCard icon={<AlertCircle className="text-rose-500" />} label={t.inventoryOverdue} value={stats.overdue} active={filterStatus === "Overdue"} onClick={() => setFilterStatus(filterStatus === "Overdue" ? "all" : "Overdue")} />
+        <StatCard icon={<DollarSign className="text-teal-600" />} label={t.inventoryTotalValue} value={`${(stats.totalValue / 1000000).toFixed(1)}M`} />
       </section>
 
-      {/* Catalog Table - Styled as a cohesive URent card container */}
       <section className="rounded-3xl bg-white dark:bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-700/50 overflow-hidden ring-1 ring-slate-900/5 dark:ring-white/5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 sm:p-8 bg-linear-to-r from-slate-50/50 to-transparent dark:from-slate-700/20">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 sm:p-8 bg-gradient-to-r from-slate-50/50 to-transparent dark:from-slate-700/20">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-none">
-              {t.inventoryListTitle}
-            </h2>
-            <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              {t.inventoryListDesc}
-            </p>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-none">{t.inventoryListTitle}</h2>
+            <p className="mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.inventoryListDesc}</p>
           </div>
-
           <div className="mt-4 sm:mt-0 flex items-center gap-2">
             <div className="flex rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/50 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50">
-              <button
-                onClick={() => setFilterStatus("all")}
-                className={`rounded-lg px-4 py-1.5 text-[10px] font-black uppercase transition-all ${filterStatus === "all" ? "bg-white text-teal-600 shadow-sm dark:bg-slate-700 dark:text-teal-400" : "text-slate-400"}`}
-              >
-                {t.inventoryAll}
-              </button>
+              <button onClick={() => setFilterStatus("all")} className={`rounded-lg px-4 py-1.5 text-[10px] font-black uppercase transition-all ${filterStatus === "all" ? "bg-white text-teal-600 shadow-sm dark:bg-slate-700 dark:text-teal-400" : "text-slate-400"}`}>{t.inventoryAll}</button>
               {["Rented", "Overdue"].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setFilterStatus(s as any)}
-                  className={`rounded-lg px-4 py-1.5 text-[10px] font-black uppercase transition-all ${filterStatus === s ? "bg-white text-teal-600 shadow-sm dark:bg-slate-700 dark:text-teal-400" : "text-slate-400"}`}
-                >
-                  {s === "Rented"
-                    ? t.inventoryFilterRented
-                    : t.inventoryFilterOverdue}
-                </button>
+                <button key={s} onClick={() => setFilterStatus(s as any)} className={`rounded-lg px-4 py-1.5 text-[10px] font-black uppercase transition-all ${filterStatus === s ? "bg-white text-teal-600 shadow-sm dark:bg-slate-700 dark:text-teal-400" : "text-slate-400"}`}>{s === "Rented" ? t.inventoryFilterRented : t.inventoryFilterOverdue}</button>
               ))}
             </div>
           </div>
@@ -285,23 +205,17 @@ export default function InventoryPage() {
             ))
           ) : (
             <div className="py-24 text-center">
-              <div className="mx-auto h-20 w-20 rounded-full bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center text-slate-200 dark:text-slate-700 mb-6 border-2 border-dashed border-slate-100 dark:border-slate-800">
-                <Filter size={32} />
-              </div>
-              <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
-                No matching items found
-              </p>
+              <div className="mx-auto h-20 w-20 rounded-full bg-slate-50 dark:bg-slate-900/50 flex items-center justify-center text-slate-200 dark:text-slate-700 mb-6 border-2 border-dashed border-slate-100 dark:border-slate-800"><Filter size={32} /></div>
+              <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">No matching items found</p>
             </div>
           )}
         </div>
       </section>
 
-      <AddProductModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onAdd={handleAddProduct}
-      />
-
+      {/* Modal Thêm Mới */}
+      <AddProductModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onAdd={handleAddProduct} />
+      
+      {/* Modal Chỉnh Sửa */}
       <EditProductModal
         isOpen={isEditModalOpen}
         onClose={() => {
@@ -309,7 +223,11 @@ export default function InventoryPage() {
           setEditingItem(null);
         }}
         product={editingItem}
-        onEdit={handleEditProduct}
+        onSuccess={() => {
+          setIsEditModalOpen(false);
+          setEditingItem(null);
+          fetchInventory();
+        }}
       />
     </div>
   );
@@ -317,33 +235,13 @@ export default function InventoryPage() {
 
 function StatCard({ icon, label, value, active, onClick }: any) {
   return (
-    <button
-      onClick={onClick}
-      disabled={!onClick}
-      className={`group relative overflow-hidden rounded-3xl border p-5 sm:p-6 text-left transition-all duration-300 ${
-        active
-          ? "border-teal-500 bg-white shadow-teal-500/10 dark:border-teal-500 dark:bg-teal-500/5"
-          : "border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800"
-      } ${onClick ? "hover:-translate-y-1 hover:shadow-2xl active:scale-95 shadow-lg shadow-slate-100 dark:shadow-none" : "shadow-md shadow-slate-100 dark:shadow-none ring-1 ring-slate-900/5 dark:ring-white/5"}`}
-    >
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900/50 transition-colors group-hover:bg-teal-500 group-hover:text-white border border-slate-100 dark:border-slate-700">
-        {icon}
-      </div>
+    <button onClick={onClick} disabled={!onClick} className={`group relative overflow-hidden rounded-3xl border p-5 sm:p-6 text-left transition-all duration-300 ${active ? "border-teal-500 bg-white shadow-teal-500/10 dark:border-teal-500 dark:bg-teal-500/5" : "border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-800"} ${onClick ? "hover:-translate-y-1 hover:shadow-2xl active:scale-95 shadow-lg shadow-slate-100 dark:shadow-none" : "shadow-md shadow-slate-100 dark:shadow-none ring-1 ring-slate-900/5 dark:ring-white/5"}`}>
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 dark:bg-slate-900/50 transition-colors group-hover:bg-teal-500 group-hover:text-white border border-slate-100 dark:border-slate-700">{icon}</div>
       <div className="flex flex-col">
-        <span className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tabular-nums">
-          {value}
-        </span>
-        <span className="mt-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-teal-500 transition-colors">
-          {label}
-        </span>
+        <span className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tabular-nums">{value}</span>
+        <span className="mt-1 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 group-hover:text-teal-500 transition-colors">{label}</span>
       </div>
-
-      {active && (
-        <div className="absolute top-0 right-0 p-2">
-          <div className="h-1.5 w-1.5 rounded-full bg-teal-500" />
-        </div>
-      )}
+      {active && <div className="absolute top-0 right-0 p-2"><div className="h-1.5 w-1.5 rounded-full bg-teal-500" /></div>}
     </button>
   );
 }
-

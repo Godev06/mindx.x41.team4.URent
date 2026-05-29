@@ -17,6 +17,7 @@ import { productRouter } from "./routes/product.route";
 import { settingsRouter } from "./routes/settings.route";
 import userRouter from "./routes/user.route";
 import { activityRouter } from "./routes/activity.route";
+import { uploadRouter } from "./routes/upload.route";
 
 // Register event listeners
 import "./events/user-events";
@@ -103,6 +104,7 @@ app.use("/api/v1", adminChatRouter);
 app.use("/api/v1/notifications", notificationRouter);
 app.use("/api/v1/orders", orderRouter);
 app.use("/api/v1", userRouter);
+app.use("/api/v1", uploadRouter);
 
 // 2. Middleware bẫy lỗi 404 Fallback cho tất cả các route không tồn tại công khai hơn
 app.use((req, res, _next) => {

@@ -101,6 +101,7 @@ export const mapAuthUser = (value: unknown): AuthUser | null => {
     username: typeof userRecord.username === "string" ? userRecord.username : undefined,
     bio: typeof userRecord.bio === "string" ? userRecord.bio : null,
     phone: typeof userRecord.phone === "string" ? userRecord.phone : null,
+    address: typeof userRecord.address === "string" ? userRecord.address : null,
     avatarUrl:
       avatarCandidates.find(
         (candidate) => typeof candidate === "string" && candidate.trim(),
