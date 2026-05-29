@@ -3,6 +3,7 @@ import { authGuard } from '../middlewares/auth.middleware';
 import {
   createOrder,
   getUserOrders,
+  getOwnerOrders,
   getOrderById,
   updateOrderStatus
 } from '../controllers/order.controller';
@@ -82,6 +83,7 @@ orderRouter.post('/', authGuard, createOrder);
  *                     $ref: '#/components/schemas/Order'
  */
 orderRouter.get('/', authGuard, getUserOrders);
+orderRouter.get('/owner', authGuard, getOwnerOrders);
 
 /**
  * @openapi

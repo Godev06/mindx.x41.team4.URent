@@ -124,7 +124,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
   const priceInUsd = isDbVnd ? product.price / 25000 : product.price;
 
   const displayPrice = isShowVnd ? priceInVnd : priceInUsd;
-  const serviceFee = isShowVnd ? 10000 : 2.5;
+  const serviceFee = displayPrice * 0.1;
   const total = displayPrice * days + serviceFee;
 
   const formatPrice = (value: number) => {
@@ -180,7 +180,7 @@ export function ProductBookingCard({ product }: ProductBookingCardProps) {
         productName: product.name,
         startDate: start.toISOString(),
         endDate: end.toISOString(),
-        totalPrice: priceInVnd * days,
+        totalPrice: priceInVnd * days + (priceInVnd * 0.1),
       });
 
       showToast({

@@ -44,6 +44,8 @@ export const createOrder = async (req: Request, res: Response) => {
     orderCode,
     productId,
     productName,
+    ownerId: product.ownerId,
+    renterId: userId,
     customerId: userId,
     customerName: req.user?.displayName || 'Unknown User',
     startDate: new Date(startDate),
@@ -67,16 +69,62 @@ export const createOrder = async (req: Request, res: Response) => {
     }
   });
 
+  // Create notification for the product owner
+  if (product.ownerId) {
+    await createLinkedActivityNotification({
+      userId: String(product.ownerId),
+      activity: {
+        action: 'order_requested',
+        description: `Yêu cầu thuê mới cho sản phẩm ${productName} từ khách hàng ${order.customerName}`,
+        type: 'update'
+      },
+      notification: {
+        title: 'Yêu cầu thuê mới',
+        description: `Bạn nhận được yêu cầu thuê mới cho sản phẩm ${productName} từ khách hàng ${order.customerName}`,
+        type: 'order'
+      }
+    });
+  }
+
   return sendSuccess(res, order, undefined, 201);
 };
 
 export const getUserOrders = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
 
-  const orders = await OrderModel.find({ customerId: userId })
+  const orders = await OrderModel.find({
+    $or: [{ customerId: userId }, { ownerId: userId }],
+  })
     .sort({ createdAt: -1 })
-    .populate('productId', 'name image');
+    .populate('productId', 'name image imageUrl');
 
+  return sendSuccess(res, orders);
+};
+
+// Owner can view orders for their products
+export const getOwnerOrders = async (req: Request, res: Response) => {
+  const ownerId = requireUserId(req);
+
+  const orders = await OrderModel.find({ ownerId })
+    .sort({ createdAt: -1 })
+    .populate('productId', 'name image imageUrl');
+
+  return sendSuccess(res, orders);
+};
+export const getAllOrders = async (req: Request, res: Response) => {
+  const orders = await OrderModel.find()
+    .sort({ createdAt: -1 })
+    .populate('productId', 'name image imageUrl');
+  return sendSuccess(res, orders);
+};
+
+export const getAllOrdersByUserId = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const orders = await OrderModel.find({
+    $or: [{ ownerId: userId }, { renterId: userId }, { customerId: userId }],
+  })
+    .sort({ createdAt: -1 })
+    .populate('productId', 'name image imageUrl');
   return sendSuccess(res, orders);
 };
 
@@ -84,8 +132,25 @@ export const getOrderById = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const { id } = req.params;
 
-  const order = await OrderModel.findOne({ _id: id, customerId: userId })
-    .populate('productId', 'name image description');
+  const order = await OrderModel.findOne({
+    _id: id,
+    $or: [{ customerId: userId }, { ownerId: userId }],
+  })
+    // Populate product basic info and deep populate its owner
+    .populate({
+      path: 'productId',
+      select: 'name image imageUrl description locationText location',
+      populate: {
+        path: 'ownerId',
+        select: 'displayName avatarUrl phone rating trips',
+      },
+    })
+    // Populate order owner (who listed the product)
+    .populate('ownerId', 'displayName avatarUrl phone rating trips')
+    // Populate renter (the user who rents)
+    .populate('renterId', 'displayName avatarUrl phone rating trips')
+    // Populate customer (might be same as renter)
+    .populate('customerId', 'displayName avatarUrl phone rating trips');
 
   if (!order) {
     throw new AppError(404, 'NOT_FOUND', 'Order not found');
@@ -100,7 +165,14 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
   const { status } = req.body;
 
   const order = await OrderModel.findOneAndUpdate(
-    { _id: id, customerId: userId },
+    {
+      _id: id,
+      $or: [
+        { customerId: userId },
+        { ownerId: userId },
+        { renterId: userId }
+      ]
+    },
     { status },
     { new: true }
   );
@@ -109,7 +181,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     throw new AppError(404, 'NOT_FOUND', 'Order not found');
   }
 
-  // Create notification for status update
+  // Create notification for status update (updater)
   await createLinkedActivityNotification({
     userId,
     activity: {
@@ -119,10 +191,31 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     },
     notification: {
       title: 'Cập nhật đơn hàng',
-      description: `Đơn hàng ${order.orderCode} của bạn đã được cập nhật trạng thái thành ${status}`,
+      description: `Bạn đã cập nhật trạng thái đơn hàng ${order.orderCode} thành ${status}`,
       type: 'order'
     }
   });
+
+  // Create notification for the other party
+  const targetUserId = String(userId) === String(order.customerId) || String(userId) === String(order.renterId)
+    ? String(order.ownerId)
+    : (order.customerId ? String(order.customerId) : String(order.renterId));
+
+  if (targetUserId) {
+    await createLinkedActivityNotification({
+      userId: targetUserId,
+      activity: {
+        action: 'order_status_updated',
+        description: `Trạng thái đơn hàng ${order.orderCode} đã được cập nhật thành ${status}`,
+        type: 'update'
+      },
+      notification: {
+        title: 'Cập nhật đơn hàng',
+        description: `Đơn hàng ${order.orderCode} của bạn đã được cập nhật trạng thái thành ${status}`,
+        type: 'order'
+      }
+    });
+  }
 
   return sendSuccess(res, order);
 };

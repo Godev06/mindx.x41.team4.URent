@@ -62,7 +62,8 @@ export interface Order {
   endDate: string;
   totalPrice: number;
   status: OrderStatus;
-  image: string;
+  ownerId?: string;
+  renterId?: string;
 }
 
 export interface Notification {
