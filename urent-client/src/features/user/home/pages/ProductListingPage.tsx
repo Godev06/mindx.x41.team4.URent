@@ -67,7 +67,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
     Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return Number((R * c).toFixed(1)); 
+  return Number((R * c).toFixed(1));
 }
 
 function normalizeLocation(loc: unknown): string | undefined {
@@ -158,11 +158,10 @@ function FilterPanel({
             return (
               <label
                 key={value}
-                className={`group flex cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${
-                  isSelected
-                    ? "border-emerald-300/70 bg-emerald-50/70 dark:border-emerald-500/40 dark:bg-emerald-500/10"
-                    : "border-transparent hover:border-slate-200 hover:bg-slate-100/50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50"
-                }`}
+                className={`group flex cursor-pointer items-center justify-between rounded-xl border px-3.5 py-2 transition-all duration-150 ${isSelected
+                  ? "border-emerald-300/70 bg-emerald-50/70 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                  : "border-transparent hover:border-slate-200 hover:bg-slate-100/50 dark:hover:border-slate-700 dark:hover:bg-slate-800/50"
+                  }`}
               >
                 <input
                   type="radio"
@@ -173,95 +172,24 @@ function FilterPanel({
                   className="sr-only"
                 />
                 <span
-                  className={`text-sm font-medium transition-colors ${
-                    isSelected
-                      ? "text-slate-900 dark:text-white"
-                      : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"
-                  }`}
+                  className={`text-sm font-medium transition-colors ${isSelected
+                    ? "text-slate-900 dark:text-white"
+                    : "text-slate-700 group-hover:text-slate-900 dark:text-slate-300 dark:group-hover:text-white"
+                    }`}
                 >
                   {label}
                 </span>
                 <span
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
-                    isSelected
-                      ? "border-emerald-500 bg-emerald-500 text-white shadow-sm dark:border-emerald-400 dark:bg-emerald-400 dark:text-slate-900"
-                      : "border-slate-300 bg-white text-transparent group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-900"
-                  }`}
+                  className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${isSelected
+                    ? "border-emerald-500 bg-emerald-500 text-white shadow-sm dark:border-emerald-400 dark:bg-emerald-400 dark:text-slate-900"
+                    : "border-slate-300 bg-white text-transparent group-hover:border-slate-400 dark:border-slate-600 dark:bg-slate-900"
+                    }`}
                 >
                   <Check size={14} strokeWidth={3} />
                 </span>
               </label>
             );
           })}
-        </div>
-      </div>
-
-      {/* FILTER: TIME */}
-      <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
-        <div className="mb-3 flex items-center gap-2">
-          <Calendar size={16} className="text-slate-600 dark:text-slate-400" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-            {t.productListingTime || "Thời gian thuê"}
-          </h3>
-        </div>
-        <div className="space-y-3">
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
-            Từ ngày
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => onStartDateChange(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
-            />
-          </label>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
-            Đến ngày
-            <input
-              type="date"
-              value={endDate}
-              min={startDate}
-              onChange={(e) => onEndDateChange(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* FILTER: LOCATION */}
-      <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
-        <div className="mb-3 flex items-center gap-2">
-          <MapPin size={16} className="text-slate-600 dark:text-slate-400" />
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-            {t.productListingLocation || "Vị trí gần tôi"}
-          </h3>
-        </div>
-        <div className="space-y-3">
-          {!userLocation ? (
-            <button
-              onClick={onGetLocation}
-              className="w-full rounded-lg border border-teal-500 bg-teal-50 py-2 text-sm font-semibold text-teal-600 hover:bg-teal-100 dark:border-teal-400/50 dark:bg-teal-900/20 dark:text-teal-400 dark:hover:bg-teal-900/40"
-            >
-              Lấy vị trí của tôi
-            </button>
-          ) : (
-            <div className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              ✓ Đã lấy vị trí thành công
-            </div>
-          )}
-          
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
-            Bán kính: <span className="font-bold text-slate-800 dark:text-slate-200">{radiusKm} km</span>
-            <input
-              type="range"
-              min={1}
-              max={50}
-              step={1}
-              value={radiusKm}
-              disabled={!userLocation}
-              onChange={(e) => onRadiusChange(Number(e.target.value))}
-              className="mt-2 w-full accent-teal-500 disabled:opacity-50"
-            />
-          </label>
         </div>
       </div>
 
@@ -342,7 +270,7 @@ export function ProductListingPage({
   const [sortBy, setSortBy] = useState<SortType>("latest");
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");
-  
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -502,7 +430,7 @@ export function ProductListingPage({
     sorted.sort((a, b) => {
       if (sortBy === "price-low") return toVnd(a.price) - toVnd(b.price);
       if (sortBy === "price-high") return toVnd(b.price) - toVnd(a.price);
-      return 0; 
+      return 0;
     });
     return sorted;
   }, [activeProducts, sortBy]);
@@ -553,11 +481,10 @@ export function ProductListingPage({
                       key={item.id}
                       onClick={() => setCategory(item.id)}
                       aria-pressed={active}
-                      className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-xs font-semibold transition-all duration-150 ${
-                        active
-                          ? "border-slate-900 bg-slate-900 text-white shadow-sm dark:border-white dark:bg-white dark:text-slate-900"
-                          : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                      }`}
+                      className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full border px-3.5 text-xs font-semibold transition-all duration-150 ${active
+                        ? "border-slate-900 bg-slate-900 text-white shadow-sm dark:border-white dark:bg-white dark:text-slate-900"
+                        : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                        }`}
                     >
                       <Icon size={13} className="opacity-90" />
                       <span className="hidden sm:inline">{item.label}</span>
@@ -674,7 +601,7 @@ export function ProductListingPage({
                         location={location}
                         distanceKm={meta.distanceKm}
                         conditionLabel={conditionLabel}
-                        
+
                         // ĐÃ BẬT CÔNG TẮC TRÁI TIM Ở ĐÂY
                         isWishlisted={favoriteIds.includes(String(product._id || product.id))}
                         onToggleWishlist={handleToggleHeart}
@@ -708,11 +635,10 @@ export function ProductListingPage({
                           type="button"
                           key={item}
                           onClick={() => setCurrentPage(item)}
-                          className={`inline-flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-sm font-semibold transition ${
-                            currentPage === item
-                              ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/30"
-                              : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
-                          }`}
+                          className={`inline-flex h-9 min-w-9 items-center justify-center rounded-xl px-3 text-sm font-semibold transition ${currentPage === item
+                            ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-md shadow-teal-500/30"
+                            : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700"
+                            }`}
                         >
                           {item}
                         </button>

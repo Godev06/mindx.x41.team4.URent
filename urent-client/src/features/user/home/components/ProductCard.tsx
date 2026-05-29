@@ -55,19 +55,19 @@ export function ProductCard({
   const formattedPrice = hasPrice
     ? lang === "en"
       ? priceInUsd.toLocaleString("en-US", {
-          style: "currency",
-          currency: "USD",
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2,
-        })
+        style: "currency",
+        currency: "USD",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      })
       : priceInVnd.toLocaleString("vi-VN", {
-          style: "currency",
-          currency: "VND",
-          maximumFractionDigits: 0,
-        })
+        style: "currency",
+        currency: "VND",
+        maximumFractionDigits: 0,
+      })
     : lang === "en"
-    ? "Contact"
-    : "Giá liên hệ";
+      ? "Contact"
+      : "Giá liên hệ";
 
   const displayDayUnit = dayUnit ? dayUnit.replace(/^\//, "").trim() : (lang === "vi" ? "ngày" : "day");
 

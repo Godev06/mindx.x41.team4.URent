@@ -5,15 +5,17 @@ export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "c
 export type NotificationType = "order" | "message" | "promotion" | "system";
 
 export interface ProductOwner {
+  id?: string;
   name: string;
   avatar: string;
   rating: number;
-  trips: number;
+  trips?: number;
 }
 
 export interface Product {
   id?: string | number;
   _id?: string;
+  ownerId?: string;
   name: string;
   category: string;
   price: number;

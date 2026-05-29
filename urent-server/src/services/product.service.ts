@@ -161,9 +161,10 @@ export const listMyProducts = async (ownerId: string, options: {
 };
 
 export const getProductById = async (id: string) => {
-  const product = await ProductModel.findById(id).lean();
+  const product = await ProductModel.findById(id).populate('ownerId', 'displayName avatarUrl trustScore').lean();
   if (!product || product.isArchived) throw new Error('PRODUCT_NOT_FOUND');
   
+  const ownerDoc = product.ownerId as any;
   return {
     id: String(product._id),
     name: product.name,
@@ -175,10 +176,17 @@ export const getProductById = async (id: string) => {
     imageUrl: product.imageUrl || 'https://placehold.co/150',
     description: product.description,
     locationText: product.locationText || 'Chưa cập nhật vị trí',
-    coordinates: product.location?.coordinates || null, // <-- THÊM DÒNG NÀY
+    coordinates: product.location?.coordinates || null,
     rating: product.rating,
     reviewsCount: product.reviewsCount,
-    lastUpdated: product.lastUpdated
+    lastUpdated: product.lastUpdated,
+    ownerId: ownerDoc ? String(ownerDoc._id) : String(product.ownerId || ''),
+    owner: ownerDoc ? {
+      id: String(ownerDoc._id),
+      name: ownerDoc.displayName || 'URent User',
+      avatar: ownerDoc.avatarUrl || null,
+      rating: ownerDoc.trustScore ?? 100,
+    } : null
   };
 };
 

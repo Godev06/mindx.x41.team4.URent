@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { OrderModel } from '../models/order.model';
+import { ProductModel } from '../models/product.model';
 import { AppError } from '../utils/app-error';
 import { sendSuccess } from '../utils/api-response';
 import { createLinkedActivityNotification } from '../services/activity-notification.service';
@@ -26,6 +27,15 @@ const createOrderSchema = z.object({
 export const createOrder = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const { productId, productName, startDate, endDate, totalPrice } = createOrderSchema.parse(req).body;
+
+  const product = await ProductModel.findById(productId);
+  if (!product) {
+    throw new AppError(404, 'NOT_FOUND', 'Sản phẩm không tồn tại');
+  }
+
+  if (product.ownerId && String(product.ownerId) === String(userId)) {
+    throw new AppError(400, 'BAD_REQUEST', 'Bạn không thể tự thuê sản phẩm của chính mình');
+  }
 
   // Generate order code
   const orderCode = `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
