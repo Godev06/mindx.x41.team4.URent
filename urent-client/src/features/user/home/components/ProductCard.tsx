@@ -1,10 +1,10 @@
 import { ChevronRight, Heart, MapPin, Star } from "lucide-react";
 import type { Product } from "../../shared/types";
-import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import clsx from "clsx";
 import { useI18n } from "../../shared/context/LanguageContext";
 
-function cn(...inputs: ClassValue[]) {
+function cn(...inputs: any[]) {
   return twMerge(clsx(inputs));
 }
 
