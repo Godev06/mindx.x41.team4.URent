@@ -7,7 +7,7 @@
     "urent-server"
   ],
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "scripts": {
     "dev": "concurrently --kill-others-on-fail --prefix-colors \"bgBlue.bold,bgGreen.bold\" --names \" CLIENT \",\" SERVER \" \"npm run dev --prefix urent-client\" \"npm run dev --prefix urent-server\"",
