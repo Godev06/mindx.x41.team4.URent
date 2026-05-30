@@ -17,8 +17,8 @@
     "lint": "eslint .",
     "test": "vitest",
     "preview": "vite preview",
-    "preview:host": "vite preview --host"
-    "postinstall": "if [ \"$VERCEL\" = \"1\" ]; then rm -rf node_modules package-lock.json && npm ci; fi",
+    "preview:host": "vite preview --host",
+    "postinstall": "if [ \"$VERCEL\" = \"1\" ]; then rm -rf node_modules package-lock.json && npm ci; fi"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
