@@ -1,17 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "installCommand": "npm install --prefix urent-server",
-  "buildCommand": "npm run vercel-build --prefix urent-server",
-  "functions": {
-    "urent-server/api/index.ts": {
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/urent-server/api/index"
-    }
-  ]
+  "installCommand": "npm install --prefix urent-client",
+  "buildCommand": "npm run build --prefix urent-client",
+  "outputDirectory": "urent-client/dist"
 }
