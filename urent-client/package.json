@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": ">=20.x"
+    "node": ">=20"
   },
   "scripts": {
     "dev": "vite --port 5173 --strictPort",
@@ -31,6 +31,7 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
+    "rollup": "^4.16.0",
     "@eslint/js": "^9.39.4",
     "@types/google.maps": "^3.58.1",
     "@types/lodash": "^4.17.24",
