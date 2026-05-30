@@ -5,6 +5,19 @@ import { env } from './env';
 
 type RawServiceAccount = Record<string, unknown>;
 
+const parsePrivateKey = (key: string | undefined): string | undefined => {
+  if (!key) return undefined;
+  let parsed = key.trim();
+  // Strip surrounding quotes if present
+  if (parsed.startsWith('"') && parsed.endsWith('"')) {
+    parsed = parsed.slice(1, -1);
+  }
+  if (parsed.startsWith("'") && parsed.endsWith("'")) {
+    parsed = parsed.slice(1, -1);
+  }
+  return parsed.replace(/\\n/g, '\n').replace(/\\r/g, '\r').trim();
+};
+
 const normalizeServiceAccount = (raw: RawServiceAccount): admin.ServiceAccount | undefined => {
   const projectId =
     typeof raw.project_id === 'string'
@@ -32,7 +45,7 @@ const normalizeServiceAccount = (raw: RawServiceAccount): admin.ServiceAccount |
   return {
     projectId: projectId?.trim(),
     clientEmail: clientEmail?.trim(),
-    privateKey: privateKey?.replace(/\\n/g, '\n').trim(),
+    privateKey: parsePrivateKey(privateKey),
   } as admin.ServiceAccount;
 };
 
@@ -80,7 +93,7 @@ const loadServiceAccountFromEnvVars = (): admin.ServiceAccount | undefined => {
   return {
     projectId,
     clientEmail,
-    privateKey: privateKey?.replace(/\\n/g, '\n'),
+    privateKey: parsePrivateKey(privateKey),
   } as admin.ServiceAccount;
 };
 
