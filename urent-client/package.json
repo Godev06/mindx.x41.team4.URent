@@ -31,7 +31,6 @@
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "rollup": "^3.29.0",
     "@eslint/js": "^9.39.4",
     "@types/google.maps": "^3.58.1",
     "@types/lodash": "^4.17.24",
