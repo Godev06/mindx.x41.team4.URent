@@ -23,20 +23,20 @@ const normalizeServiceAccount = (raw: RawServiceAccount): admin.ServiceAccount |
     typeof raw.project_id === 'string'
       ? raw.project_id
       : typeof raw.projectId === 'string'
-      ? raw.projectId
-      : undefined;
+        ? raw.projectId
+        : undefined;
   const clientEmail =
     typeof raw.client_email === 'string'
       ? raw.client_email
       : typeof raw.clientEmail === 'string'
-      ? raw.clientEmail
-      : undefined;
+        ? raw.clientEmail
+        : undefined;
   const privateKey =
     typeof raw.private_key === 'string'
       ? raw.private_key
       : typeof raw.privateKey === 'string'
-      ? raw.privateKey
-      : undefined;
+        ? raw.privateKey
+        : undefined;
 
   if (!projectId && !clientEmail && !privateKey) {
     return undefined;
@@ -136,15 +136,20 @@ const getFirebaseCredential = () => {
 
 export const initializeFirebase = () => {
   if (!admin.apps.length) {
-    const credential = getFirebaseCredential();
-    if (!credential) {
-      // Skip initializing admin SDK if no credential is available
-      return;
-    }
+    try {
+      const credential = getFirebaseCredential();
+      if (!credential) {
+        return;
+      }
 
-    admin.initializeApp({
-      credential,
-    });
+      admin.initializeApp({
+        credential,
+      });
+      console.info("[Firebase] Admin SDK initialized successfully.");
+    } catch (error) {
+      // Thay vì sập toàn bộ server, chỉ log lỗi ra để bạn biết và sửa cấu hình
+      console.error("[Firebase] Fatal initialization error caught:", error);
+    }
   }
 };
 
