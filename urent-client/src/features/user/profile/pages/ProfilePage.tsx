@@ -180,18 +180,17 @@ export function ProfilePage() {
       <div className="relative overflow-hidden rounded-3xl border border-slate-200/85 bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-900/10">
         {/* Banner Cover */}
         <div className="h-32 w-full bg-gradient-to-r from-teal-600 via-emerald-600 to-teal-800 dark:from-teal-850 dark:via-emerald-900 dark:to-slate-855" />
-        
+
         {/* Profile Identity Details Overlay */}
         <div className="px-6 pb-6 pt-0 sm:px-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end -mt-10 sm:-mt-12">
             {/* Sleek Clickable Avatar Container */}
             <div className="relative shrink-0">
               <label
-                className={`group relative block h-24 w-24 cursor-pointer overflow-hidden rounded-full ring-4 shadow-md transition-all ${
-                  !user.avatarUrl
-                    ? "ring-amber-500/70 hover:ring-amber-500 dark:ring-amber-500/50"
-                    : "ring-white dark:ring-slate-900 hover:ring-teal-500/50"
-                }`}
+                className={`group relative block h-24 w-24 cursor-pointer overflow-hidden rounded-full ring-4 shadow-md transition-all ${!user.avatarUrl
+                  ? "ring-amber-500/70 hover:ring-amber-500 dark:ring-amber-500/50"
+                  : "ring-white dark:ring-slate-900 hover:ring-teal-500/50"
+                  }`}
               >
                 <input
                   id="avatar-file-input"
@@ -201,7 +200,7 @@ export function ProfilePage() {
                   onChange={handleAvatarUpload}
                   disabled={isUploadingAvatar || isSaving}
                 />
-                
+
                 {user.avatarUrl ? (
                   <img
                     src={user.avatarUrl}
@@ -222,10 +221,10 @@ export function ProfilePage() {
                     <RefreshCw size={18} className="animate-spin text-teal-400" />
                   ) : (
                     <>
-                       <Camera size={18} className="animate-pulse" />
-                       <span className="mt-1 text-[8px] font-black uppercase tracking-widest text-slate-200">
-                         TẢI ẢNH
-                       </span>
+                      <Camera size={18} className="animate-pulse" />
+                      <span className="mt-1 text-[8px] font-black uppercase tracking-widest text-slate-200">
+                        TẢI ẢNH
+                      </span>
                     </>
                   )}
                 </div>
@@ -252,7 +251,7 @@ export function ProfilePage() {
                   {user.displayName || t.profileUserFallback}
                 </h2>
                 {completeness === 100 && (
-                  <ShieldCheck size={18} className="text-teal-500 shrink-0" title={t.profileSecuredAccount} />
+                  <ShieldCheck size={18} className="text-teal-500 shrink-0" />
                 )}
               </div>
               <p className="text-sm font-semibold text-slate-505 dark:text-slate-400 truncate">
@@ -460,10 +459,10 @@ export function ProfilePage() {
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-350">
                     {user.createdAt
                       ? new Date(user.createdAt).toLocaleDateString(lang === "vi" ? "vi-VN" : "en-US", {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })
                       : t.profileNoData}
                   </span>
                 </div>
@@ -513,7 +512,7 @@ export function ProfilePage() {
             )}
 
             <form className="space-y-6" onSubmit={handleProfileSubmit}>
-              
+
               {/* 1. Basic Info Section */}
               <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-teal-600 dark:text-teal-400 flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-850">
@@ -629,42 +628,40 @@ export function ProfilePage() {
 
                 {/* Intelligent address container */}
                 {!isEditingAddress ? (
-                   <div className={`rounded-2xl border p-4 flex items-start justify-between gap-4 shadow-sm transition-all ${
-                     !form.address?.trim()
-                       ? "border-amber-500/30 bg-amber-500/[0.02] dark:bg-amber-500/[0.01]"
-                       : "border-slate-150 bg-slate-50/30 dark:border-slate-855 dark:bg-slate-900/20"
-                   }`}>
-                     <div className="flex items-start gap-3">
-                       <div className={`mt-0.5 rounded-xl p-2 shrink-0 ${
-                         !form.address?.trim()
-                           ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 animate-pulse"
-                           : "bg-teal-500/10 text-teal-600 dark:text-teal-450"
-                       }`}>
-                         <MapPin size={16} />
-                       </div>
-                       <div>
-                         <span className="text-[9px] font-black text-slate-405 dark:text-slate-500 uppercase tracking-widest block mb-1">
-                           {t.profileCurrentAddress}
-                         </span>
-                         {form.address ? (
-                           <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed">
-                             {form.address}
-                           </p>
-                         ) : (
-                           <p className="text-xs font-semibold text-amber-650 dark:text-amber-400 italic">
-                             {t.profileAddressNotConfigured}
-                           </p>
-                         )}
-                       </div>
-                     </div>
-                     <button
-                       type="button"
-                       onClick={() => setIsEditingAddress(true)}
-                       className="text-[9px] font-black text-teal-600 hover:text-teal-700 dark:text-teal-450 dark:hover:text-teal-300 transition shrink-0 uppercase tracking-widest"
-                     >
-                       {form.address ? t.profileChangeAddress : t.profileAddAddress}
-                     </button>
-                   </div>
+                  <div className={`rounded-2xl border p-4 flex items-start justify-between gap-4 shadow-sm transition-all ${!form.address?.trim()
+                    ? "border-amber-500/30 bg-amber-500/[0.02] dark:bg-amber-500/[0.01]"
+                    : "border-slate-150 bg-slate-50/30 dark:border-slate-855 dark:bg-slate-900/20"
+                    }`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`mt-0.5 rounded-xl p-2 shrink-0 ${!form.address?.trim()
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 animate-pulse"
+                        : "bg-teal-500/10 text-teal-600 dark:text-teal-450"
+                        }`}>
+                        <MapPin size={16} />
+                      </div>
+                      <div>
+                        <span className="text-[9px] font-black text-slate-405 dark:text-slate-500 uppercase tracking-widest block mb-1">
+                          {t.profileCurrentAddress}
+                        </span>
+                        {form.address ? (
+                          <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-relaxed">
+                            {form.address}
+                          </p>
+                        ) : (
+                          <p className="text-xs font-semibold text-amber-650 dark:text-amber-400 italic">
+                            {t.profileAddressNotConfigured}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingAddress(true)}
+                      className="text-[9px] font-black text-teal-600 hover:text-teal-700 dark:text-teal-450 dark:hover:text-teal-300 transition shrink-0 uppercase tracking-widest"
+                    >
+                      {form.address ? t.profileChangeAddress : t.profileAddAddress}
+                    </button>
+                  </div>
                 ) : (
                   <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
                     <div className="flex items-center justify-between gap-3">
@@ -710,18 +707,18 @@ export function ProfilePage() {
 
                 <div className="space-y-1">
                   <textarea
-                     id="bio-input"
-                     maxLength={200}
-                     rows={4}
-                     className={`${inputClass} resize-none`}
-                     placeholder={lang === "vi" ? "Chia sẻ ngắn về bạn để xây dựng uy tín với người dùng khác..." : "Share a short bio to build trust with other users..."}
-                     value={form.bio}
-                     onChange={(event) =>
-                       setForm((current) => ({
-                         ...current,
-                         bio: event.target.value,
-                       }))
-                     }
+                    id="bio-input"
+                    maxLength={200}
+                    rows={4}
+                    className={`${inputClass} resize-none`}
+                    placeholder={lang === "vi" ? "Chia sẻ ngắn về bạn để xây dựng uy tín với người dùng khác..." : "Share a short bio to build trust with other users..."}
+                    value={form.bio}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        bio: event.target.value,
+                      }))
+                    }
                   />
                   <div className="flex items-center justify-between gap-3 mt-1.5">
                     {errors.bio ? (

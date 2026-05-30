@@ -18,13 +18,6 @@ export interface GeminiProductAnalysis {
   confidence: "high" | "medium" | "low";
 }
 
-const VALID_CATEGORIES = [
-  "Điện tử & Công nghệ",
-  "Du lịch & Dã ngoại",
-  "Đồ dùng học tập",
-  "Thời trang & Đời sống",
-];
-
 const ANALYSIS_PROMPT = `Bạn là chuyên gia định giá tài sản tài ba của nền tảng cho thuê đồ dùng URent tại Việt Nam. 
 Nhiệm vụ của bạn là phân tích kỹ hình ảnh sản phẩm được cung cấp, nhận diện chính xác và tự suy luận mức giá thuê theo ngày (VND/ngày) tối ưu nhất trên thị trường hiện tại.
 
@@ -553,7 +546,7 @@ export interface QuotaErrorDetails {
 
 export function parseQuotaError(errorMsg: string, lang: "vi" | "en"): QuotaErrorDetails {
   const isVi = lang === "vi";
-  
+
   // Try to parse the JSON if it's from Gemini API
   let details = "";
   try {
@@ -566,17 +559,17 @@ export function parseQuotaError(errorMsg: string, lang: "vi" | "en"): QuotaError
   } catch {
     // Fallback to raw string search
   }
-  
+
   if (!details) {
     details = errorMsg;
   }
 
   const detailsLower = details.toLowerCase();
-  
+
   // Check if it's a daily quota limit
   if (
-    detailsLower.includes("day") || 
-    detailsLower.includes("daily") || 
+    detailsLower.includes("day") ||
+    detailsLower.includes("daily") ||
     detailsLower.includes("per day") ||
     detailsLower.includes("rpd") ||
     (detailsLower.includes("limit_exceeded") && detailsLower.includes("day"))
@@ -584,16 +577,16 @@ export function parseQuotaError(errorMsg: string, lang: "vi" | "en"): QuotaError
     return {
       type: "day",
       message: details,
-      resetTimeMessage: isVi 
-        ? "Hạn ngạch ngày của AI (Gemini) đã hết. Hạn ngạch sẽ tự động được làm mới sau 24 giờ (thường vào 14:00 chiều mai theo giờ Việt Nam)." 
+      resetTimeMessage: isVi
+        ? "Hạn ngạch ngày của AI (Gemini) đã hết. Hạn ngạch sẽ tự động được làm mới sau 24 giờ (thường vào 14:00 chiều mai theo giờ Việt Nam)."
         : "Daily AI quota (Gemini) has been exhausted. Quota will automatically refresh in 24 hours (usually around 14:00 tomorrow VN time)."
     };
   }
-  
+
   // Check if it's a minute-based rate limit
   if (
-    detailsLower.includes("minute") || 
-    detailsLower.includes("rpm") || 
+    detailsLower.includes("minute") ||
+    detailsLower.includes("rpm") ||
     detailsLower.includes("tpm") ||
     detailsLower.includes("queries per minute") ||
     detailsLower.includes("requests per minute") ||
@@ -603,18 +596,18 @@ export function parseQuotaError(errorMsg: string, lang: "vi" | "en"): QuotaError
     return {
       type: "minute",
       message: details,
-      resetTimeMessage: isVi 
-        ? "Giới hạn theo phút của AI (Gemini) đã hết. Vui lòng đợi từ 1-2 phút rồi thử lại." 
+      resetTimeMessage: isVi
+        ? "Giới hạn theo phút của AI (Gemini) đã hết. Vui lòng đợi từ 1-2 phút rồi thử lại."
         : "Minute-based AI limit (RPM/TPM) reached. Please wait 1-2 minutes and try again."
     };
   }
-  
+
   // Fallback
   return {
     type: "unknown",
     message: details,
-    resetTimeMessage: isVi 
-      ? "Hạn ngạch AI (Gemini) tạm thời hết hoặc không hoạt động. Vui lòng đợi 1-2 phút hoặc thử lại sau." 
+    resetTimeMessage: isVi
+      ? "Hạn ngạch AI (Gemini) tạm thời hết hoặc không hoạt động. Vui lòng đợi 1-2 phút hoặc thử lại sau."
       : "Gemini AI quota is temporarily exhausted or unavailable. Please wait 1-2 minutes or try again later."
   };
 }

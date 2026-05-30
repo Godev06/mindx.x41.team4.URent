@@ -9,7 +9,6 @@ import {
   Gift,
   ShieldAlert,
   ArrowRight,
-  Eye,
   Calendar,
   Sparkles
 } from "lucide-react";
@@ -162,31 +161,28 @@ export function NotificationsPage() {
     <div className="space-y-6 max-w-7xl mx-auto px-1 sm:px-4 py-2">
       {/* Premium Glassmorphic Header */}
       <div
-        className={`relative overflow-hidden rounded-3xl border px-6 py-6 shadow-xl backdrop-blur-md transition-all duration-300 ${
-          theme === "dark"
+        className={`relative overflow-hidden rounded-3xl border px-6 py-6 shadow-xl backdrop-blur-md transition-all duration-300 ${theme === "dark"
             ? "border-slate-800 bg-slate-900/80 ring-1 ring-white/5"
             : "border-slate-200 bg-white/90 ring-1 ring-slate-900/5"
-        }`}
+          }`}
       >
         <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-teal-500/10 blur-[100px] rounded-full -mr-20 -mt-20 pointer-events-none"></div>
         <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between z-10">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h1
-                className={`text-2xl font-bold tracking-tight ${
-                  theme === "dark"
+                className={`text-2xl font-bold tracking-tight ${theme === "dark"
                     ? "bg-gradient-to-r from-slate-50 via-slate-100 to-slate-300 bg-clip-text text-transparent"
                     : "text-slate-900"
-                }`}
+                  }`}
               >
                 {t.notifCenterTitle}
               </h1>
               <Sparkles size={18} className="text-teal-500 animate-pulse" />
             </div>
             <p
-              className={`text-sm ${
-                theme === "dark" ? "text-slate-400" : "text-slate-500"
-              }`}
+              className={`text-sm ${theme === "dark" ? "text-slate-400" : "text-slate-500"
+                }`}
             >
               {t.notifCenterDesc}
             </p>
@@ -194,11 +190,10 @@ export function NotificationsPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <div
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-300 ${
-                theme === "dark"
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm transition-all duration-300 ${theme === "dark"
                   ? "bg-teal-500/15 text-teal-300 border border-teal-500/20"
                   : "bg-teal-50 text-teal-700 border border-teal-100"
-              }`}
+                }`}
             >
               <Bell size={15} strokeWidth={2.5} className="animate-swing" />
               <span>
@@ -208,11 +203,10 @@ export function NotificationsPage() {
 
             <button
               onClick={handleMarkAllAsRead}
-              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 shadow-sm ${
-                theme === "dark"
+              className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-semibold transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 shadow-sm ${theme === "dark"
                   ? "bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 hover:text-white"
                   : "bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 hover:text-slate-900"
-              }`}
+                }`}
             >
               <CheckCheck size={16} strokeWidth={2.5} className="text-teal-500" />
               <span>Mark All Read</span>
@@ -224,37 +218,32 @@ export function NotificationsPage() {
       <div className="flex flex-col gap-6 lg:flex-row items-stretch">
         {/* Left Pane - Notification List */}
         <div
-          className={`w-full lg:w-[420px] shrink-0 overflow-hidden rounded-3xl border shadow-xl backdrop-blur-sm transition-all duration-300 ${
-            theme === "dark"
+          className={`w-full lg:w-[420px] shrink-0 overflow-hidden rounded-3xl border shadow-xl backdrop-blur-sm transition-all duration-300 ${theme === "dark"
               ? "border-slate-800 bg-slate-900/50 ring-1 ring-white/5"
               : "border-slate-200 bg-white/70 ring-1 ring-slate-900/5"
-          }`}
+            }`}
         >
           <div
-            className={`px-5 py-4 border-b ${
-              theme === "dark" ? "border-slate-800" : "border-slate-200"
-            }`}
+            className={`px-5 py-4 border-b ${theme === "dark" ? "border-slate-800" : "border-slate-200"
+              }`}
           >
             <h2
-              className={`text-sm font-bold tracking-wide uppercase ${
-                theme === "dark" ? "text-slate-400" : "text-slate-500"
-              }`}
+              className={`text-sm font-bold tracking-wide uppercase ${theme === "dark" ? "text-slate-400" : "text-slate-500"
+                }`}
             >
               {t.notifCenterListTitle}
             </h2>
             <p
-              className={`mt-0.5 text-xs ${
-                theme === "dark" ? "text-slate-500" : "text-slate-400"
-              }`}
+              className={`mt-0.5 text-xs ${theme === "dark" ? "text-slate-500" : "text-slate-400"
+                }`}
             >
               {t.notifCenterListDesc}
             </p>
           </div>
 
           <div
-            className={`divide-y max-h-[520px] overflow-y-auto custom-scrollbar ${
-              theme === "dark" ? "divide-slate-800/60" : "divide-slate-100"
-            }`}
+            className={`divide-y max-h-[520px] overflow-y-auto custom-scrollbar ${theme === "dark" ? "divide-slate-800/60" : "divide-slate-100"
+              }`}
           >
             {notifications.map((notification) => {
               const isSelected = selectedNotificationId === notification._id;
@@ -263,13 +252,12 @@ export function NotificationsPage() {
               return (
                 <div
                   key={notification._id}
-                  className={`group relative px-5 py-4 transition-all duration-300 cursor-pointer flex gap-4 items-start ${
-                    isSelected
+                  className={`group relative px-5 py-4 transition-all duration-300 cursor-pointer flex gap-4 items-start ${isSelected
                       ? theme === "dark"
                         ? "bg-teal-500/5 border-l-4 border-l-teal-500"
                         : "bg-teal-50/40 border-l-4 border-l-teal-600"
                       : "border-l-4 border-l-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/30"
-                  }`}
+                    }`}
                   onClick={() => setSelectedNotificationId(notification._id)}
                 >
                   {/* Category Themed Icon */}
@@ -279,21 +267,19 @@ export function NotificationsPage() {
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-center justify-between gap-2">
                       <span
-                        className={`text-xs font-bold uppercase tracking-wider ${
-                          notification.type === "message"
+                        className={`text-xs font-bold uppercase tracking-wider ${notification.type === "message"
                             ? "text-teal-500"
                             : notification.type === "order"
-                            ? "text-blue-500"
-                            : "text-purple-500"
-                        }`}
+                              ? "text-blue-500"
+                              : "text-purple-500"
+                          }`}
                       >
                         {getCategoryLabel(notification.type)}
                       </span>
                       <div className="flex items-center gap-2">
                         <div
-                          className={`flex items-center gap-1 text-[11px] font-medium ${
-                            theme === "dark" ? "text-slate-500" : "text-slate-400"
-                          }`}
+                          className={`flex items-center gap-1 text-[11px] font-medium ${theme === "dark" ? "text-slate-500" : "text-slate-400"
+                            }`}
                         >
                           <Calendar size={10} />
                           <span>
@@ -311,20 +297,18 @@ export function NotificationsPage() {
                     </div>
 
                     <h3
-                      className={`text-sm font-semibold truncate leading-snug transition-colors duration-200 ${
-                        isSelected
+                      className={`text-sm font-semibold truncate leading-snug transition-colors duration-200 ${isSelected
                           ? "text-teal-600 dark:text-teal-400 font-bold"
                           : theme === "dark"
-                          ? "text-slate-100"
-                          : "text-slate-800"
-                      }`}
+                            ? "text-slate-100"
+                            : "text-slate-800"
+                        }`}
                     >
                       {notification.title}
                     </h3>
                     <p
-                      className={`text-xs line-clamp-1 leading-normal ${
-                        theme === "dark" ? "text-slate-400" : "text-slate-500"
-                      }`}
+                      className={`text-xs line-clamp-1 leading-normal ${theme === "dark" ? "text-slate-400" : "text-slate-500"
+                        }`}
                     >
                       {notification.description}
                     </p>
@@ -336,11 +320,10 @@ export function NotificationsPage() {
                       e.stopPropagation();
                       handleDelete(notification._id);
                     }}
-                    className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-200 ${
-                      theme === "dark"
+                    className={`absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-200 ${theme === "dark"
                         ? "hover:bg-red-500/10 text-red-400 hover:text-red-300"
                         : "hover:bg-red-50 text-red-500 hover:text-red-600"
-                    }`}
+                      }`}
                   >
                     <Trash2 size={15} />
                   </button>
@@ -361,11 +344,10 @@ export function NotificationsPage() {
 
         {/* Right Pane - Rich Detailed Card Panel */}
         <div
-          className={`flex-1 rounded-3xl border shadow-xl backdrop-blur-sm transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
-            theme === "dark"
+          className={`flex-1 rounded-3xl border shadow-xl backdrop-blur-sm transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${theme === "dark"
               ? "border-slate-800 bg-slate-900/30 ring-1 ring-white/5"
               : "border-slate-200 bg-white/50 ring-1 ring-slate-900/5"
-          }`}
+            }`}
         >
           {/* Decorative mesh gradient overlay inside Detail pane */}
           <div className="absolute inset-0 bg-gradient-to-tr from-teal-500/5 via-transparent to-transparent pointer-events-none"></div>
@@ -376,11 +358,10 @@ export function NotificationsPage() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-6">
                 <div>
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
-                      theme === "dark"
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${theme === "dark"
                         ? "bg-teal-500/10 text-teal-400 border border-teal-500/20"
                         : "bg-teal-50 text-teal-700 border border-teal-100"
-                    }`}
+                      }`}
                   >
                     {getCategoryLabel(selectedNotification.type)}
                   </span>
@@ -389,8 +370,8 @@ export function NotificationsPage() {
                     <span>
                       {selectedNotification.time ||
                         new Date(selectedNotification.createdAt).toLocaleDateString() +
-                          " - " +
-                          new Date(selectedNotification.createdAt).toLocaleTimeString()}
+                        " - " +
+                        new Date(selectedNotification.createdAt).toLocaleTimeString()}
                     </span>
                   </p>
                 </div>
@@ -399,11 +380,10 @@ export function NotificationsPage() {
                   {!selectedNotification.read && (
                     <button
                       onClick={() => handleMarkAsRead(selectedNotification._id)}
-                      className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition-all duration-200 shadow-sm hover:-translate-y-0.5 active:translate-y-0 ${
-                        theme === "dark"
+                      className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition-all duration-200 shadow-sm hover:-translate-y-0.5 active:translate-y-0 ${theme === "dark"
                           ? "bg-teal-500/10 text-teal-300 border border-teal-500/25 hover:bg-teal-500/20"
                           : "bg-teal-50 text-teal-700 border border-teal-100 hover:bg-teal-100"
-                      }`}
+                        }`}
                     >
                       <CheckCheck size={14} strokeWidth={2.5} />
                       <span>Mark as Read</span>
@@ -412,11 +392,10 @@ export function NotificationsPage() {
 
                   <button
                     onClick={() => handleDelete(selectedNotification._id)}
-                    className={`p-2.5 rounded-2xl transition-all duration-200 border shadow-sm hover:-translate-y-0.5 active:translate-y-0 ${
-                      theme === "dark"
+                    className={`p-2.5 rounded-2xl transition-all duration-200 border shadow-sm hover:-translate-y-0.5 active:translate-y-0 ${theme === "dark"
                         ? "bg-slate-800 text-red-400 border-slate-700 hover:bg-red-500/10 hover:border-red-500/20"
                         : "bg-white text-red-500 border-slate-200 hover:bg-red-50 hover:border-red-100"
-                    }`}
+                      }`}
                     title="Delete notification"
                   >
                     <Trash2 size={15} />
@@ -431,9 +410,8 @@ export function NotificationsPage() {
                     Tiêu đề thông báo
                   </span>
                   <h2
-                    className={`text-xl font-bold tracking-tight leading-snug ${
-                      theme === "dark" ? "text-slate-100" : "text-slate-900"
-                    }`}
+                    className={`text-xl font-bold tracking-tight leading-snug ${theme === "dark" ? "text-slate-100" : "text-slate-900"
+                      }`}
                   >
                     {selectedNotification.title}
                   </h2>
@@ -444,11 +422,10 @@ export function NotificationsPage() {
                     Nội dung chi tiết
                   </span>
                   <div
-                    className={`p-5 rounded-2xl border text-sm leading-relaxed ${
-                      theme === "dark"
+                    className={`p-5 rounded-2xl border text-sm leading-relaxed ${theme === "dark"
                         ? "bg-slate-900/60 border-slate-800 text-slate-300"
                         : "bg-slate-50 border-slate-150 text-slate-700"
-                    }`}
+                      }`}
                   >
                     {selectedNotification.description}
                   </div>
@@ -460,11 +437,10 @@ export function NotificationsPage() {
                 <div className="border-t border-slate-100 dark:border-slate-800/80 pt-6">
                   <button
                     onClick={() => navigate(selectedNotification.actionUrl!)}
-                    className={`group inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold shadow-lg shadow-teal-500/10 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-teal-500/20 active:translate-y-0 ${
-                      theme === "dark"
+                    className={`group inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold shadow-lg shadow-teal-500/10 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-teal-500/20 active:translate-y-0 ${theme === "dark"
                         ? "bg-teal-500 text-slate-950 hover:bg-teal-400 active:bg-teal-600"
                         : "bg-teal-600 text-white hover:bg-teal-500 active:bg-teal-700"
-                    }`}
+                      }`}
                   >
                     <span>{t.ordersViewDetail ? "Xem chi tiết" : "View Details"}</span>
                     <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />

@@ -37,6 +37,7 @@ export interface ApiSupportConversation {
   updatedAt: string;
   client: ApiConversationParticipant | null;
   participants: Array<ApiConversationParticipant & { role?: string; unreadCount?: number; lastReadAt?: string | null }>;
+  unreadCount?: number;
 }
 
 export interface ApiOneToOneConversation {

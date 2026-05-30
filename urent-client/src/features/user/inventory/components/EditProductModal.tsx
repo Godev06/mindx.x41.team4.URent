@@ -3,7 +3,6 @@ import {
   X,
   Plus,
   Trash2,
-  Package,
   Loader2,
   MapPin,
   Sparkles,
@@ -15,12 +14,10 @@ import {
   Layers,
   ChevronDown,
   Map,
-  Save,
   CheckCircle,
 } from "lucide-react";
 import { apiClient } from "../../../../lib/api/apiClient";
 import { useI18n } from "../../shared/context/LanguageContext";
-import { normalizeApiError } from "../../../../lib/api/apiError";
 import type { InventoryItem } from "../../shared/types";
 import { productService } from "../../product/services/productService";
 import { AddressSelector } from "../../shared/components/AddressSelector";
@@ -31,81 +28,6 @@ interface EditProductModalProps {
   product: InventoryItem | null;
   onSuccess: () => void;
 }
-
-type UnknownRecord = Record<string, unknown>;
-
-type ProductAiSuggestion = {
-  name?: string;
-  category?: string;
-  price?: number;
-  priceMin?: number;
-  priceMax?: number;
-  priceReason?: string;
-  condition?: string;
-  description?: string[];
-  confidence?: "high" | "medium" | "low";
-  aiPowered?: boolean;
-};
-
-const isRecord = (value: unknown): value is UnknownRecord => {
-  return typeof value === "object" && value !== null;
-};
-
-const toStringArray = (value: unknown): string[] | undefined => {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
-  const items = value
-    .map((item) => (typeof item === "string" ? item.trim() : ""))
-    .filter(Boolean);
-
-  return items.length > 0 ? items : undefined;
-};
-
-const toNum = (v: unknown): number | undefined => {
-  if (typeof v === "number" && Number.isFinite(v) && v > 0) return Math.round(v);
-  if (typeof v === "string" && v.trim()) {
-    const n = Number(v);
-    return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
-  }
-  return undefined;
-};
-
-const parseAiSuggestion = (payload: unknown): ProductAiSuggestion | null => {
-  const root = isRecord(payload) ? payload : null;
-  if (!root) {
-    return null;
-  }
-
-  const data = isRecord(root.data) ? root.data : root;
-
-  const description =
-    toStringArray(data.description) ??
-    toStringArray(data.specs) ??
-    toStringArray(data.suggestedSpecs);
-
-  const suggestion: ProductAiSuggestion = {
-    name: typeof data.name === "string" ? data.name.trim() : undefined,
-    category:
-      typeof data.category === "string" ? data.category.trim() : undefined,
-    price: toNum(data.price),
-    priceMin: toNum(data.priceMin),
-    priceMax: toNum(data.priceMax),
-    priceReason: typeof data.priceReason === "string" ? data.priceReason.trim() : undefined,
-    condition:
-      typeof data.condition === "string" ? data.condition.trim() : undefined,
-    description,
-    confidence: ["high", "medium", "low"].includes(data.confidence as string)
-      ? (data.confidence as "high" | "medium" | "low")
-      : undefined,
-    aiPowered: data.aiPowered === true,
-  };
-
-  return Object.values(suggestion).some((value) => value !== undefined)
-    ? suggestion
-    : null;
-};
 
 const parseDescriptionToArray = (descStr: string): string[] => {
   if (!descStr) return [];
@@ -142,9 +64,9 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -246,7 +168,10 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
       let finalImageUrl = formData.imageUrl;
 
       // Defer image upload to Cloudinary until Save is clicked
+      // Start uploading indicator
       if (selectedFileRef.current && formData.imageUrl.startsWith("blob:")) {
+        // Indicate upload is in progress
+        setIsUploading(true);
         const uploadData = new FormData();
         uploadData.append("image", selectedFileRef.current);
         const res = await apiClient.post<{ success: boolean; url: string }>("/api/v1/upload", uploadData, {
@@ -254,6 +179,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
         });
         const url = res.data.url;
         finalImageUrl = url.startsWith("http") ? url : `${apiClient.defaults.baseURL}${url}`;
+        // Upload finished
+        setIsUploading(false);
       }
 
       let lng = 105.8342, lat = 21.0278;
@@ -412,6 +339,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
               onChange={handleFileChange}
               className="hidden"
               accept="image/*"
+              disabled
             />
             {formData.imageUrl ? (
               <div className="space-y-4 relative z-10">
@@ -433,6 +361,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="h-10 w-10 rounded-full bg-white/90 dark:bg-slate-900/90 text-teal-650 dark:text-teal-400 flex items-center justify-center shadow-xl backdrop-blur-md hover:scale-110 active:scale-95 transition-all duration-200 border border-white/20"
+                      disabled
                     >
                       <Zap size={18} />
                     </button>
@@ -500,7 +429,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
 
               {/* Spacious 12-column Grid Layout */}
               <div className="grid grid-cols-12 gap-5 relative">
-                
+
                 {/* Row 1: Name (8 cols) & Price (4 cols) */}
                 <div className="col-span-12 md:col-span-8 space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -510,7 +439,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                     className="w-full rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-3 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all duration-200 h-[46px]"
                     placeholder={t.addProductPlaceholderName}
                     value={formData.name}
-                    onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                    disabled
                   />
                 </div>
 
@@ -523,8 +452,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                       className="w-full rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-3 text-sm font-extrabold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all tabular-nums pr-16 h-[46px]"
                       placeholder="0"
                       value={formData.price}
-                      onChange={(e) => setFormData((p) => ({ ...p, price: e.target.value }))}
                       type="number"
+                      disabled
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pointer-events-none">
                       VND/Ngày
@@ -559,6 +488,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                     type="button"
                     onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
                     className="w-full flex items-center justify-between rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-3 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all duration-200 h-[46px]"
+                    disabled
                   >
                     <div className="flex items-center gap-2.5">
                       <div className={`p-1 rounded-lg ${activeCat.iconBg}`}>
@@ -627,12 +557,11 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                           key={opt.value}
                           type="button"
                           onClick={() => setFormData((p) => ({ ...p, condition: opt.value }))}
-                          className={`h-full rounded-xl flex flex-col items-center justify-center transition-all duration-250 ${
-                            isSelected
-                              ? "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm border border-slate-200/50 dark:border-slate-750 font-black"
-                              : "text-slate-500 dark:text-slate-450 hover:text-slate-800 dark:hover:text-slate-200 font-bold"
-                          }`}
-                        >
+                          className={`h-full rounded-xl flex flex-col items-center justify-center transition-all duration-250 ${isSelected
+                            ? "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm border border-slate-200/50 dark:border-slate-750 font-black"
+                            : "text-slate-500 dark:text-slate-450 hover:text-slate-800 dark:hover:text-slate-200 font-bold"
+                            }`}
+                          disabled>
                           <span className="text-[10px] uppercase tracking-wider">{opt.label}</span>
                         </button>
                       );
@@ -695,15 +624,14 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAdminAddress(!showAdminAddress)}
-                      className={`text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 shadow-sm ${
-                        showAdminAddress
-                          ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30 shadow-teal-500/5 scale-102"
-                          : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-455 border-slate-200/60 dark:border-slate-700/80 hover:text-slate-700 dark:hover:text-slate-200 hover:scale-102"
-                      }`}
+                      className={`text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 shadow-sm ${showAdminAddress
+                        ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30 shadow-teal-500/5 scale-102"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-455 border-slate-200/60 dark:border-slate-700/80 hover:text-slate-700 dark:hover:text-slate-200 hover:scale-102"
+                        }`}
                     >
                       <Map size={10} className={showAdminAddress ? "animate-pulse text-teal-500" : ""} />
-                      {showAdminAddress 
-                        ? (lang === "vi" ? "Gõ Địa Chỉ Nhanh" : "Quick Text Input") 
+                      {showAdminAddress
+                        ? (lang === "vi" ? "Gõ Địa Chỉ Nhanh" : "Quick Text Input")
                         : (lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative")}
                     </button>
                   </label>
@@ -712,6 +640,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                       className="w-full rounded-2xl border border-slate-200/85 dark:border-slate-800 bg-slate-50/20 dark:bg-slate-950/20 px-4 py-3.5 text-sm font-semibold outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/5 dark:text-white transition-all pr-10 h-[46px]"
                       placeholder="Ví dụ: Cầu Giấy, Hà Nội..."
                       value={formData.locationText}
+                      disabled
                       onChange={(e) => {
                         setSelectedFromSuggestions(false);
                         setFormData((p) => ({ ...p, locationText: e.target.value }));
@@ -753,8 +682,8 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                         <MapPin size={13} className="text-teal-500 animate-pulse" />
                         {lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative Address"}
                       </span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowAdminAddress(false)}
                         className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-655 transition-colors"
                       >
@@ -779,6 +708,7 @@ export const EditProductModal: React.FC<EditProductModalProps> = ({
                     rows={2}
                     placeholder={t.addProductDescriptionPlaceholder}
                     value={formData.description}
+                    disabled
                     onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))}
                   />
                 </div>

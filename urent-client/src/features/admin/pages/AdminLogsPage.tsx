@@ -1,14 +1,11 @@
 import { useState } from "react";
 import { AdminLayout } from "../layout/AdminLayout";
-import { 
-  Activity, 
-  Terminal, 
-  Download, 
-  Clock, 
-  ShieldAlert, 
-  ShieldCheck, 
-  AlertTriangle, 
-  Compass,
+import {
+  Activity,
+  Terminal,
+  Download,
+  Clock,
+  ShieldAlert,
   AlertOctagon,
   RefreshCw
 } from "lucide-react";
@@ -82,17 +79,6 @@ export function AdminLogsPage() {
       case "High":
         return "bg-rose-500/10 text-rose-400 border border-rose-500/25";
       case "Medium":
-        return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25";
-      default:
-        return "bg-teal-500/10 text-teal-400 border border-teal-500/25";
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Critical":
-        return "bg-rose-500/10 text-rose-400 border border-rose-500/25";
-      case "Warning":
         return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25";
       default:
         return "bg-teal-500/10 text-teal-400 border border-teal-500/25";
@@ -217,9 +203,9 @@ export function AdminLogsPage() {
             <Activity className="h-4.5 w-4.5 text-cyan-400" />
             Security Shield Monitor active
           </h3>
-          
+
           <p className="text-xs font-semibold text-slate-500 leading-relaxed max-w-2xl">
-             Escrow security triggers automatically listen to administrator roles, renter trust mutations, escort code scans, checkout validations, and suspicious network headers. Use the filter controls below to parse the stack.
+            Escrow security triggers automatically listen to administrator roles, renter trust mutations, escort code scans, checkout validations, and suspicious network headers. Use the filter controls below to parse the stack.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold">

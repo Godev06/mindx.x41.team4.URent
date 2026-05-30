@@ -47,11 +47,11 @@ export function AdminChatPage() {
     setSelectedId(id);
     setSearchParams({ conversationId: id });
   };
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [inputText, setInputText] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "unread" | "open">("all");
-  
+
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +104,7 @@ export function AdminChatPage() {
       .then(async (res) => {
         if (!isCancelled) {
           setMessages([...res.data].reverse());
-          
+
           try {
             await messageService.markAsRead(selectedId);
           } catch (e) {
@@ -159,17 +159,17 @@ export function AdminChatPage() {
             return [...prev, message];
           });
           setTimeout(scrollToBottom, 50);
-          void messageService.markAsRead(convId).catch(() => {});
+          void messageService.markAsRead(convId).catch(() => { });
         } else {
           setConversations((prev) =>
             prev.map((c) =>
               c.id === convId
                 ? {
-                    ...c,
-                    unreadCount: (c.unreadCount ?? 0) + 1,
-                    lastMessage: message.content || (message.messageType === "PRODUCT" ? "[Product]" : "[Location]"),
-                    lastMessageAt: message.createdAt,
-                  }
+                  ...c,
+                  unreadCount: (c.unreadCount ?? 0) + 1,
+                  lastMessage: message.content || (message.messageType === "PRODUCT" ? "[Product]" : "[Location]"),
+                  lastMessageAt: message.createdAt,
+                }
                 : c
             )
           );
@@ -185,11 +185,11 @@ export function AdminChatPage() {
           return prev.map((c) =>
             c.id === convId
               ? {
-                  ...c,
-                  lastMessage: message.content || (message.messageType === "PRODUCT" ? "[Product]" : "[Location]"),
-                  lastMessageAt: message.createdAt,
-                  updatedAt: message.createdAt,
-                }
+                ...c,
+                lastMessage: message.content || (message.messageType === "PRODUCT" ? "[Product]" : "[Location]"),
+                lastMessageAt: message.createdAt,
+                updatedAt: message.createdAt,
+              }
               : c
           ).sort((a, b) => new Date(b.updatedAt || b.lastMessageAt || 0).getTime() - new Date(a.updatedAt || a.lastMessageAt || 0).getTime());
         });
@@ -232,7 +232,7 @@ export function AdminChatPage() {
         if (prev.some((m) => m.id === message.id)) return prev;
         return [...prev, message];
       });
-      
+
       setConversations((prev) =>
         prev
           .map((c) =>
@@ -284,7 +284,7 @@ export function AdminChatPage() {
     const clientName = (c.client?.displayName || c.client?.email || "").toLowerCase();
     const lastMsg = (c.lastMessage || "").toLowerCase();
     const q = searchTerm.toLowerCase().trim();
-    
+
     // Search match
     const matchesSearch = clientName.includes(q) || lastMsg.includes(q);
     if (!matchesSearch) return false;
@@ -305,7 +305,7 @@ export function AdminChatPage() {
   return (
     <AdminLayout>
       <div className="flex h-[calc(100vh-6.5rem)] flex-col overflow-hidden rounded-3xl border border-slate-800 bg-[#0b1329]/60 shadow-2xl backdrop-blur-xl transition-all duration-300">
-        
+
         {/* TOP BAR / HEADER */}
         <div className="flex h-20 items-center justify-between border-b border-slate-800/80 bg-[#0b1329]/80 px-6 backdrop-blur-md">
           <div className="flex items-center gap-4">
@@ -351,10 +351,10 @@ export function AdminChatPage() {
 
         {/* MAIN BODY LAYOUT */}
         <div className="flex flex-1 min-h-0 bg-[#070b19]/20">
-          
+
           {/* SIDEBAR */}
           <div className="flex w-[22rem] shrink-0 flex-col border-r border-slate-800/80 bg-[#0b1329]/30">
-            
+
             {/* SEARCH & FILTERS */}
             <div className="p-4 space-y-3 border-b border-slate-800/80">
               <div className="relative group">
@@ -374,11 +374,10 @@ export function AdminChatPage() {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`flex-1 text-[11px] font-medium py-1.5 capitalize rounded-lg transition-all duration-200 ${
-                      activeTab === tab
-                        ? "bg-slate-800 text-white shadow-sm"
-                        : "text-slate-400 hover:text-slate-200"
-                    }`}
+                    className={`flex-1 text-[11px] font-medium py-1.5 capitalize rounded-lg transition-all duration-200 ${activeTab === tab
+                      ? "bg-slate-800 text-white shadow-sm"
+                      : "text-slate-400 hover:text-slate-200"
+                      }`}
                   >
                     {tab}
                   </button>
@@ -419,11 +418,10 @@ export function AdminChatPage() {
                     <button
                       key={conv.id}
                       onClick={() => handleSelectConversation(conv.id)}
-                      className={`group flex w-full items-start gap-3.5 rounded-2xl p-3.5 text-left transition-all duration-200 ease-out active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/80 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 ${
-                        isSelected
-                          ? "bg-cyan-500/10 border border-cyan-500/20 text-white shadow-lg shadow-cyan-500/5"
-                          : "border border-transparent hover:bg-white/[0.02] text-slate-300"
-                      }`}
+                      className={`group flex w-full items-start gap-3.5 rounded-2xl p-3.5 text-left transition-all duration-200 ease-out active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/80 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950 ${isSelected
+                        ? "bg-cyan-500/10 border border-cyan-500/20 text-white shadow-lg shadow-cyan-500/5"
+                        : "border border-transparent hover:bg-white/[0.02] text-slate-300"
+                        }`}
                     >
                       {/* Avatar container */}
                       <div className="relative shrink-0 mt-0.5">
@@ -505,9 +503,8 @@ export function AdminChatPage() {
                         />
                       ) : (
                         <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${
-                            getAvatarStyle(selectedConversation.client?.displayName || "Support").colorClass
-                          }`}
+                          className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white shadow-sm ${getAvatarStyle(selectedConversation.client?.displayName || "Support").colorClass
+                            }`}
                         >
                           {getAvatarStyle(selectedConversation.client?.displayName || "Support").initials}
                         </div>
@@ -568,15 +565,14 @@ export function AdminChatPage() {
                             <div className="shrink-0 mb-1">
                               {isSenderImageUrl ? (
                                 <img
-                                  src={senderAvatarUrl}
+                                  src={senderAvatarUrl ?? ''}
                                   alt={senderName}
                                   className="h-8 w-8 rounded-full object-cover ring-2 ring-white/50"
                                 />
                               ) : (
                                 <div
-                                  className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs ${
-                                    getAvatarStyle(senderName).colorClass
-                                  }`}
+                                  className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold text-white shadow-xs ${getAvatarStyle(senderName).colorClass
+                                    }`}
                                 >
                                   {getAvatarStyle(senderName).initials}
                                 </div>
@@ -586,11 +582,10 @@ export function AdminChatPage() {
 
                           <div className="flex flex-col max-w-[70%]">
                             <div
-                              className={`rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm transition-all duration-200 border ${
-                                isMe
-                                  ? "bg-gradient-to-tr from-cyan-600 to-cyan-500 text-white font-medium rounded-br-none border-cyan-600/30"
-                                  : "bg-slate-900 text-slate-100 rounded-bl-none border-slate-800"
-                              }`}
+                              className={`rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm transition-all duration-200 border ${isMe
+                                ? "bg-gradient-to-tr from-cyan-600 to-cyan-500 text-white font-medium rounded-br-none border-cyan-600/30"
+                                : "bg-slate-900 text-slate-100 rounded-bl-none border-slate-800"
+                                }`}
                             >
                               {/* TEXT TYPE */}
                               {message.messageType === "TEXT" && (
@@ -604,7 +599,7 @@ export function AdminChatPage() {
                                     <Package className="h-3 w-3" />
                                     <span>Product Inquiry Reference</span>
                                   </div>
-                                  
+
                                   <div className="flex gap-3.5 rounded-xl bg-slate-950/60 p-3 border border-slate-800/80 min-w-[240px] group transition-all hover:shadow-md hover:border-slate-700/80">
                                     {"snapshot" in message.metadata && (
                                       <>
@@ -649,7 +644,7 @@ export function AdminChatPage() {
                                           <Compass className="h-3.5 w-3.5 shrink-0 mt-0.5 text-cyan-400" />
                                           <span>{message.metadata.address || "Meeting Handover Location"}</span>
                                         </p>
-                                        
+
                                         <div className="mt-3 flex items-center justify-between text-[9px] text-slate-500 font-mono border-t border-slate-850 pt-2">
                                           <span>LAT: {message.metadata.latitude.toFixed(5)}</span>
                                           <span>LNG: {message.metadata.longitude.toFixed(5)}</span>
@@ -663,9 +658,8 @@ export function AdminChatPage() {
 
                             {/* Timestamp indicator */}
                             <span
-                              className={`text-[9px] text-slate-500 mt-1.5 flex items-center gap-1 ${
-                                isMe ? "justify-end pr-1" : "justify-start pl-1"
-                              }`}
+                              className={`text-[9px] text-slate-500 mt-1.5 flex items-center gap-1 ${isMe ? "justify-end pr-1" : "justify-start pl-1"
+                                }`}
                             >
                               <Clock className="h-2.5 w-2.5" />
                               <span className="font-mono tracking-tighter">
@@ -732,7 +726,7 @@ export function AdminChatPage() {
                         placeholder="Compose administrative support message..."
                         className="w-full rounded-2xl border border-slate-800 bg-slate-900/40 px-4 py-3 pr-16 text-xs text-slate-100 placeholder-slate-500 transition-all duration-200 ease-out outline-none hover:border-slate-700 focus:border-cyan-500 focus:bg-slate-900 focus:ring-4 focus:ring-cyan-500/10"
                       />
-                      
+
                       <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1 select-none text-[10px] font-medium text-slate-500">
                         <kbd className="px-1 rounded bg-slate-900 font-sans border border-slate-800">Enter</kbd>
                         <CornerDownLeft className="h-3 w-3" />
@@ -758,14 +752,14 @@ export function AdminChatPage() {
                     <MessageSquare className="h-8 w-8 text-cyan-400" />
                   </div>
                 </div>
-                
+
                 <h3 className="text-base font-semibold text-white mb-1.5 tracking-tight">
                   No Support Channel Selected
                 </h3>
                 <p className="text-xs text-slate-500 max-w-[280px] leading-relaxed">
                   Select a live support thread from the left list pane to begin chatting with clients in real-time.
                 </p>
-                
+
                 <div className="mt-8 flex flex-col gap-2.5 items-center w-full max-w-[240px]">
                   <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
                     <User className="h-3.5 w-3.5 text-slate-500" />

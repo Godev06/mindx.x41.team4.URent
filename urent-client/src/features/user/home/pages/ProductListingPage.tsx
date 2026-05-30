@@ -17,13 +17,10 @@ import {
   Search,
   Sliders,
   X,
-  MapPin,
-  Calendar,
   Tent,
   Shirt,
 } from "lucide-react";
 
-import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { ProductCard } from "../components/ProductCard";
 import { useI18n } from "../../shared/context/LanguageContext";
@@ -51,11 +48,6 @@ const ITEMS_PER_PAGE = 10;
 const SKELETON_COUNT = ITEMS_PER_PAGE;
 
 const toVnd = (price: number) => (price > 1000 ? price : price * 25_000);
-
-const formatCompactNumber = (value: number) =>
-  new Intl.NumberFormat("vi-VN", {
-    maximumFractionDigits: 0,
-  }).format(value);
 
 // CÔNG THỨC HAVERSINE TÍNH KHOẢNG CÁCH
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -132,14 +124,6 @@ function FilterPanel({
   onResetPrice,
   dataMinPriceVnd,
   dataMaxPriceVnd,
-  startDate,
-  endDate,
-  onStartDateChange,
-  onEndDateChange,
-  userLocation,
-  onGetLocation,
-  radiusKm,
-  onRadiusChange,
   t,
 }: FilterPanelProps) {
   return (
@@ -389,11 +373,11 @@ export function ProductListingPage({
 
   const activeProducts = useMemo(() => {
     if (products.length > 0) return products;
-    return PRODUCTS.filter((product) => ACTIVE_STATUSES.has(product.status));
+    return products.filter((product: Product) => ACTIVE_STATUSES.has(product.status));
   }, [products]);
 
   const { dataMinPriceVnd, dataMaxPriceVnd } = useMemo(() => {
-    const prices = activeProducts.map((product) => toVnd(product.price));
+    const prices = activeProducts.map((product: Product) => toVnd(product.price));
     if (prices.length === 0) return { dataMinPriceVnd: 0, dataMaxPriceVnd: 0 };
     return { dataMinPriceVnd: Math.min(...prices), dataMaxPriceVnd: Math.max(...prices) };
   }, [activeProducts]);

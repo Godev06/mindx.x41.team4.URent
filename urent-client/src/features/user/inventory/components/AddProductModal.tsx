@@ -24,7 +24,6 @@ import { useI18n } from "../../shared/context/LanguageContext";
 import { useToast } from "../../shared/hooks/useToast";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { apiClient } from "../../../../lib/api/apiClient";
-import { normalizeApiError } from "../../../../lib/api/apiError";
 import { AddressSelector } from "../../shared/components/AddressSelector";
 import {
   analyzeProductWithGemini,
@@ -53,81 +52,6 @@ interface AddProductModalProps {
     description?: string[];
   }) => Promise<void> | void;
 }
-
-type UnknownRecord = Record<string, unknown>;
-
-type ProductAiSuggestion = {
-  name?: string;
-  category?: string;
-  price?: number;
-  priceMin?: number;
-  priceMax?: number;
-  priceReason?: string;
-  condition?: string;
-  description?: string[];
-  confidence?: "high" | "medium" | "low";
-  aiPowered?: boolean;
-};
-
-const isRecord = (value: unknown): value is UnknownRecord => {
-  return typeof value === "object" && value !== null;
-};
-
-const toStringArray = (value: unknown): string[] | undefined => {
-  if (!Array.isArray(value)) {
-    return undefined;
-  }
-
-  const items = value
-    .map((item) => (typeof item === "string" ? item.trim() : ""))
-    .filter(Boolean);
-
-  return items.length > 0 ? items : undefined;
-};
-
-const toNum = (v: unknown): number | undefined => {
-  if (typeof v === "number" && Number.isFinite(v) && v > 0) return Math.round(v);
-  if (typeof v === "string" && v.trim()) {
-    const n = Number(v);
-    return Number.isFinite(n) && n > 0 ? Math.round(n) : undefined;
-  }
-  return undefined;
-};
-
-const parseAiSuggestion = (payload: unknown): ProductAiSuggestion | null => {
-  const root = isRecord(payload) ? payload : null;
-  if (!root) {
-    return null;
-  }
-
-  const data = isRecord(root.data) ? root.data : root;
-
-  const description =
-    toStringArray(data.description) ??
-    toStringArray(data.specs) ??
-    toStringArray(data.suggestedSpecs);
-
-  const suggestion: ProductAiSuggestion = {
-    name: typeof data.name === "string" ? data.name.trim() : undefined,
-    category:
-      typeof data.category === "string" ? data.category.trim() : undefined,
-    price: toNum(data.price),
-    priceMin: toNum(data.priceMin),
-    priceMax: toNum(data.priceMax),
-    priceReason: typeof data.priceReason === "string" ? data.priceReason.trim() : undefined,
-    condition:
-      typeof data.condition === "string" ? data.condition.trim() : undefined,
-    description,
-    confidence: ["high", "medium", "low"].includes(data.confidence as string)
-      ? (data.confidence as "high" | "medium" | "low")
-      : undefined,
-    aiPowered: data.aiPowered === true,
-  };
-
-  return Object.values(suggestion).some((value) => value !== undefined)
-    ? suggestion
-    : null;
-};
 
 const parseDescriptionToArray = (descStr: string): string[] => {
   if (!descStr) return [];
@@ -160,8 +84,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     imageUrl: "",
     description: "",
   });
+
   const [error, setError] = useState("");
-  const [aiError, setAiError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [aiSuccessToast, setAiSuccessToast] = useState(false);
@@ -196,6 +120,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     setTimeout(() => setAiSuccessToast(false), 2800);
   }, []);
 
+  console.log(error);
+
   useEffect(() => {
     if (isOpen) {
       if (user?.address) {
@@ -206,7 +132,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
       }
     } else {
       setError("");
-      setAiError("");
       setIsAnalyzing(false);
       setIsUploading(false);
       setAddressSuggestions([]);
@@ -310,7 +235,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
-    setAiError("");
     setQuotaDetails(null);
     setIsAnalyzing(true);
 
@@ -453,7 +377,6 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
         variant: "error",
       });
 
-      setAiError(parsedDetails.resetTimeMessage);
     } catch (err: any) {
       if (controller.signal.aborted) return;
     } finally {
@@ -576,16 +499,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
     { value: "Used", label: lang === "vi" ? "Đã dùng" : "Used", desc: lang === "vi" ? "Hao mòn" : "Used" },
   ];
 
-  const formatCurrency = (val: string) => {
-    if (!val) return "0 ₫";
-    const num = parseInt(val.replace(/\D/g, ""), 10);
-    if (isNaN(num)) return "0 ₫";
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-      maximumFractionDigits: 0,
-    }).format(num);
-  };
+
 
   const activeCat = categories.find(c => c.value === newProduct.category) || categories[0];
   const ActiveIcon = activeCat.icon;
@@ -750,8 +664,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                       AI Auto-Filled
                     </h4>
                     <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400">
-                      {lang === "vi" 
-                        ? "Đã điền tự động các thông tin phân tích từ ảnh!" 
+                      {lang === "vi"
+                        ? "Đã điền tự động các thông tin phân tích từ ảnh!"
                         : "Automatically filled product analysis from image!"}
                     </p>
                   </div>
@@ -779,7 +693,7 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
               {/* Spacious 12-column Grid Layout */}
               <div className="grid grid-cols-12 gap-5 relative">
-                
+
                 {/* Row 1: Name (full width) */}
                 <div className="col-span-12 space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1">
@@ -862,11 +776,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                           key={opt.value}
                           type="button"
                           onClick={() => setNewProduct((p) => ({ ...p, condition: opt.value }))}
-                          className={`h-full rounded-xl flex flex-col items-center justify-center transition-all duration-250 ${
-                            isSelected
-                              ? "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm border border-slate-200/50 dark:border-slate-750 font-black"
-                              : "text-slate-500 dark:text-slate-450 hover:text-slate-800 dark:hover:text-slate-200 font-bold"
-                          }`}
+                          className={`h-full rounded-xl flex flex-col items-center justify-center transition-all duration-250 ${isSelected
+                            ? "bg-white dark:bg-slate-800 text-teal-600 dark:text-teal-400 shadow-sm border border-slate-200/50 dark:border-slate-750 font-black"
+                            : "text-slate-500 dark:text-slate-450 hover:text-slate-800 dark:hover:text-slate-200 font-bold"
+                            }`}
                         >
                           <span className="text-[10px] uppercase tracking-wider">{opt.label}</span>
                         </button>
@@ -926,15 +839,14 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setShowAdminAddress(!showAdminAddress)}
-                      className={`text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 shadow-sm ${
-                        showAdminAddress
-                          ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30 shadow-teal-500/5 scale-102"
-                          : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-450 border-slate-200/60 dark:border-slate-700/80 hover:text-slate-700 dark:hover:text-slate-200 hover:scale-102"
-                      }`}
+                      className={`text-[9px] font-black tracking-widest uppercase flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-300 shadow-sm ${showAdminAddress
+                        ? "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30 shadow-teal-500/5 scale-102"
+                        : "bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-450 border-slate-200/60 dark:border-slate-700/80 hover:text-slate-700 dark:hover:text-slate-200 hover:scale-102"
+                        }`}
                     >
                       <Map size={10} className={showAdminAddress ? "animate-pulse text-teal-500" : ""} />
-                      {showAdminAddress 
-                        ? (lang === "vi" ? "Gõ Địa Chỉ Nhanh" : "Quick Text Input") 
+                      {showAdminAddress
+                        ? (lang === "vi" ? "Gõ Địa Chỉ Nhanh" : "Quick Text Input")
                         : (lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative")}
                     </button>
                   </label>
@@ -984,8 +896,8 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                         <MapPin size={13} className="text-teal-500 animate-pulse" />
                         {lang === "vi" ? "Chọn Địa Chỉ Hành Chính" : "Select Administrative Address"}
                       </span>
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={() => setShowAdminAddress(false)}
                         className="text-[9px] font-black uppercase tracking-widest text-red-500 hover:text-red-650 transition-colors"
                       >
@@ -1034,17 +946,15 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                     />
                     <div
                       onClick={() => setIsConfirmed(!isConfirmed)}
-                      className={`w-5 h-5 rounded-lg border transition-all duration-200 flex items-center justify-center cursor-pointer ${
-                        isConfirmed
-                          ? "bg-teal-500 border-teal-500 shadow-md shadow-teal-500/20 scale-102"
-                          : "border-slate-350 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:border-slate-455"
-                      }`}
+                      className={`w-5 h-5 rounded-lg border transition-all duration-200 flex items-center justify-center cursor-pointer ${isConfirmed
+                        ? "bg-teal-500 border-teal-500 shadow-md shadow-teal-500/20 scale-102"
+                        : "border-slate-350 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 hover:border-slate-455"
+                        }`}
                     >
                       <Check
                         size={12}
-                        className={`text-white font-black transition-transform duration-200 ${
-                          isConfirmed ? "scale-100" : "scale-0"
-                        }`}
+                        className={`text-white font-black transition-transform duration-200 ${isConfirmed ? "scale-100" : "scale-0"
+                          }`}
                       />
                     </div>
                   </div>
@@ -1088,11 +998,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
 
                 {/* Price Input + Preview Card - Bottom of form */}
                 <div className="col-span-12">
-                  <div className={`rounded-2xl border transition-all duration-500 overflow-hidden ${
-                    newProduct.price
-                      ? "bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50/50 dark:from-emerald-955/25 dark:via-teal-955/15 dark:to-slate-900 border-emerald-200/70 dark:border-emerald-800/40 shadow-md shadow-emerald-500/5"
-                      : "bg-slate-50/40 dark:bg-slate-950/30 border-slate-200/60 dark:border-slate-800"
-                  }`}>
+                  <div className={`rounded-2xl border transition-all duration-500 overflow-hidden ${newProduct.price
+                    ? "bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50/50 dark:from-emerald-955/25 dark:via-teal-955/15 dark:to-slate-900 border-emerald-200/70 dark:border-emerald-800/40 shadow-md shadow-emerald-500/5"
+                    : "bg-slate-50/40 dark:bg-slate-950/30 border-slate-200/60 dark:border-slate-800"
+                    }`}>
                     {/* Top: Label + Status */}
                     <div className="px-4 pt-3.5 pb-2 flex items-center justify-between">
                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
@@ -1129,11 +1038,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                     <div className="px-3 pb-3 flex items-center gap-3">
                       <div className="relative flex-1 group/price">
                         <input
-                          className={`w-full rounded-xl border pl-11 pr-16 py-2.5 text-xl font-black outline-none tabular-nums tracking-tight transition-all duration-300 h-[52px] ${
-                            newProduct.price
-                              ? "border-emerald-300/60 dark:border-emerald-700/50 bg-white/80 dark:bg-slate-900/80 text-emerald-800 dark:text-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
-                              : "border-slate-200/85 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 text-slate-800 dark:text-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
-                          } ${aiFilledFields.has("price") ? "ai-filled" : ""}`}
+                          className={`w-full rounded-xl border pl-11 pr-16 py-2.5 text-xl font-black outline-none tabular-nums tracking-tight transition-all duration-300 h-[52px] ${newProduct.price
+                            ? "border-emerald-300/60 dark:border-emerald-700/50 bg-white/80 dark:bg-slate-900/80 text-emerald-800 dark:text-emerald-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+                            : "border-slate-200/85 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60 text-slate-800 dark:text-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10"
+                            } ${aiFilledFields.has("price") ? "ai-filled" : ""}`}
                           placeholder="0"
                           value={newProduct.price}
                           onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))}
@@ -1143,11 +1051,10 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none transition-colors group-focus-within/price:text-teal-500">
                           <Coins size={15} />
                         </div>
-                        <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg pointer-events-none border transition-all duration-300 ${
-                          newProduct.price
-                            ? "bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                            : "bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border-teal-500/15"
-                        }`}>
+                        <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg pointer-events-none border transition-all duration-300 ${newProduct.price
+                          ? "bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                          : "bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 border-teal-500/15"
+                          }`}>
                           ₫/ngày
                         </span>
                       </div>
@@ -1164,13 +1071,12 @@ export const AddProductModal: React.FC<AddProductModalProps> = ({
                                 {lang === "vi" ? "Khoảng giá AI đề xuất" : "AI Suggested Price Range"}
                               </span>
                               {aiInsight.confidence && (
-                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
-                                  aiInsight.confidence === "high"
-                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                                    : aiInsight.confidence === "medium"
+                                <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${aiInsight.confidence === "high"
+                                  ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                  : aiInsight.confidence === "medium"
                                     ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
                                     : "bg-slate-500/15 text-slate-500"
-                                }`}>
+                                  }`}>
                                   {lang === "vi"
                                     ? aiInsight.confidence === "high" ? "🎯 Tin cao" : aiInsight.confidence === "medium" ? "〜 Vừa" : "? Thấp"
                                     : aiInsight.confidence}

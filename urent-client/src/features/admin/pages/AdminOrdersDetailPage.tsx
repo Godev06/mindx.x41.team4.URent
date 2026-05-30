@@ -1,11 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { AdminLayout } from "../layout/AdminLayout";
-import { 
-  ArrowLeft, 
-  MessageSquare, 
-  AlertTriangle, 
-  Calendar, 
-  ShieldCheck, 
+import {
+  ArrowLeft,
+  MessageSquare,
+  AlertTriangle,
+  ShieldCheck,
   QrCode,
   AlertOctagon,
   UserX,
@@ -78,7 +77,7 @@ export function AdminOrdersDetailPage() {
           animation: scan 2.5s linear infinite;
         }
       `}</style>
-      
+
       <div className="space-y-8">
         {/* BACK NAVIGATION AND TITLE */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
@@ -117,7 +116,7 @@ export function AdminOrdersDetailPage() {
                 <span>tienarena2k@gmail.com</span>
               </div>
             </div>
-            
+
             <div className="mt-6 flex items-center gap-2 self-start rounded-xl bg-teal-500/10 border border-teal-500/25 px-3 py-1.5 text-xs font-extrabold text-teal-400">
               <ShieldCheck className="h-4 w-4" />
               100% Trust Verified
@@ -152,11 +151,11 @@ export function AdminOrdersDetailPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Escrow Verification QR</p>
             </div>
-            
+
             <div className="relative mt-4 flex h-36 items-center justify-center rounded-xl border border-dashed border-cyan-500/20 bg-slate-950/40 p-4">
               {/* Animated Laser Scanning Line */}
               <div className="absolute left-0 right-0 h-0.5 bg-[#0df2c9] shadow-[0_0_12px_#0df2c9] opacity-80 scan-line" />
-              
+
               <div className="flex flex-col items-center gap-2 z-10">
                 <QrCode className="h-10 w-10 text-cyan-400/80" />
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#0df2c9]">QR Secure Active</p>
@@ -189,16 +188,14 @@ export function AdminOrdersDetailPage() {
               {messages.map((message, index) => (
                 <div
                   key={index}
-                  className={`flex ${
-                    message.mine ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex ${message.mine ? "justify-end" : "justify-start"
+                    }`}
                 >
                   <div
-                    className={`max-w-md rounded-2xl p-4 shadow-md ${
-                      message.mine
+                    className={`max-w-md rounded-2xl p-4 shadow-md ${message.mine
                         ? "bg-cyan-500/10 text-cyan-100 border border-cyan-500/25 rounded-tr-none"
                         : "bg-slate-900/80 text-slate-100 border border-slate-800 rounded-tl-none"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between gap-6">
                       <span className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-wider">{message.sender}</span>
@@ -223,7 +220,7 @@ export function AdminOrdersDetailPage() {
                 <User className="h-4.5 w-4.5 text-slate-400" />
                 Renter History Registry
               </h3>
-              
+
               <div className="space-y-3">
                 {rentalHistory.map((item) => (
                   <div
@@ -237,11 +234,10 @@ export function AdminOrdersDetailPage() {
 
                     <div className="mt-3 flex items-center justify-between text-xs font-semibold">
                       <span
-                        className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                          item.status === "Đang thuê"
+                        className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${item.status === "Đang thuê"
                             ? "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
                             : "bg-teal-500/10 text-teal-400 border border-teal-500/20"
-                        }`}
+                          }`}
                       >
                         {item.status}
                       </span>

@@ -9,6 +9,7 @@ export interface ApiNotification {
   userId?: string;
   title: string;
   description: string;
+  actionUrl?: string;
   type: 'order' | 'message' | 'promotion' | 'system';
   time?: string;
   read: boolean;

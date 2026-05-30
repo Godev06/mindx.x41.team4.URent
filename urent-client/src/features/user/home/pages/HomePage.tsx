@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { HeroIntro } from "../components/HeroIntro";
 import { FeaturedProducts } from "../components/FeaturedProducts";
@@ -13,8 +12,6 @@ interface HomePageProps {
   onProductClick: (id: string | number) => void;
 }
 
-type CategoryKey = "all" | "electronics" | "travel" | "study" | "lifestyle";
-
 const toVnd = (price: number) => (price > 1000 ? price : price * 25_000);
 const ACTIVE_STATUSES = new Set(["Available", "Active"]);
 
@@ -22,13 +19,12 @@ export function HomePage({ onProductClick }: HomePageProps) {
   const { lang } = useI18n();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     async function loadProducts() {
       try {
-        setIsLoading(true);
+
         const fetched = await productService.getProducts({ limit: 20 });
         if (active) {
           setProducts(fetched);
@@ -37,7 +33,7 @@ export function HomePage({ onProductClick }: HomePageProps) {
         console.error("Failed to load products in HomePage:", err);
       } finally {
         if (active) {
-          setIsLoading(false);
+
         }
       }
     }

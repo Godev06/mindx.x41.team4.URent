@@ -2,15 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "../layout/AdminLayout";
 import {
-  Users,
   Search,
-  ShieldCheck,
-  ShieldAlert,
-  Trash2,
-  UserCheck,
   Mail,
   Calendar,
-  Lock,
   Compass,
   MessageSquare,
   Loader2
@@ -323,11 +317,10 @@ export function AdminUsersPage() {
                         <button
                           onClick={() => handleStartChat(user._id)}
                           disabled={chatLoadingUserId !== null}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border ${
-                            chatLoadingUserId === user._id
-                              ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
-                              : "bg-slate-900/50 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800 hover:border-slate-700"
-                          } disabled:opacity-50 disabled:cursor-not-allowed`}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 border ${chatLoadingUserId === user._id
+                            ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/30"
+                            : "bg-slate-900/50 text-slate-400 border-slate-800 hover:text-white hover:bg-slate-800 hover:border-slate-700"
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
                           title="Chat with user"
                         >
                           {chatLoadingUserId === user._id ? (

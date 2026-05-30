@@ -5,7 +5,6 @@ import {
   ToastContext,
   type ToastContextValue,
   type ToastItem,
-  type ToastVariant,
 } from "../context/toastContext";
 
 const variantStyles = {

@@ -1,6 +1,6 @@
 import {
   AlertTriangle,
-  ArrowLeft,
+
   CheckCircle2,
   Clock3,
   MapPin,
@@ -82,12 +82,12 @@ export function OrderDetailPage() {
 
   const isRenter = useMemo(() => {
     if (!user || !order) return false;
-    return String(order.renter?.id) === String(user.id || user.sub);
+    return String(order.renter?.id) === String(user.id);
   }, [user, order]);
 
   const isOwner = useMemo(() => {
     if (!user || !order) return false;
-    return String(order.owner?.id) === String(user.id || user.sub);
+    return String(order.owner?.id) === String(user.id);
   }, [user, order]);
 
   const getStatusText = (status: string) => {
@@ -233,7 +233,7 @@ export function OrderDetailPage() {
     if (isConnectingSupport) return;
     try {
       setIsConnectingSupport(true);
-      
+
       let partnerId: string | undefined = undefined;
       if (isOwner) {
         partnerId = order.renter?.id || order.renterId || order.customerId;
@@ -258,7 +258,7 @@ export function OrderDetailPage() {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center text-center space-y-4">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-teal-500 border-t-transparent" />
-        <p className="text-slate-500">{t.orderDetailLoading || "Đang tải..."}</p>
+        <p className="text-slate-500">{t.loadingSession || "Đang tải..."}</p>
       </div>
     );
   }
@@ -278,41 +278,39 @@ export function OrderDetailPage() {
       {/* Dynamic Premium Stepper Timeline Progress Bar */}
       <section className="rounded-3xl border border-slate-200/90 bg-white dark:border-slate-800/80 dark:bg-slate-900/60 p-6 shadow-sm ring-1 ring-slate-900/4 dark:ring-white/4 backdrop-blur-md">
         <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 md:gap-0">
-          
+
           {/* Connecting Line between Steps */}
           <div className="absolute top-[24px] left-[12%] right-[12%] h-[3px] bg-slate-100 dark:bg-slate-800 hidden md:block z-0 rounded-full">
-            <div 
-              className="h-full bg-teal-500 transition-all duration-700 ease-out rounded-full" 
-              style={{ 
-                width: order.status === "delivered" 
-                  ? "100%" 
-                  : order.status === "shipped" 
-                  ? "66%" 
-                  : order.status === "confirmed"
-                  ? "33%" 
-                  : "0%" 
+            <div
+              className="h-full bg-teal-500 transition-all duration-700 ease-out rounded-full"
+              style={{
+                width: order.status === "delivered"
+                  ? "100%"
+                  : order.status === "shipped"
+                    ? "66%"
+                    : order.status === "confirmed"
+                      ? "33%"
+                      : "0%"
               }}
             />
           </div>
 
           {/* Step 1: Meetup */}
           <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
-              (order.status === "confirmed" || order.status === "shipped" || order.status === "delivered") 
-                ? "bg-teal-600 ring-teal-500/20" 
-                : (order.status === "pending") 
-                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse" 
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${(order.status === "confirmed" || order.status === "shipped" || order.status === "delivered")
+              ? "bg-teal-600 ring-teal-500/20"
+              : (order.status === "pending")
+                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse"
                 : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
-            }`}>
+              }`}>
               <PackageCheck size={18} />
             </div>
-            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
-              (order.status === "confirmed" || order.status === "shipped" || order.status === "delivered") 
-                ? "text-teal-600 dark:text-teal-400" 
-                : (order.status === "pending") 
-                ? "text-amber-600 dark:text-amber-400" 
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${(order.status === "confirmed" || order.status === "shipped" || order.status === "delivered")
+              ? "text-teal-600 dark:text-teal-400"
+              : (order.status === "pending")
+                ? "text-amber-600 dark:text-amber-400"
                 : "text-slate-500 dark:text-slate-400"
-            }`}>
+              }`}>
               {t.orderDetailMeetup}
             </h4>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
@@ -322,22 +320,20 @@ export function OrderDetailPage() {
 
           {/* Step 2: Received */}
           <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
-              (order.status === "shipped" || order.status === "delivered") 
-                ? "bg-teal-600 ring-teal-500/20" 
-                : order.status === "confirmed" 
-                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse" 
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${(order.status === "shipped" || order.status === "delivered")
+              ? "bg-teal-600 ring-teal-500/20"
+              : order.status === "confirmed"
+                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse"
                 : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
-            }`}>
+              }`}>
               <QrCode size={18} />
             </div>
-            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
-              (order.status === "shipped" || order.status === "delivered") 
-                ? "text-teal-600 dark:text-teal-400" 
-                : order.status === "confirmed" 
-                ? "text-amber-600 dark:text-amber-400" 
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${(order.status === "shipped" || order.status === "delivered")
+              ? "text-teal-600 dark:text-teal-400"
+              : order.status === "confirmed"
+                ? "text-amber-600 dark:text-amber-400"
                 : "text-slate-500 dark:text-slate-400"
-            }`}>
+              }`}>
               {t.orderDetailReceived}
             </h4>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold leading-tight">
@@ -347,22 +343,20 @@ export function OrderDetailPage() {
 
           {/* Step 3: Returning */}
           <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
-              order.status === "delivered" 
-                ? "bg-teal-600 ring-teal-500/20" 
-                : order.status === "shipped" 
-                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse" 
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${order.status === "delivered"
+              ? "bg-teal-600 ring-teal-500/20"
+              : order.status === "shipped"
+                ? "bg-amber-500 ring-amber-500/20 scale-110 shadow-md shadow-amber-500/25 animate-pulse"
                 : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
-            }`}>
+              }`}>
               <Clock3 size={18} />
             </div>
-            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
-              order.status === "delivered" 
-                ? "text-teal-600 dark:text-teal-400" 
-                : order.status === "shipped" 
-                ? "text-amber-600 dark:text-amber-400" 
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${order.status === "delivered"
+              ? "text-teal-600 dark:text-teal-400"
+              : order.status === "shipped"
+                ? "text-amber-600 dark:text-amber-400"
                 : "text-slate-500 dark:text-slate-400"
-            }`}>
+              }`}>
               {t.orderDetailReturning}
             </h4>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
@@ -372,18 +366,16 @@ export function OrderDetailPage() {
 
           {/* Step 4: Completed */}
           <div className="relative z-10 flex flex-col items-center text-center max-w-[180px]">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${
-              order.status === "delivered" 
-                ? "bg-teal-600 ring-teal-500/20 scale-110 shadow-md shadow-teal-500/25" 
-                : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
-            }`}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-full text-white transition-all duration-300 ring-4 ${order.status === "delivered"
+              ? "bg-teal-600 ring-teal-500/20 scale-110 shadow-md shadow-teal-500/25"
+              : "bg-slate-200 text-slate-500 ring-slate-200/10 dark:bg-slate-800 dark:text-slate-400"
+              }`}>
               <CheckCircle2 size={18} />
             </div>
-            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${
-              order.status === "delivered" 
-                ? "text-teal-600 dark:text-teal-400 font-extrabold" 
-                : "text-slate-500 dark:text-slate-400"
-            }`}>
+            <h4 className={`mt-3 text-xs font-bold transition-colors duration-300 ${order.status === "delivered"
+              ? "text-teal-600 dark:text-teal-400 font-extrabold"
+              : "text-slate-500 dark:text-slate-400"
+              }`}>
               {t.orderDetailCompleted}
             </h4>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-semibold">
@@ -404,7 +396,7 @@ export function OrderDetailPage() {
                 <ShieldCheck className="text-teal-600 h-5.5 w-5.5" />
                 Hành động & Tiến trình giao nhận
               </h2>
-              
+
               <p className="mt-3 text-sm text-slate-600 dark:text-slate-350 leading-relaxed font-semibold">
                 {isRenter && order.status === "pending" && "Chờ chủ sở hữu duyệt yêu cầu thuê của bạn. Bạn có thể chọn hủy yêu cầu nếu không còn nhu cầu."}
                 {isRenter && order.status === "confirmed" && "Chủ sở hữu đã duyệt yêu cầu thuê! Hai bên vui lòng gặp mặt tại điểm hẹn, kiểm tra thiết bị, sau đó chủ sở hữu sẽ bấm xác nhận giao đồ để kích hoạt thời gian thuê."}
@@ -665,7 +657,7 @@ export function OrderDetailPage() {
           <div className="grid gap-6 md:grid-cols-[1.1fr_1fr]">
             {/* Product details */}
             <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800/80 flex flex-col justify-between gap-5 bg-slate-50/20 dark:bg-slate-900/10">
-              
+
               {/* Product Info Block */}
               <div className="flex items-start gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-linear-to-br from-slate-100 dark:from-slate-850 to-slate-50 dark:to-slate-750 border border-slate-200/80 dark:border-slate-800 flex items-center justify-center shadow-inner group">
@@ -694,7 +686,7 @@ export function OrderDetailPage() {
                 <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
                   {isOwner ? "Thông tin khách hàng (Người thuê)" : "Thông tin đối tác (Chủ sở hữu)"}
                 </p>
-                
+
                 {isOwner ? (
                   /* Renter Profile */
                   <div className="flex items-center gap-3.5 rounded-xl border border-slate-150 bg-slate-50/50 dark:border-slate-800/80 dark:bg-slate-800/20 p-3 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition duration-200 shadow-xs">
@@ -812,7 +804,7 @@ export function OrderDetailPage() {
           <div className="relative flex h-full min-h-55 flex-col overflow-hidden rounded-2xl bg-slate-100 dark:bg-slate-800/40 border border-slate-200/50 dark:border-slate-800/60">
             {/* Grid Pattern Background mimicking coordinates map */}
             <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:16px_16px] dark:bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)]" />
-            
+
             {/* Soft pulsing halo and pin in center */}
             <div className="relative flex-1 flex flex-col items-center justify-center">
               <div className="absolute h-20 w-20 rounded-full bg-teal-500/10 dark:bg-teal-400/10 animate-ping duration-3000" />
@@ -821,7 +813,7 @@ export function OrderDetailPage() {
                 <MapPin size={28} className="animate-bounce" />
               </div>
             </div>
-            
+
             {/* Address bar block */}
             <div className="relative z-10 border-t border-slate-200 bg-white/90 backdrop-blur-md px-4 py-3.5 dark:border-slate-800 dark:bg-slate-950/80">
               <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">

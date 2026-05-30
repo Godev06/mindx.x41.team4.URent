@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ShieldCheck, X, ShieldAlert } from "lucide-react";
+import { ShieldCheck, X } from "lucide-react";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { useAuth } from "../../auth/hooks/useAuth";
 import { settingsService } from "../services/settingsService";
@@ -22,7 +22,7 @@ export function TwoFactorOtpModal({
 }: TwoFactorOtpModalProps) {
   const { t } = useI18n();
   const { user } = useAuth();
-  
+
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

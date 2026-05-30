@@ -1,22 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
-  Award,
   MapPin,
-  MessageCircle,
   ShieldCheck,
   Star,
-  Truck,
   Zap,
   Maximize2,
   X,
+  MessageCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { ProductBookingCard } from "../components/ProductBookingCard";
 import { ProductSpecRow } from "../components/ProductSpecRow";
-import { ProductReviews } from "../components/ProductReviews";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { productService } from "../services/productService";
 import { useAuth } from "../../auth/hooks/useAuth";
@@ -42,7 +39,7 @@ export function ProductDetailPage({
   // Khai báo kiểu mở rộng để nhận diện các trường mới
   const [product, setProduct] = useState<(Product & { locationText?: string }) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const navigate = useNavigate();
@@ -120,10 +117,9 @@ export function ProductDetailPage({
 
       try {
         setIsLoading(true);
-        setError(null);
-        
+
         const isObjectId = typeof productId === "string" && productId.length === 24 && /^[0-9a-fA-F]+$/.test(productId);
-        
+
         if (isObjectId) {
           const fetched = await productService.getProductById(productId);
           if (active) setProduct(fetched);
@@ -269,11 +265,10 @@ export function ProductDetailPage({
                 type="button"
                 onClick={handleContactOwner}
                 disabled={isCreatingChat || isOwner}
-                className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isOwner
+                className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${isOwner
                     ? "border-slate-200 bg-slate-100 text-slate-400 dark:border-white/5 dark:bg-white/5 dark:text-slate-500"
                     : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-teal-500/30 dark:hover:bg-teal-500/10 dark:hover:text-teal-400"
-                }`}
+                  }`}
               >
                 {isCreatingChat ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-teal-600 border-t-transparent" />

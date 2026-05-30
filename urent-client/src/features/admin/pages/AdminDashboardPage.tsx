@@ -9,8 +9,6 @@ import {
   CheckCircle,
   AlertTriangle,
   ArrowRight,
-  TrendingUp,
-  TrendingDown,
   UserPlus
 } from "lucide-react";
 
