@@ -4,21 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "scripts": {
     "dev": "vite --port 5173 --strictPort",
-    "dev:auto": "vite",
-    "dev:strict": "vite --port 5173 --strictPort",
     "dev:host": "vite --host --port 5173 --strictPort",
-    "typecheck": "tsc -b --pretty false",
+    "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
-    "build:vercel": "npm run build",
     "lint": "eslint .",
     "test": "vitest",
     "preview": "vite preview",
-    "preview:host": "vite preview --host",
-    "postinstall": "if [ \"$VERCEL\" = \"1\" ]; then rm -rf node_modules package-lock.json && npm ci; fi"
+    "preview:host": "vite preview --host"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",
@@ -34,9 +30,6 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.6.0"
   },
-  "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "*"
-  },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
     "@types/google.maps": "^3.58.1",
@@ -45,12 +38,10 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.2.0",
-    "autoprefixer": "^10.4.27",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
-    "postcss": "^8.5.8",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
