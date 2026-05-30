@@ -26,6 +26,7 @@ import { ProductCard } from "../components/ProductCard";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { productService } from "../../product/services/productService";
 import { profileService } from "../../profile/services/profileService"; // <-- IMPORT THÊM CHO WISHLIST
+import { useSearchParams } from "react-router-dom";
 
 interface ProductListingPageProps {
   onProductClick: (id: string | number) => void;
@@ -250,6 +251,9 @@ export function ProductListingPage({
 }: ProductListingPageProps) {
   const { t, lang } = useI18n();
 
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
+
   const [category, setCategory] = useState<CategoryKey>("all");
   const [sortBy, setSortBy] = useState<SortType>("latest");
   const [minPriceInput, setMinPriceInput] = useState("");
@@ -345,6 +349,7 @@ export function ProductListingPage({
 
         const fetched = await productService.getProducts({
           category: categoryParam,
+          q: searchQuery || undefined,
           limit: 50,
           minPrice: deferredMinPrice ? Number(deferredMinPrice) : undefined,
           maxPrice: deferredMaxPrice ? Number(deferredMaxPrice) : undefined,
@@ -369,7 +374,7 @@ export function ProductListingPage({
 
     loadProducts();
     return () => { active = false; };
-  }, [category, deferredMinPrice, deferredMaxPrice, userLocation, deferredRadius, startDate, endDate]);
+  }, [category, deferredMinPrice, deferredMaxPrice, userLocation, deferredRadius, startDate, endDate, searchQuery]);
 
   const activeProducts = useMemo(() => {
     if (products.length > 0) return products;
@@ -471,7 +476,7 @@ export function ProductListingPage({
                         }`}
                     >
                       <Icon size={13} className="opacity-90" />
-                      <span className="hidden sm:inline">{item.label}</span>
+                      <span className="text-[10px] sm:text-xs font-semibold">{item.label}</span>
                     </button>
                   );
                 })}

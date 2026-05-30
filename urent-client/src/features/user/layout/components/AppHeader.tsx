@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { APP_ROUTES } from "../../auth/constants";
 import { useAuthGate } from "../../auth/context/AuthGateContext";
 import { useAuth } from "../../auth/hooks/useAuth";
@@ -46,6 +46,22 @@ export function AppHeader() {
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") || "");
+  }, [searchParams]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate(`/products`);
+    }
+  };
   // Track previous auth state to only call revokeToken on a real logout (true → false),
   // not during initial mount or React Strict Mode unmount/remount cycles.
   const wasAuthenticatedRef = useRef<boolean | null>(null);
@@ -309,7 +325,7 @@ export function AppHeader() {
         </div>
 
         {supportsSearch && (
-          <div className="relative hidden max-w-xl flex-1 lg:flex">
+          <form onSubmit={handleSearchSubmit} className="relative hidden max-w-xl flex-1 lg:flex">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors dark:text-slate-500"
               size={16}
@@ -317,10 +333,12 @@ export function AppHeader() {
             />
             <input
               type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.headerSearchPlaceholder}
               className="w-full rounded-full border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-10 text-sm text-slate-800 placeholder:text-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400/40"
             />
-          </div>
+          </form>
         )}
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-3 lg:gap-4">
@@ -555,7 +573,7 @@ export function AppHeader() {
 
       {supportsSearch && (
         <div className="mt-2 sm:mt-3 lg:hidden">
-          <div className="relative">
+          <form onSubmit={handleSearchSubmit} className="relative">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400 transition-colors dark:text-slate-500"
               size={16}
@@ -563,10 +581,12 @@ export function AppHeader() {
             />
             <input
               type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.headerSearchPlaceholder}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 sm:py-3 pr-4 pl-10 text-sm sm:text-[15px] text-slate-800 placeholder:text-slate-400 transition-all focus:border-teal-400 focus:ring-2 focus:ring-teal-500/20 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-teal-400/40"
             />
-          </div>
+          </form>
         </div>
       )}
       </nav>
