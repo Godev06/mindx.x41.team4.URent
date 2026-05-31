@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
-import { getOrCreateOneToOneConversation, sendConversationMessage } from "./message.service";
+import { getOrCreateSupportConversation } from "./admin-chat.service";
+import { sendConversationMessage } from "./message.service";
 import { emitConversationMessageCreated } from "../realtime/socket";
 import { getSystemAdminId } from "../utils/admin";
 
@@ -35,10 +36,10 @@ export async function sendWelcomeMessageFromAdmin(newUserId: string): Promise<vo
 
     console.log(`[WelcomeMessage] Đang tạo cuộc hội thoại chào mừng giữa Admin (${ADMIN_ID}) và User (${newUserId})...`);
 
-    // 3. Khởi tạo/Lấy phòng chat 1-1 giữa Admin và người dùng mới
-    const conversation = await getOrCreateOneToOneConversation(ADMIN_ID, newUserId);
+    // 3. Khởi tạo/Lấy phòng chat support của người dùng mới
+    const conversation = await getOrCreateSupportConversation(newUserId);
     if (!conversation || !conversation.id) {
-      console.error("[WelcomeMessage] Không thể tạo phòng chat 1-1 với Admin.");
+      console.error("[WelcomeMessage] Không thể tạo phòng chat support với Admin.");
       return;
     }
 
