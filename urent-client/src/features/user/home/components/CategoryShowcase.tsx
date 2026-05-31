@@ -22,84 +22,84 @@ export function CategoryShowcase({
   const categories: Record<string, CategoryCard> =
     lang === "vi"
       ? {
-          electronics: {
-            id: "electronics",
-            label: "Điện tử & Công nghệ",
-            icon: Laptop,
-            color: "teal",
-            gradient: "from-teal-500 to-cyan-500",
-            count: 45,
-          },
-          travel: {
-            id: "travel",
-            label: "Du lịch & Dã ngoại",
-            icon: Tent,
-            color: "emerald",
-            gradient: "from-emerald-500 to-teal-500",
-            count: 18,
-          },
-          study: {
-            id: "study",
-            label: "Đồ dùng học tập",
-            icon: BookOpen,
-            color: "blue",
-            gradient: "from-blue-500 to-indigo-500",
-            count: 28,
-          },
-          lifestyle: {
-            id: "lifestyle",
-            label: "Thời trang & Đời sống",
-            icon: Shirt,
-            color: "amber",
-            gradient: "from-amber-500 to-orange-500",
-            count: 32,
-          },
-        }
+        electronics: {
+          id: "electronics",
+          label: "Điện tử & Công nghệ",
+          icon: Laptop,
+          color: "teal",
+          gradient: "from-teal-500 to-cyan-500",
+          count: 45,
+        },
+        travel: {
+          id: "travel",
+          label: "Du lịch & Dã ngoại",
+          icon: Tent,
+          color: "emerald",
+          gradient: "from-emerald-500 to-teal-500",
+          count: 18,
+        },
+        study: {
+          id: "study",
+          label: "Đồ dùng học tập",
+          icon: BookOpen,
+          color: "blue",
+          gradient: "from-blue-500 to-indigo-500",
+          count: 28,
+        },
+        lifestyle: {
+          id: "lifestyle",
+          label: "Thời trang & Đời sống",
+          icon: Shirt,
+          color: "amber",
+          gradient: "from-amber-500 to-orange-500",
+          count: 32,
+        },
+      }
       : {
-          electronics: {
-            id: "electronics",
-            label: "Electronics & Tech",
-            icon: Laptop,
-            color: "teal",
-            gradient: "from-teal-500 to-cyan-500",
-            count: 45,
-          },
-          travel: {
-            id: "travel",
-            label: "Travel & Outdoors",
-            icon: Tent,
-            color: "emerald",
-            gradient: "from-emerald-500 to-teal-500",
-            count: 18,
-          },
-          study: {
-            id: "study",
-            label: "School Supplies",
-            icon: BookOpen,
-            color: "blue",
-            gradient: "from-blue-500 to-indigo-500",
-            count: 28,
-          },
-          lifestyle: {
-            id: "lifestyle",
-            label: "Fashion & Lifestyle",
-            icon: Shirt,
-            color: "amber",
-            gradient: "from-amber-500 to-orange-500",
-            count: 32,
-          },
-        };
+        electronics: {
+          id: "electronics",
+          label: "Electronics & Tech",
+          icon: Laptop,
+          color: "teal",
+          gradient: "from-teal-500 to-cyan-500",
+          count: 45,
+        },
+        travel: {
+          id: "travel",
+          label: "Travel & Outdoors",
+          icon: Tent,
+          color: "emerald",
+          gradient: "from-emerald-500 to-teal-500",
+          count: 18,
+        },
+        study: {
+          id: "study",
+          label: "School Supplies",
+          icon: BookOpen,
+          color: "blue",
+          gradient: "from-blue-500 to-indigo-500",
+          count: 28,
+        },
+        lifestyle: {
+          id: "lifestyle",
+          label: "Fashion & Lifestyle",
+          icon: Shirt,
+          color: "amber",
+          gradient: "from-amber-500 to-orange-500",
+          count: 32,
+        },
+      };
 
   const t =
     lang === "vi"
       ? {
-          title: "Khám phá danh mục",
-          viewAll: "Xem tất cả",
-        }
+        title: "Khám phá danh mục",
+        viewAll: "Xem tất cả",
+      }
       : {
-          title: "Browse categories",
-          viewAll: "View all",
-        };
+        title: "Browse categories",
+        viewAll: "View all",
+      };
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
@@ -116,10 +116,10 @@ export function CategoryShowcase({
               key={cat.id}
               type="button"
               onClick={() => onCategoryClick(cat.id)}
-              className="group relative overflow-hidden rounded-[2rem] p-4 sm:p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-900/10 active:scale-95 shadow-md border border-white/10 dark:border-white/5"
+              className="group relative overflow-hidden rounded-[2rem] p-4 sm:p-6 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-teal-900/10 active:scale-95 shadow-md border border-white/10 dark:border-white/5 cursor-pointer"
             >
               <div
-                className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-90 group-hover:opacity-105 transition-opacity duration-300`}
+                className={`pointer-events-none absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-90 group-hover:opacity-105 transition-opacity duration-300`}
               />
               {/* Blur backdrop overlay */}
               <div className="absolute inset-0 bg-black/[0.03] backdrop-blur-[1px] group-hover:backdrop-blur-none transition-all" />

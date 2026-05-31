@@ -222,3 +222,26 @@ export const analyzeImageAI = async (req: Request, res: Response, next: NextFunc
     });
   } catch (error) { next(error); }
 };
+
+export const getPublicStats = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Dynamically require models inside the function to prevent circular imports if any
+    const { ProductModel } = await import('../models/product.model');
+    const { UserModel } = await import('../models/user.model');
+    const { OrderModel } = await import('../models/order.model');
+
+    const [totalProducts, totalUsers, totalTransactions] = await Promise.all([
+      ProductModel.countDocuments({ isArchived: false }),
+      UserModel.countDocuments(),
+      OrderModel.countDocuments()
+    ]);
+
+    return sendSuccess(res, {
+      totalProducts,
+      totalUsers,
+      totalTransactions
+    });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { OrderModel } from '../models/order.model';
 import { ProductModel } from '../models/product.model';
+import { UserModel } from '../models/user.model';
 import { AppError } from '../utils/app-error';
 import { sendSuccess } from '../utils/api-response';
 import { createLinkedActivityNotification } from '../services/activity-notification.service';
@@ -27,6 +28,15 @@ const createOrderSchema = z.object({
 export const createOrder = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const { productId, productName, startDate, endDate, totalPrice } = createOrderSchema.parse(req).body;
+
+  const renter = await UserModel.findById(userId);
+  if (!renter) {
+    throw new AppError(404, 'NOT_FOUND', 'Người thuê không tồn tại');
+  }
+
+  if (!renter.phone || !renter.bio) {
+    throw new AppError(400, 'BAD_REQUEST', 'Hồ sơ người dùng chưa hoàn tất. Vui lòng cập nhật Số điện thoại và Giới thiệu bản thân trong Hồ sơ trước khi thuê.');
+  }
 
   const product = await ProductModel.findById(productId);
   if (!product) {

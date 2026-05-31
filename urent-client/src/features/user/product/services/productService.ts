@@ -64,4 +64,9 @@ export const productService = {
   async archiveProduct(id: string | number): Promise<void> {
     await apiClient.patch<ApiResponse<unknown>>(`/api/v1/products/${id}/archive`);
   },
+
+  async getPublicStats(): Promise<{ totalProducts: number; totalUsers: number; totalTransactions: number }> {
+    const res = await apiClient.get<ApiResponse<{ totalProducts: number; totalUsers: number; totalTransactions: number }>>("/api/v1/public-stats");
+    return res.data.data;
+  },
 };

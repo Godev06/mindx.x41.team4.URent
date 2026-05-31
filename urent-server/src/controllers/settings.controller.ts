@@ -3,6 +3,7 @@ import { createActivityOnly, createLinkedActivityNotification } from '../service
 import { SettingsModel } from '../models/settings.model';
 import { UserModel } from '../models/user.model';
 import { issueOtp, verifyOtp } from '../services/user.service';
+import { getClientIp, parseUserAgent, estimateLocation, evaluateRiskLevel } from '../utils/request-metadata';
 
 const flattenObject = (obj: any, prefix = ''): any => {
   return Object.keys(obj).reduce((acc: any, k: string) => {
@@ -120,10 +121,15 @@ export const updateSettings = async (req: Request, res: Response) => {
   if (updateData.twoFactorEnabled !== undefined) {
     const twoFactorEnabled = updateData.twoFactorEnabled;
     try {
+      const ip = getClientIp(req);
+      const parsedUa = parseUserAgent(req.headers['user-agent']);
+      const location = estimateLocation(ip);
+      const risk = evaluateRiskLevel(req.headers['user-agent']);
+
       await createLinkedActivityNotification({
         userId,
         activity: {
-          type: 'update',
+          type: 'settings_change',
           action: twoFactorEnabled ? 'Two-factor authentication enabled' : 'Two-factor authentication disabled',
           description: twoFactorEnabled
             ? 'User enabled email OTP for sign in'
@@ -136,7 +142,12 @@ export const updateSettings = async (req: Request, res: Response) => {
             : 'Bạn đã tắt tính năng xác thực bảo mật 2 lớp.',
           type: 'system',
           actionUrl: '/settings'
-        }
+        },
+        ip,
+        userAgent: req.headers['user-agent'] || '',
+        location,
+        device: `${parsedUa.browser} / ${parsedUa.device}`,
+        riskLevel: risk,
       });
     } catch (err) {
       console.error('Failed to create 2FA notification:', err);

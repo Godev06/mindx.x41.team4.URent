@@ -466,10 +466,14 @@ export const listConversations = async (
     allConversationIds,
   );
 
-  const allowedConversationIdSet = new Set([
-    ...oneToOneConversationIdSet,
-    ...supportConvIdSet,
-  ]);
+  const user = await UserModel.findById(userId).select("role").lean();
+  const isAdmin = user?.role === "admin";
+
+  const allowedConversationIdSet = new Set(
+    isAdmin
+      ? [...oneToOneConversationIdSet]
+      : [...oneToOneConversationIdSet, ...supportConvIdSet]
+  );
 
   const allowedMemberRows = memberRows.filter((row) =>
     allowedConversationIdSet.has(String(row.conversationId)),

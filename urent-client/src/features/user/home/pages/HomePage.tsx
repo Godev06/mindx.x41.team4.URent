@@ -19,25 +19,25 @@ export function HomePage({ onProductClick }: HomePageProps) {
   const { lang } = useI18n();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [dbStats, setDbStats] = useState<{ totalProducts: number; totalUsers: number; totalTransactions: number } | null>(null);
 
   useEffect(() => {
     let active = true;
-    async function loadProducts() {
+    async function loadData() {
       try {
-
-        const fetched = await productService.getProducts({ limit: 20 });
+        const [fetchedProducts, fetchedStats] = await Promise.all([
+          productService.getProducts({ limit: 20 }),
+          productService.getPublicStats()
+        ]);
         if (active) {
-          setProducts(fetched);
+          setProducts(fetchedProducts);
+          setDbStats(fetchedStats);
         }
       } catch (err) {
-        console.error("Failed to load products in HomePage:", err);
-      } finally {
-        if (active) {
-
-        }
+        console.error("Failed to load home page data:", err);
       }
     }
-    loadProducts();
+    loadData();
     return () => {
       active = false;
     };
@@ -50,10 +50,15 @@ export function HomePage({ onProductClick }: HomePageProps) {
   return (
     <div className="space-y-8 sm:space-y-10">
       <HeroIntro lang={lang} />
-      <Stats lang={lang} totalItems={activeProducts.length} />
+      <Stats 
+        lang={lang} 
+        totalItems={dbStats?.totalProducts ?? activeProducts.length} 
+        totalUsers={dbStats?.totalUsers ?? 5000}
+        totalTransactions={dbStats?.totalTransactions ?? 0}
+      />
       <CategoryShowcase
         lang={lang}
-        onCategoryClick={() => navigate("/products")}
+        onCategoryClick={(catId) => navigate(`/products?category=${catId}`)}
       />
       <FeaturedProducts
         products={activeProducts}

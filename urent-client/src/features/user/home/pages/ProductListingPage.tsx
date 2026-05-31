@@ -254,7 +254,22 @@ export function ProductListingPage({
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
 
-  const [category, setCategory] = useState<CategoryKey>("all");
+  const [category, setCategory] = useState<CategoryKey>(() => {
+    const cat = searchParams.get("category") as CategoryKey | null;
+    if (cat && ["all", "electronics", "travel", "study", "lifestyle"].includes(cat)) {
+      return cat;
+    }
+    return "all";
+  });
+
+  useEffect(() => {
+    const cat = searchParams.get("category") as CategoryKey | null;
+    if (cat && ["all", "electronics", "travel", "study", "lifestyle"].includes(cat)) {
+      setCategory(cat);
+    } else {
+      setCategory("all");
+    }
+  }, [searchParams]);
   const [sortBy, setSortBy] = useState<SortType>("latest");
   const [minPriceInput, setMinPriceInput] = useState("");
   const [maxPriceInput, setMaxPriceInput] = useState("");

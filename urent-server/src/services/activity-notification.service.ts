@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import {
   ActivityLogDocument,
   ActivityLogModel,
+  ActivityType,
 } from "../models/activity-log.model";
 import {
   NotificationDocument,
@@ -18,8 +19,7 @@ interface CreateLinkedActivityNotificationInput {
   activity: {
     action: string;
     description: string;
-    // Must match enum values in activity-log.model.ts
-    type: "auth" | "update";
+    type: ActivityType;
     timestamp?: Date;
   };
   notification: {
@@ -32,16 +32,25 @@ interface CreateLinkedActivityNotificationInput {
     metadata?: Record<string, any>;
   };
   eventKey?: string;
+  ip?: string;
+  userAgent?: string;
+  location?: string;
+  device?: string;
+  riskLevel?: "safe" | "low" | "medium" | "high";
 }
 
 interface CreateActivityOnlyInput {
   userId?: string;
   action: string;
   description: string;
-  // Must match enum values in activity-log.model.ts
-  type: "auth" | "update";
+  type: ActivityType;
   timestamp?: Date;
   eventKey?: string;
+  ip?: string;
+  userAgent?: string;
+  location?: string;
+  device?: string;
+  riskLevel?: "safe" | "low" | "medium" | "high";
 }
 
 const toObjectId = (value?: string): mongoose.Types.ObjectId | undefined => {
@@ -63,6 +72,11 @@ export const createActivityOnly = async (
     type: input.type,
     timestamp: input.timestamp ?? new Date(),
     eventKey: input.eventKey,
+    ip: input.ip,
+    userAgent: input.userAgent,
+    location: input.location,
+    device: input.device,
+    riskLevel: input.riskLevel,
   });
 };
 
@@ -91,6 +105,11 @@ export const createLinkedActivityNotification = async (
             type: input.activity.type,
             timestamp: input.activity.timestamp ?? new Date(),
             eventKey,
+            ip: input.ip,
+            userAgent: input.userAgent,
+            location: input.location,
+            device: input.device,
+            riskLevel: input.riskLevel,
           },
         ],
         { session },

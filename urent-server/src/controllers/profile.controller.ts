@@ -5,6 +5,7 @@ import { UpdateProfileInput } from '../validators/profile.validator';
 import { createActivityOnly } from '../services/activity-notification.service';
 import { comparePassword, hashPassword } from '../utils/hash';
 import { sendPasswordCreatedEmail, sendPasswordChangedEmail } from '../services/email.service';
+import { getClientIp, parseUserAgent, estimateLocation, evaluateRiskLevel } from '../utils/request-metadata';
 
 const buildFirebaseUid = (userId: string) => `urent_${userId}`;
 
@@ -60,15 +61,25 @@ export const updateProfile = async (req: Request, res: Response) => {
   await user.save();
 
   try {
+    const ip = getClientIp(req);
+    const parsedUa = parseUserAgent(req.headers['user-agent']);
+    const location = estimateLocation(ip);
+    const risk = evaluateRiskLevel(req.headers['user-agent']);
+
     await createActivityOnly({
       userId,
-      type: 'update',
+      type: newPassword ? 'password_change' : 'profile_update',
       action: isPasswordCreation ? 'Password created' : newPassword ? 'Password changed' : 'Profile updated',
       description: isPasswordCreation 
         ? 'User created password for their account' 
         : newPassword 
           ? 'User changed their password' 
-          : 'User updated profile information'
+          : 'User updated profile information',
+      ip,
+      userAgent: req.headers['user-agent'] || '',
+      location,
+      device: `${parsedUa.browser} / ${parsedUa.device}`,
+      riskLevel: risk,
     });
   } catch {}
 
@@ -107,11 +118,21 @@ export const uploadAvatar = async (req: Request, res: Response) => {
   await user.save();
 
   try {
+    const ip = getClientIp(req);
+    const parsedUa = parseUserAgent(req.headers['user-agent']);
+    const location = estimateLocation(ip);
+    const risk = evaluateRiskLevel(req.headers['user-agent']);
+
     await createActivityOnly({
       userId,
-      type: 'update',
+      type: 'profile_update',
       action: 'Avatar updated',
-      description: 'User changed profile avatar'
+      description: 'User changed profile avatar',
+      ip,
+      userAgent: req.headers['user-agent'] || '',
+      location,
+      device: `${parsedUa.browser} / ${parsedUa.device}`,
+      riskLevel: risk,
     });
   } catch {}
 

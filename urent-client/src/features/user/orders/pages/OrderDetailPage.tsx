@@ -535,7 +535,7 @@ export function OrderDetailPage() {
                                   onClick={() => setRatingInput(star)}
                                   onMouseEnter={() => setHoveredRating(star)}
                                   onMouseLeave={() => setHoveredRating(null)}
-                                  className="transition-transform duration-150 hover:scale-125 focus:outline-none"
+                                  className="transition-transform duration-150 hover:scale-125 focus:outline-none cursor-pointer"
                                 >
                                   <Star
                                     size={24}
@@ -711,7 +711,7 @@ export function OrderDetailPage() {
                   type="button"
                   disabled={isConnectingSupport}
                   onClick={handleChatWithExpert}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40 dark:border-slate-850 dark:bg-slate-800/30 dark:hover:border-teal-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="group flex w-full items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-left transition hover:border-teal-300 hover:bg-teal-50/40 dark:border-slate-850 dark:bg-slate-800/30 dark:hover:border-teal-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-500/15 dark:text-teal-300 shrink-0">
                     {isConnectingSupport ? (
@@ -734,7 +734,7 @@ export function OrderDetailPage() {
                 <button
                   disabled={isConnectingSupport}
                   onClick={handleChatWithPartner}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/40 dark:border-blue-700 dark:bg-blue-800/30 dark:hover:border-blue-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="group flex w-full items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-3 text-left transition hover:border-blue-300 hover:bg-blue-50/40 dark:border-blue-700 dark:bg-blue-800/30 dark:hover:border-blue-500/40 dark:hover:bg-slate-800 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
                 >
                   <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300 shrink-0">
                     {isConnectingSupport ? (
@@ -760,7 +760,7 @@ export function OrderDetailPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/messages")}
-                  className="group flex w-full items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/60 px-3.5 py-3 text-left transition hover:bg-rose-50/90 dark:border-rose-500/30 dark:bg-rose-500/10"
+                  className="group flex w-full items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/60 px-3.5 py-3 text-left transition hover:bg-rose-50/90 dark:border-rose-500/30 dark:bg-rose-500/10 cursor-pointer"
                 >
                   <span className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 shrink-0">
                     <AlertTriangle size={15} />

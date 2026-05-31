@@ -11,7 +11,7 @@ const activityTypeValues = [
   "settings_change"
 ] as const;
 
-type ActivityType = (typeof activityTypeValues)[number];
+export type ActivityType = (typeof activityTypeValues)[number];
 
 export interface ActivityLogDocument extends mongoose.Document {
   userId?: mongoose.Types.ObjectId;

@@ -4,10 +4,19 @@ interface StatsProps {
   lang: "vi" | "en";
   totalItems?: number;
   totalUsers?: number;
+  totalTransactions?: number;
 }
 
 export function Stats(props: StatsProps) {
-  const { lang, totalItems = 125, totalUsers = 5000 } = props;
+  const { lang, totalItems = 125, totalUsers = 5000, totalTransactions = 0 } = props;
+
+  const formatTransactions = (val: number) => {
+    if (val >= 1000) {
+      return (val / 1000).toFixed(1) + "k";
+    }
+    return String(val);
+  };
+
   const stats =
     lang === "vi"
       ? [
@@ -25,7 +34,7 @@ export function Stats(props: StatsProps) {
           },
           {
             label: "Giao dịch",
-            value: "3.2k",
+            value: formatTransactions(totalTransactions),
             icon: TrendingUp,
             color: "green",
           },
@@ -45,7 +54,7 @@ export function Stats(props: StatsProps) {
           },
           {
             label: "Transactions",
-            value: "3.2k",
+            value: formatTransactions(totalTransactions),
             icon: TrendingUp,
             color: "green",
           },

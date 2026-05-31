@@ -259,7 +259,7 @@ export function ProductReviews({
                   <button
                     type="button"
                     onClick={() => handleLike(review.id)}
-                    className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                    className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition cursor-pointer ${
                       likedIds.has(review.id)
                         ? "border-teal-200 bg-teal-50 text-teal-700 dark:border-teal-500/25 dark:bg-teal-500/10 dark:text-teal-300"
                         : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:text-slate-700 dark:border-white/8 dark:bg-white/4 dark:text-slate-400 dark:hover:border-white/15 dark:hover:text-slate-200"

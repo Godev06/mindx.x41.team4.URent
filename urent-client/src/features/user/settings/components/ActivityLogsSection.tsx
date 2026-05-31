@@ -113,7 +113,10 @@ export function ActivityLogsSection({
   const getLogIcon = (type: string) => {
     switch (type) {
       case "login":
+      case "auth":
         return <Globe size={16} className="text-emerald-500" />;
+      case "logout":
+        return <LogOut size={16} className="text-rose-500" />;
       case "password_change":
         return <KeyRound size={16} className="text-amber-500" />;
       case "settings_change":
@@ -161,7 +164,15 @@ export function ActivityLogsSection({
   // Live filter & search processing
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
-      const matchesFilter = selectedFilter === "all" || log.type === selectedFilter;
+      let matchesFilter = false;
+      if (selectedFilter === "all") {
+        matchesFilter = true;
+      } else if (selectedFilter === "login") {
+        matchesFilter = log.type === "login" || log.type === "logout" || log.type === "auth";
+      } else {
+        matchesFilter = log.type === selectedFilter;
+      }
+
       const term = searchQuery.toLowerCase();
       const matchesSearch =
         log.action.toLowerCase().includes(term) ||
