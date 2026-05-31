@@ -2,6 +2,8 @@ import http from "node:http";
 import "dotenv/config";
 import dns from "node:dns";
 import { app } from "./app";
+import express from "express";
+import path from "path";
 import { connectDB } from "./config/db-lazy";
 
 import { initializeFirebase } from "./config/firebase";

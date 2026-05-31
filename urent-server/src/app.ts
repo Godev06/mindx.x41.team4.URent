@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
-import rateLimit from "express-rate-limit";
+import path from "path";
+import path from "path";
 import swaggerUi from "swagger-ui-express";
 import { connectDB } from "./config/db-lazy";
 

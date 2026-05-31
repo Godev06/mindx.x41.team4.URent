@@ -1,22 +1,11 @@
 /* src/index.css */
 
 @import "tailwindcss";
+@import "./styles/theme.css";
+/* added theme import */
+
 @custom-variant dark (&:where(.dark, .dark *));
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import "./styles/theme.css"; // added theme import
 
-@theme {
-  --font-sans: "Outfit", "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
-  --color-surface: #f8fafc;
-  --color-elevated: #ffffff;
-  --color-brand-primary: #0f766e;
-  --color-brand-accent: #f97316;
-
-  --color-surface-dark: #0f172a;
-  --color-elevated-dark: #1e293b;
-  --color-text-dark: #f1f5f9;
-  --color-text-muted-dark: #cbd5e1;
-}
 
 @layer base {
   html {
@@ -50,5 +39,13 @@
 }
 
 /* Glass card utility */
-.glass-card { backdrop-filter: blur(12px); background: rgba(255,255,255,0.15); border-radius: 0.75rem; transition: all 0.2s ease-in-out; }
-.dark .glass-card { background: rgba(0,0,0,0.25); }
+.glass-card {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.dark .glass-card {
+  background: rgba(0, 0, 0, 0.25);
+}
