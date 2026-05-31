@@ -14,8 +14,7 @@
     "dev:client": "npm run dev --prefix urent-client",
     "dev:server": "npm run dev --prefix urent-server",
     "build": "concurrently --prefix-colors \"bgBlue.bold,bgGreen.bold\" --names \" CLIENT \",\" SERVER \" \"npm run build --prefix urent-client\" \"npm run build --prefix urent-server\"",
-    "check": "concurrently --prefix-colors \"bgBlue.bold,bgGreen.bold\" --names \" CLIENT \",\" SERVER \" \"npm run typecheck --prefix urent-client\" \"npm run typecheck --prefix urent-server\"",
-
+    "check": "concurrently --prefix-colors \"bgBlue.bold,bgGreen.bold\" --names \" CLIENT \",\" SERVER \" \"npm run typecheck --prefix urent-client\" \"npm run typecheck --prefix urent-server\""
   },
   "devDependencies": {
     "@types/swagger-ui-express": "^4.1.8",
