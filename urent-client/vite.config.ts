@@ -1,22 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite' // Dòng quan trọng
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),  
+    tailwindcss(),
   ],
+
   build: {
+    chunkSizeWarningLimit: 600,
+
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Separate vendor libraries into their own chunk
-          vendor: (id) => id.includes('node_modules'),
+        manualChunks(id: string) {
+          if (id.includes('node_modules')) {
+            return 'vendor'
+          }
         },
       },
     },
-    // Set chunk size warning limit to 600 KB (adjust as needed)
-    chunkSizeWarningLimit: 600,
   },
 })
