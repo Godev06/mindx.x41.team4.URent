@@ -132,10 +132,12 @@ export const getOrderById = async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const { id } = req.params;
 
-  const order = await OrderModel.findOne({
-    _id: id,
-    $or: [{ customerId: userId }, { ownerId: userId }],
-  })
+  const query: any = { _id: id };
+  if (req.user?.role !== 'admin') {
+    query.$or = [{ customerId: userId }, { ownerId: userId }];
+  }
+
+  const order = await OrderModel.findOne(query)
     // Populate product basic info and deep populate its owner
     .populate({
       path: 'productId',
@@ -164,15 +166,17 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
 
+  const query: any = { _id: id };
+  if (req.user?.role !== 'admin') {
+    query.$or = [
+      { customerId: userId },
+      { ownerId: userId },
+      { renterId: userId }
+    ];
+  }
+
   const order = await OrderModel.findOneAndUpdate(
-    {
-      _id: id,
-      $or: [
-        { customerId: userId },
-        { ownerId: userId },
-        { renterId: userId }
-      ]
-    },
+    query,
     { status },
     { new: true }
   );

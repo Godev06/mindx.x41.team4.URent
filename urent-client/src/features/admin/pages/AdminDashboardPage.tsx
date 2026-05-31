@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "../layout/AdminLayout";
 import { TrustChart } from "../components/TrustChart";
+import { apiClient } from "../../../lib/api/apiClient";
 import {
   Users as UsersIcon,
   ShoppingBag,
@@ -9,27 +10,57 @@ import {
   CheckCircle,
   AlertTriangle,
   ArrowRight,
-  UserPlus
 } from "lucide-react";
 
 interface User {
   _id: string;
   trustScore?: number;
+  role?: "admin" | "user";
 }
 
 export function AdminDashboardPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [stats, setStats] = useState<{
+    totalUsers: number;
+    onlineUsers: number;
+    offlineUsers: number;
+    totalOrders: number;
+    pendingOrders: number;
+    completedOrders: number;
+    totalInventory: number;
+    rentedCount: number;
+    overdueCount: number;
+    recentActivities: any[];
+  }>({
+    totalUsers: 0,
+    onlineUsers: 0,
+    offlineUsers: 0,
+    totalOrders: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
+    totalInventory: 0,
+    rentedCount: 0,
+    overdueCount: 0,
+    recentActivities: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:5003/api/v1/users")
-      .then((res) => res.json())
-      .then((data) => setUsers(data))
-      .catch((err) => console.log(err));
+    setIsLoading(true);
+    apiClient.get("/api/v1/admin/dashboard-stats")
+      .then((res) => {
+        if (res.data && res.data.success) {
+          setStats(res.data.data);
+          setUsers(res.data.data.users || []);
+        }
+      })
+      .catch((err) => console.error("Failed to load dashboard stats:", err))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const totalUsers = users.length;
-  const onlineUsers = Math.floor(totalUsers * 0.7);
-  const offlineUsers = totalUsers - onlineUsers;
+  const totalUsers = stats.totalUsers;
+  const onlineUsers = stats.onlineUsers;
+  const offlineUsers = stats.offlineUsers;
 
   return (
     <AdminLayout>
@@ -45,7 +76,7 @@ export function AdminDashboardPage() {
                 Welcome back, Admin 👋
               </h2>
               <p className="max-w-xl text-sm font-medium text-slate-300 leading-relaxed">
-                Your platform is running smoothly. You have <span className="font-bold text-cyan-400">12 new orders</span> pending verification, and <span className="font-bold text-teal-400">{onlineUsers} users online</span> right now.
+                Your platform is running smoothly. You have <span className="font-bold text-cyan-400">{stats.pendingOrders} new orders</span> pending verification, and <span className="font-bold text-teal-400">{onlineUsers} users online</span> right now.
               </p>
             </div>
 
@@ -92,15 +123,15 @@ export function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-4">
-              <h3 className="text-4xl font-extrabold tracking-tight text-white">340</h3>
+              <h3 className="text-4xl font-extrabold tracking-tight text-white">{stats.totalOrders}</h3>
               <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold">
                 <span className="flex items-center gap-1.5 text-yellow-400">
                   <Clock className="h-3.5 w-3.5" />
-                  Pending: 40
+                  Pending: {stats.pendingOrders}
                 </span>
                 <span className="flex items-center gap-1.5 text-teal-400">
                   <CheckCircle className="h-3.5 w-3.5" />
-                  Completed: 250
+                  Completed: {stats.completedOrders}
                 </span>
               </div>
             </div>
@@ -116,15 +147,15 @@ export function AdminDashboardPage() {
               </div>
             </div>
             <div className="mt-4">
-              <h3 className="text-4xl font-extrabold tracking-tight text-white">89</h3>
+              <h3 className="text-4xl font-extrabold tracking-tight text-white">{stats.totalInventory}</h3>
               <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold">
                 <span className="flex items-center gap-1.5 text-cyan-400">
                   <CheckCircle className="h-3.5 w-3.5" />
-                  Rented: 60
+                  Rented: {stats.rentedCount}
                 </span>
                 <span className="flex items-center gap-1.5 text-rose-400">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  Repair: 9
+                  Overdue: {stats.overdueCount}
                 </span>
               </div>
             </div>
@@ -152,67 +183,31 @@ export function AdminDashboardPage() {
             </div>
 
             <div className="space-y-3.5">
-              {/* FEED 1: NEW REGISTER */}
-              <div className="flex items-center justify-between rounded-xl border border-slate-800/40 bg-slate-900/10 p-3.5 hover:bg-slate-900/40 transition duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
-                    <UserPlus className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">New user registered</p>
-                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">lahongquan profile created</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">2m ago</span>
-              </div>
-
-              {/* FEED 2: ORDER COMPLETE */}
-              <div className="flex items-center justify-between rounded-xl border border-slate-800/40 bg-slate-900/10 p-3.5 hover:bg-slate-900/40 transition duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                    <CheckCircle className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">Order #102 completed</p>
-                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">Disputed deposit released</p>
-                  </div>
-                </div>
-                <span className="rounded-lg bg-teal-500/10 px-2.5 py-1 text-[10px] font-bold text-teal-400 border border-teal-500/20 uppercase tracking-wider">
-                  Success
-                </span>
-              </div>
-
-              {/* FEED 3: BLOCKED USER */}
-              <div className="flex items-center justify-between rounded-xl border border-slate-800/40 bg-slate-900/10 p-3.5 hover:bg-slate-900/40 transition duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">User security warning</p>
-                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">Tuan Anh trust score updated to 40%</p>
-                  </div>
-                </div>
-                <span className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-[10px] font-bold text-rose-400 border border-rose-500/20 uppercase tracking-wider">
-                  Warning
-                </span>
-              </div>
-
-              {/* FEED 4: INVENTORY */}
-              <div className="flex items-center justify-between rounded-xl border border-slate-800/40 bg-slate-900/10 p-3.5 hover:bg-slate-900/40 transition duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
-                    <Clock className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-white">Inventory updated</p>
-                    <p className="text-[11px] font-semibold text-slate-500 mt-0.5">Sony A7 IV listed by Nguyễn Trọng Tiến</p>
-                  </div>
-                </div>
-                <span className="rounded-lg bg-yellow-500/10 px-2.5 py-1 text-[10px] font-bold text-yellow-400 border border-yellow-500/20 uppercase tracking-wider">
-                  Pending
-                </span>
-              </div>
+              {isLoading ? (
+                <div className="text-center py-8 text-xs text-slate-500">Loading activities...</div>
+              ) : stats.recentActivities.length === 0 ? (
+                <div className="text-center py-8 text-xs text-slate-500">No platform actions recorded yet.</div>
+              ) : (
+                stats.recentActivities.slice(0, 5).map((act: any) => {
+                  const actorName = act.userId?.displayName || act.userId?.username || act.actor || "System";
+                  const timeAgo = new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " " + new Date(act.timestamp).toLocaleDateString();
+                  
+                  return (
+                    <div key={act._id} className="flex items-center justify-between rounded-xl border border-slate-800/40 bg-slate-900/10 p-3.5 hover:bg-slate-900/40 transition duration-300">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                          <Box className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">{act.action}</p>
+                          <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{act.description} (by {actorName})</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 shrink-0">{timeAgo}</span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   Loader2
 } from "lucide-react";
 import { messageService } from "../../user/messages/services/messageService";
+import { apiClient } from "../../../lib/api/apiClient";
 
 interface User {
   _id: string;
@@ -45,9 +46,10 @@ export function AdminUsersPage() {
   const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:5003/api/v1/users");
-      const data = await response.json();
-      setUsers(data);
+      const response = await apiClient.get("/api/v1/users");
+      if (response.data && response.data.success) {
+        setUsers(response.data.data);
+      }
     } catch (err) {
       console.error("Failed to fetch users:", err);
     } finally {
@@ -74,14 +76,8 @@ export function AdminUsersPage() {
 
     // 2. Call endpoint in background
     try {
-      await fetch(`http://localhost:5003/api/v1/users/${userId}/role`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          role: newRole,
-        }),
+      await apiClient.patch(`/api/v1/users/${userId}/role`, {
+        role: newRole,
       });
     } catch (error) {
       console.error("Failed to update user role:", error);
@@ -104,14 +100,8 @@ export function AdminUsersPage() {
     );
 
     try {
-      await fetch(`http://localhost:5003/api/v1/users/${userId}/trust`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          trustScore: newTrust,
-        }),
+      await apiClient.patch(`/api/v1/users/${userId}/trust`, {
+        trustScore: newTrust,
       });
     } catch (error) {
       console.error("Failed to update trust score:", error);

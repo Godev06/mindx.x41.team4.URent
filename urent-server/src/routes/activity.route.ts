@@ -1,14 +1,18 @@
 import { Router } from "express";
 import { authGuard } from "../middlewares/auth.middleware";
+import { adminGuard } from "../middlewares/admin-guard.middleware";
 import {
   getActivities,
   clearActivities,
   getSessions,
   revokeSession,
-  revokeAllOtherSessions
+  revokeAllOtherSessions,
+  getAllActivitiesAdmin
 } from "../controllers/activity.controller";
 
 export const activityRouter = Router();
+
+activityRouter.get("/admin/all", authGuard, adminGuard, getAllActivitiesAdmin);
 
 /**
  * @openapi

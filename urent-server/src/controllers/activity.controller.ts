@@ -221,3 +221,17 @@ export const revokeAllOtherSessions = async (req: Request, res: Response) => {
 
   return sendSuccess(res, { message: "All other sessions revoked successfully" });
 };
+
+export const getAllActivitiesAdmin = async (req: Request, res: Response) => {
+  const userId = req.user?.sub;
+  if (!userId) {
+    throw new AppError(401, "UNAUTHORIZED", "Unauthorized");
+  }
+
+  const logs = await ActivityLogModel.find()
+    .populate("userId", "username displayName email avatarUrl")
+    .sort({ timestamp: -1 });
+
+  return sendSuccess(res, logs);
+};
+

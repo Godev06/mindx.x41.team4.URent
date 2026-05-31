@@ -19,6 +19,7 @@ import userRouter from "./routes/user.route";
 import { activityRouter } from "./routes/activity.route";
 import { uploadRouter } from "./routes/upload.route";
 import { urentAiRouter } from "./routes/urent-ai.route";
+import { adminRouter } from "./routes/admin.route";
 
 // Register event listeners
 import "./events/user-events";
@@ -100,6 +101,7 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/profile", profileRouter);
 app.use("/api/v1/settings", settingsRouter);
 app.use("/api/v1/activities", activityRouter);
+app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1", productRouter);
 app.use("/api/v1", messageRouter);
 app.use("/api/v1", adminChatRouter);

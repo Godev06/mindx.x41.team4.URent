@@ -1,14 +1,18 @@
 import { Router } from 'express';
 import { authGuard } from '../middlewares/auth.middleware';
+import { adminGuard } from '../middlewares/admin-guard.middleware';
 import {
   createOrder,
   getUserOrders,
   getOwnerOrders,
   getOrderById,
-  updateOrderStatus
+  updateOrderStatus,
+  getAllOrders
 } from '../controllers/order.controller';
 
 export const orderRouter = Router();
+
+orderRouter.get('/admin/all', authGuard, adminGuard, getAllOrders);
 
 /**
  * @openapi
