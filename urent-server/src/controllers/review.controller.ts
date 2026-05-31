@@ -32,8 +32,8 @@ export const createReview = async (req: Request, res: Response) => {
   }
 
   // Verify that current user is the renter or customer of the order
-  const isRenter = (order.renterId && String(order.renterId) === String(userId)) || 
-                   (order.customerId && String(order.customerId) === String(userId));
+  const isRenter = (order.renterId && String(order.renterId) === String(userId)) ||
+    (order.customerId && String(order.customerId) === String(userId));
   if (!isRenter) {
     throw new AppError(403, 'FORBIDDEN', 'Bạn không có quyền đánh giá đơn hàng này');
   }
@@ -72,7 +72,7 @@ export const createReview = async (req: Request, res: Response) => {
     reviewsCount,
   });
 
-  return sendSuccess(res, review, 'Đánh giá đã được lưu thành công', 201);
+  return sendSuccess(res, review, { message: "Đánh giá đã được lưu thành công" }, 201);
 };
 
 export const getProductReviews = async (req: Request, res: Response) => {
