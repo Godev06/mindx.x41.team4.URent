@@ -80,7 +80,7 @@ export function AdminOrdersDetailPage() {
       showToast({
         title: "Tài khoản bị hạn chế",
         description: `Đã hạ điểm tin cậy của tài khoản người thuê xuống 10%`,
-        variant: "warning"
+        variant: "info"
       });
     } catch (err: any) {
       console.error("Failed to suspend renter:", err);

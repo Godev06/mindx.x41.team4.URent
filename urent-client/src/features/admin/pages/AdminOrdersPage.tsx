@@ -36,18 +36,7 @@ export function AdminOrdersPage() {
     fetchOrders();
   }, []);
 
-  const getTrustBadge = (trust: number) => {
-    if (trust >= 80) {
-      return "bg-teal-500/10 text-teal-400 border border-teal-500/25";
-    }
-    if (trust >= 60) {
-      return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25";
-    }
-    if (trust >= 40) {
-      return "bg-orange-500/10 text-orange-400 border border-orange-500/25";
-    }
-    return "bg-rose-500/10 text-rose-400 border border-rose-500/25";
-  };
+
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -172,7 +161,7 @@ export function AdminOrdersPage() {
               </div>
             ) : (
               filteredOrders.map((order) => {
-                const trustScore = order.renterId?.trustScore ?? 100;
+            
                 return (
                   <div
                     key={order._id}

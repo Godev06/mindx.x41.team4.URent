@@ -4,7 +4,6 @@ import { apiClient } from "../../../lib/api/apiClient";
 import {
   Activity,
   Terminal,
-  Download,
   Clock,
   ShieldAlert,
   AlertOctagon,
@@ -56,7 +55,7 @@ export function AdminLogsPage() {
     }
   };
 
-  // Filter logs based on severity trigger
+  // getTrustBadge removed as unused
   const filteredLogs = logs.filter((log) => {
     if (severityFilter === "all") return true;
     const severity = getSeverityLevel(log.riskLevel);
@@ -149,9 +148,10 @@ export function AdminLogsPage() {
               <div className="text-center py-20 text-slate-500">No logs found matching severity criteria.</div>
             ) : (
               filteredLogs.map((log) => {
+                // trustScore usage removed
                 const actorName = log.userId?.displayName || log.userId?.username || log.actor || "System";
                 const severity = getSeverityLevel(log.riskLevel);
-                
+
                 return (
                   <div
                     key={log._id}
@@ -212,11 +212,10 @@ export function AdminLogsPage() {
           <div className="mt-6 flex flex-wrap gap-3 text-xs font-bold">
             <button
               onClick={() => setSeverityFilter(severityFilter === "high" ? "all" : "high")}
-              className={`flex items-center gap-1.5 rounded-xl px-4.5 py-2.5 transition duration-150 border ${
-                severityFilter === "high"
-                  ? "bg-rose-500 text-white border-rose-500"
-                  : "bg-rose-500/10 border-rose-500/25 text-rose-400 hover:bg-rose-500/20"
-              }`}
+              className={`flex items-center gap-1.5 rounded-xl px-4.5 py-2.5 transition duration-150 border ${severityFilter === "high"
+                ? "bg-rose-500 text-white border-rose-500"
+                : "bg-rose-500/10 border-rose-500/25 text-rose-400 hover:bg-rose-500/20"
+                }`}
             >
               <ShieldAlert className="h-4 w-4" />
               Critical Events only
@@ -224,23 +223,21 @@ export function AdminLogsPage() {
 
             <button
               onClick={() => setSeverityFilter(severityFilter === "medium" ? "all" : "medium")}
-              className={`flex items-center gap-1.5 rounded-xl px-4.5 py-2.5 transition duration-150 border ${
-                severityFilter === "medium"
-                  ? "bg-yellow-500 text-slate-950 border-yellow-500 font-extrabold"
-                  : "bg-yellow-500/10 border-yellow-500/25 text-yellow-400 hover:bg-yellow-500/20"
-              }`}
+              className={`flex items-center gap-1.5 rounded-xl px-4.5 py-2.5 transition duration-150 border ${severityFilter === "medium"
+                ? "bg-yellow-500 text-slate-950 border-yellow-500 font-extrabold"
+                : "bg-yellow-500/10 border-yellow-500/25 text-yellow-400 hover:bg-yellow-500/20"
+                }`}
             >
               <AlertOctagon className="h-4 w-4" />
-              Audits Warnings
+              variant: "info"
             </button>
 
             <button
               onClick={() => setSeverityFilter("all")}
-              className={`flex items-center gap-1.5 rounded-xl px-4.5 py-2.5 transition duration-150 border ${
-                severityFilter === "all"
-                  ? "bg-cyan-500 text-slate-950 border-cyan-500 font-extrabold"
-                  : "bg-slate-900/50 border-slate-800 text-slate-400 hover:text-white"
-              }`}
+              className={`flex items-center gap-1.5 rounded-xl px-4.5 py-2.5 transition duration-150 border ${severityFilter === "all"
+                ? "bg-cyan-500 text-slate-950 border-cyan-500 font-extrabold"
+                : "bg-slate-900/50 border-slate-800 text-slate-400 hover:text-white"
+                }`}
             >
               Show All Logs
             </button>

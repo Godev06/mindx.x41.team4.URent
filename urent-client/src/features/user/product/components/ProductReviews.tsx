@@ -68,11 +68,7 @@ interface ProductReviewsProps {
   reviews?: number;
 }
 
-export function ProductReviews({
-  productId,
-  rating = 4.9,
-  reviews = 0,
-}: ProductReviewsProps) {
+export function ProductReviews({ productId }: ProductReviewsProps) {
   const { t } = useI18n();
   const [allReviews, setAllReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(false);
