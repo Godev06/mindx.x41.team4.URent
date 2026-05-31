@@ -130,3 +130,20 @@ export interface SidebarItemProps {
   active: boolean;
   onClick: () => void;
 }
+
+export interface Review {
+  _id?: string;
+  id?: string;
+  productId: string;
+  orderId: string;
+  userId: {
+    _id: string;
+    displayName?: string;
+    username?: string;
+    avatarUrl?: string;
+  } | string;
+  rating: number;
+  content: string;
+  createdAt?: string;
+  updatedAt?: string;
+}

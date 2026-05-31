@@ -1,6 +1,5 @@
 import {
   AlertTriangle,
-
   CheckCircle2,
   Clock3,
   MapPin,
@@ -8,6 +7,7 @@ import {
   PackageCheck,
   QrCode,
   ShieldCheck,
+  Star,
 } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -17,6 +17,7 @@ import { useAuth } from "../../auth/hooks/useAuth";
 import { useToast } from "../../shared/hooks/useToast";
 import OrderHeader from "../components/OrderHeader";
 import { fetchOrderDetail, updateOrderStatus } from "../services/orderService";
+import { fetchReviewByOrder, createReview } from "../services/reviewService";
 
 export function OrderDetailPage() {
   const { orderId } = useParams();
@@ -31,6 +32,11 @@ export function OrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [isConnectingSupport, setIsConnectingSupport] = useState(false);
+  const [review, setReview] = useState<any>(null);
+  const [ratingInput, setRatingInput] = useState(5);
+  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
+  const [commentInput, setCommentInput] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const days = useMemo(() => {
     if (!order?.rawStartDate || !order?.rawEndDate) return 1;
@@ -182,6 +188,15 @@ export function OrderDetailPage() {
 
       setOrder(mappedOrder);
       setProduct(mappedProduct);
+
+      if (ord.status === "delivered") {
+        try {
+          const rev = await fetchReviewByOrder(ord._id);
+          setReview(rev);
+        } catch (err) {
+          console.error("Failed to fetch review for order:", err);
+        }
+      }
     } catch (err) {
       console.error("Failed to load order detail from BE:", err);
     } finally {
@@ -213,6 +228,41 @@ export function OrderDetailPage() {
       });
     } finally {
       setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleSubmitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentInput.trim()) {
+      showToast({
+        title: "Thông báo",
+        description: "Vui lòng nhập nội dung nhận xét.",
+        variant: "error",
+      });
+      return;
+    }
+    try {
+      setIsSubmittingReview(true);
+      const newReview = await createReview({
+        orderId: order._id,
+        rating: ratingInput,
+        content: commentInput,
+      });
+      setReview(newReview);
+      showToast({
+        title: "Đánh giá thành công",
+        description: "Cảm ơn bạn đã đóng góp ý kiến về sản phẩm!",
+        variant: "success",
+      });
+    } catch (err: any) {
+      console.error("Failed to submit review:", err);
+      showToast({
+        title: "Gửi đánh giá thất bại",
+        description: err.response?.data?.message || "Không thể gửi đánh giá lúc này.",
+        variant: "error",
+      });
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -439,12 +489,92 @@ export function OrderDetailPage() {
                   <p className="text-xs text-slate-500 max-w-xs font-medium leading-relaxed">Hệ thống đang bảo vệ giao dịch của bạn. Hãy liên hệ với đối tác nếu cần hỗ trợ.</p>
                 </div>
               ) : order.status === "delivered" ? (
-                <div className="flex flex-col items-center text-center py-6 space-y-3">
+                <div className="flex flex-col items-center text-center py-6 space-y-3 w-full">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400">
                     <CheckCircle2 size={32} />
                   </div>
                   <h3 className="text-base font-extrabold text-slate-800 dark:text-slate-200">Giao dịch đã hoàn tất</h3>
                   <p className="text-xs text-slate-500 max-w-sm font-medium leading-relaxed">Hợp đồng điện tử đã được lưu giữ an toàn và giao dịch được hoàn tất trọn vẹn.</p>
+                  
+                  {isRenter && (
+                    <div className="mt-6 w-full max-w-md border-t border-slate-100 dark:border-white/5 pt-6 text-left">
+                      {review ? (
+                        <div className="rounded-2xl border border-teal-200/80 bg-teal-50/10 p-5 shadow-xs dark:border-teal-500/20 dark:bg-teal-500/5">
+                          <h4 className="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-400 mb-2">Đánh giá của bạn</h4>
+                          <div className="flex items-center gap-1 mb-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                size={14}
+                                className={
+                                  star <= review.rating
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "fill-slate-200 text-slate-200 dark:fill-white/10 dark:text-white/10"
+                                }
+                              />
+                            ))}
+                          </div>
+                          <p className="text-xs text-slate-650 dark:text-slate-350 leading-relaxed font-semibold italic">
+                            "{review.content}"
+                          </p>
+                        </div>
+                      ) : (
+                        <form onSubmit={handleSubmitReview} className="space-y-4">
+                          <div>
+                            <h4 className="text-sm font-extrabold text-slate-800 dark:text-slate-100">Đánh giá & Nhận xét sản phẩm</h4>
+                            <p className="text-[11px] text-slate-450 dark:text-slate-400 mt-1">Chia sẻ trải nghiệm của bạn khi thuê thiết bị này.</p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-550 dark:text-slate-350">Chọn mức độ hài lòng:</span>
+                            <div className="flex items-center gap-1.5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  type="button"
+                                  key={star}
+                                  onClick={() => setRatingInput(star)}
+                                  onMouseEnter={() => setHoveredRating(star)}
+                                  onMouseLeave={() => setHoveredRating(null)}
+                                  className="transition-transform duration-150 hover:scale-125 focus:outline-none"
+                                >
+                                  <Star
+                                    size={24}
+                                    className={`transition-colors duration-150 ${
+                                      star <= (hoveredRating ?? ratingInput)
+                                        ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_4px_rgba(251,191,36,0.3)]"
+                                        : "fill-slate-200 text-slate-200 dark:fill-white/10 dark:text-white/10"
+                                    }`}
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <textarea
+                              value={commentInput}
+                              onChange={(e) => setCommentInput(e.target.value)}
+                              placeholder="Thiết bị hoạt động tốt không? Chủ xe hỗ trợ nhiệt tình chứ?..."
+                              rows={3}
+                              className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5 text-xs text-slate-800 shadow-inner outline-none transition focus:border-teal-400 dark:border-white/8 dark:bg-white/4 dark:text-white focus:ring-1 focus:ring-teal-400/30"
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={isSubmittingReview}
+                            className="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-600 hover:bg-teal-700 py-2.5 text-xs font-bold text-white shadow-md shadow-teal-600/20 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSubmittingReview ? (
+                              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                            ) : (
+                              "Gửi đánh giá"
+                            )}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-center text-center py-6 space-y-3">

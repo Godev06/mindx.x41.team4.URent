@@ -14,6 +14,7 @@ import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { ProductBookingCard } from "../components/ProductBookingCard";
 import { ProductSpecRow } from "../components/ProductSpecRow";
+import { ProductReviews } from "../components/ProductReviews";
 import { useI18n } from "../../shared/context/LanguageContext";
 import { productService } from "../services/productService";
 import { useAuth } from "../../auth/hooks/useAuth";
@@ -208,8 +209,14 @@ export function ProductDetailPage({
             <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
               <div className="inline-flex items-center gap-1 font-semibold text-amber-300">
                 <Star size={14} fill="currentColor" />
-                <span className="tabular-nums">{product.rating ?? 4.9}</span>
-                <span className="font-normal text-white/70">{t.productDetailReviewUnit}</span>
+                <span className="tabular-nums">
+                  {(product.reviewsCount ?? product.reviews ?? 0) > 0
+                    ? (product.rating ? product.rating.toFixed(1) : "0.0")
+                    : (useI18n().lang === "vi" ? "Chưa có đánh giá" : "No reviews")}
+                </span>
+                <span className="font-normal text-white/70">
+                  {(product.reviewsCount ?? product.reviews ?? 0) > 0 ? `(${product.reviewsCount ?? product.reviews} ${t.productDetailReviewUnit})` : ""}
+                </span>
               </div>
               <span className="h-3 w-px bg-white/30" aria-hidden />
               <div className="inline-flex items-center gap-1 text-white/80">
@@ -266,8 +273,8 @@ export function ProductDetailPage({
                 onClick={handleContactOwner}
                 disabled={isCreatingChat || isOwner}
                 className={`flex items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed ${isOwner
-                    ? "border-slate-200 bg-slate-100 text-slate-400 dark:border-white/5 dark:bg-white/5 dark:text-slate-500"
-                    : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-teal-500/30 dark:hover:bg-teal-500/10 dark:hover:text-teal-400"
+                  ? "border-slate-200 bg-slate-100 text-slate-400 dark:border-white/5 dark:bg-white/5 dark:text-slate-500"
+                  : "border-slate-200 bg-slate-50 text-slate-700 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-600 dark:border-white/10 dark:bg-white/5 dark:text-slate-300 dark:hover:border-teal-500/30 dark:hover:bg-teal-500/10 dark:hover:text-teal-400"
                   }`}
               >
                 {isCreatingChat ? (
@@ -279,6 +286,14 @@ export function ProductDetailPage({
               </button>
             </div>
           )}
+
+          <div className="mt-8">
+            <ProductReviews
+              productId={product._id || product.id}
+              rating={product.rating}
+              reviews={product.reviewsCount || product.reviews}
+            />
+          </div>
         </div>
 
         <div className="lg:col-span-4">

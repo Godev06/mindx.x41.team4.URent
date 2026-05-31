@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle2, Star, ThumbsUp } from "lucide-react";
 import { useI18n } from "../../shared/context/LanguageContext";
+import { fetchReviewsByProduct } from "../../orders/services/reviewService";
 
 interface Review {
-  id: number;
+  id: string | number;
   author: string;
   avatar: string;
   rating: number;
@@ -99,20 +100,68 @@ interface ProductReviewsProps {
 }
 
 export function ProductReviews({
+  productId,
   rating = 4.9,
   reviews = 0,
 }: ProductReviewsProps) {
   const { t } = useI18n();
-  const [allReviews] = useState<Review[]>(MOCK_REVIEWS);
-  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
+  const [allReviews, setAllReviews] = useState<Review[]>(MOCK_REVIEWS);
+  const [isLoading, setIsLoading] = useState(false);
+  const [likedIds, setLikedIds] = useState<Set<string | number>>(new Set());
 
-  const totalCount = reviews > 0 ? reviews : allReviews.length;
+  useEffect(() => {
+    async function loadReviews() {
+      const isObjectId = typeof productId === "string" && productId.length === 24 && /^[0-9a-fA-F]+$/.test(productId);
+      if (!productId || !isObjectId) {
+        setAllReviews(MOCK_REVIEWS);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        const data = await fetchReviewsByProduct(String(productId));
+        if (data && data.length > 0) {
+          const mapped = data.map((r: any, idx: number) => ({
+            id: r._id || idx,
+            author: r.userId?.displayName || r.userId?.username || "Người dùng URent",
+            avatar: r.userId?.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${r._id || idx}`,
+            rating: r.rating,
+            date: r.createdAt
+              ? new Date(r.createdAt).toLocaleDateString("vi-VN", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              : "Mới đây",
+            text: r.content,
+            verified: true,
+            helpful: 0,
+          }));
+          setAllReviews(mapped);
+        } else {
+          setAllReviews([]);
+        }
+      } catch (err) {
+        console.error("Failed to load product reviews:", err);
+        setAllReviews([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadReviews();
+  }, [productId]);
+
+  const totalCount = allReviews.length;
+  // Calculate average rating dynamically from fetched reviews if database reviews exist
+  const dynamicRating = totalCount > 0 
+    ? Number((allReviews.reduce((sum, r) => sum + r.rating, 0) / totalCount).toFixed(1))
+    : 0;
+
   const dist: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   allReviews.forEach((r) => {
     dist[r.rating] = (dist[r.rating] ?? 0) + 1;
   });
 
-  const handleLike = (id: number) => {
+  const handleLike = (id: string | number) => {
     setLikedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -120,6 +169,15 @@ export function ProductReviews({
       return next;
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 animate-pulse space-y-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-400 border-t-transparent" />
+        <p className="text-slate-500 dark:text-slate-400 text-sm">Đang tải đánh giá...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -131,9 +189,9 @@ export function ProductReviews({
             {/* Overall score */}
             <div className="flex shrink-0 flex-col items-center gap-1 rounded-2xl border border-slate-100 bg-slate-50/80 px-6 py-5 dark:border-white/6 dark:bg-white/4">
               <span className="text-5xl font-bold tabular-nums text-slate-900 dark:text-white">
-                {rating.toFixed(1)}
+                {dynamicRating.toFixed(1)}
               </span>
-              <StarRating value={Math.round(rating)} size={16} />
+              <StarRating value={Math.round(dynamicRating)} size={16} />
               <span className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                 {totalCount} {t.productDetailReviewsCount}
               </span>
@@ -161,7 +219,7 @@ export function ProductReviews({
       <div className="space-y-4">
         {allReviews.length === 0 ? (
           <p className="py-6 text-center text-sm text-slate-400 dark:text-slate-500">
-            {t.productDetailReviewsEmpty}
+            {t.productDetailReviewsEmpty || "Chưa có đánh giá nào cho sản phẩm này."}
           </p>
         ) : (
           allReviews.map((review) => (
