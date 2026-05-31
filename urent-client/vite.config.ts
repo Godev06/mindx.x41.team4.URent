@@ -7,4 +7,16 @@ export default defineConfig({
     react(),
     tailwindcss(),  
   ],
-})   
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor libraries into their own chunk
+          vendor: (id) => id.includes('node_modules'),
+        },
+      },
+    },
+    // Set chunk size warning limit to 600 KB (adjust as needed)
+    chunkSizeWarningLimit: 600,
+  },
+})

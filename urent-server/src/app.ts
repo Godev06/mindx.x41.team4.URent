@@ -28,6 +28,7 @@ import { adminRouter } from "./routes/admin.route";
 import "./events/user-events";
 
 export const app = express();
+app.set('trust proxy', true); // Enable trust proxy for correct X-Forwarded-For handling
 
 app.use(
   cors({
