@@ -10,9 +10,9 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Separate vendor libraries into their own chunk
-          vendor: (id) => id.includes('node_modules'),
+        // Separate vendor libraries into their own chunk
+        manualChunks: (id: string) => {
+          if (id.includes('node_modules')) return 'vendor';
         },
       },
     },
