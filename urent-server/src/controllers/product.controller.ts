@@ -120,105 +120,11 @@ export const analyzeImageAI = async (req: Request, res: Response, next: NextFunc
       }
     }
 
-    // Smart fallback (when no API key or AI call failed)
-    const urlStr = String(imageUrl ?? '').toLowerCase();
-    const fileStr = String(fileName ?? '').toLowerCase();
-    const searchStr = `${urlStr} ${fileStr}`;
-    let name = 'Sản phẩm cho thuê';
-    let category = 'Điện tử & Công nghệ';
-    let price = 100000;
-    let priceMin = 70000;
-    let priceMax = 130000;
-    let priceReason = 'Giá ước tính dựa trên danh mục sản phẩm tương tự trên thị trường.';
-    let description: string[] = ['Tình trạng tốt', 'Sẵn sàng cho thuê'];
-    const condition = '99%';
-
-    if (searchStr.includes('book') || searchStr.includes('sach') || searchStr.includes('notebook') || searchStr.includes('vo') || searchStr.includes('vở')) {
-      name = 'Giáo trình / Sách học tập';
-      category = 'Đồ dùng học tập';
-      price = 15000;
-      priceMin = 5000;
-      priceMax = 30000;
-      priceReason = 'Sách và giáo trình thường có giá thuê thấp, phù hợp cho học sinh sinh viên.';
-      description = ['Nội dung đầy đủ', 'Giấy in rõ nét', 'Ít trầy xước'];
-    } else if (searchStr.includes('laptop') || searchStr.includes('macbook') || searchStr.includes('may-tinh') || searchStr.includes('máy tính')) {
-      name = 'Laptop / Máy tính xách tay';
-      category = 'Điện tử & Công nghệ';
-      price = 180000;
-      priceMin = 80000;
-      priceMax = 300000;
-      priceReason = 'Laptop có giá thuê trung bình-cao do giá trị thiết bị lớn và nhu cầu cao.';
-      description = ['Hoạt động mượt mà', 'Pin bền', 'Đầy đủ sạc và phụ kiện'];
-    } else if (searchStr.includes('phone') || searchStr.includes('iphone') || searchStr.includes('dien-thoai') || searchStr.includes('điện thoại')) {
-      name = 'Điện thoại thông minh';
-      category = 'Điện tử & Công nghệ';
-      price = 80000;
-      priceMin = 50000;
-      priceMax = 150000;
-      priceReason = 'Điện thoại cho thuê theo ngày phổ biến cho du lịch hoặc thay thế tạm thời.';
-      description = ['Màn hình sắc nét', 'Pin tốt', 'Bảo hành đầy đủ'];
-    } else if (searchStr.includes('camera') || searchStr.includes('may-anh') || searchStr.includes('máy ảnh')) {
-      name = 'Máy ảnh / Camera';
-      category = 'Điện tử & Công nghệ';
-      price = 250000;
-      priceMin = 100000;
-      priceMax = 500000;
-      priceReason = 'Thiết bị chụp ảnh chuyên nghiệp có giá thuê cao do giá trị và nhu cầu sự kiện.';
-      description = ['Ống kính rõ nét', 'Đầy đủ phụ kiện', 'Pin dự phòng'];
-    } else if (searchStr.includes('outdoor') || searchStr.includes('camp') || searchStr.includes('tent') || searchStr.includes('da-ngoai') || searchStr.includes('dã ngoại') || searchStr.includes('lều')) {
-      name = 'Đồ dùng cắm trại / Dã ngoại';
-      category = 'Du lịch & Dã ngoại';
-      price = 100000;
-      priceMin = 50000;
-      priceMax = 200000;
-      priceReason = 'Thiết bị dã ngoại có nhu cầu theo mùa, thường được thuê cho các chuyến đi ngắn ngày.';
-      description = ['Chống thấm nước', 'Độ bền cao', 'Đầy đủ phụ kiện'];
-    } else if (searchStr.includes('fashion') || searchStr.includes('thoi-trang') || searchStr.includes('thời trang') || searchStr.includes('clothes') || searchStr.includes('dong-ho') || searchStr.includes('đồng hồ') || searchStr.includes('váy') || searchStr.includes('đầm') || searchStr.includes('vest')) {
-      name = 'Trang phục / Phụ kiện thời trang';
-      category = 'Thời trang & Đời sống';
-      price = 80000;
-      priceMin = 30000;
-      priceMax = 200000;
-      priceReason = 'Thời trang cho thuê phổ biến cho sự kiện, tiết kiệm chi phí cho người dùng.';
-      description = ['Chất liệu cao cấp', 'Đã vệ sinh sạch sẽ', 'Kiểu dáng thời thượng'];
-    } else if (searchStr.includes('ipad') || searchStr.includes('tablet') || searchStr.includes('máy tính bảng')) {
-      name = 'Máy tính bảng / iPad';
-      category = 'Điện tử & Công nghệ';
-      price = 120000;
-      priceMin = 80000;
-      priceMax = 180000;
-      priceReason = 'Máy tính bảng hỗ trợ học tập và vẽ thiết kế tiện dụng có giá thuê hợp lý.';
-      description = ['Màn hình cảm ứng mượt', 'Độ nét cao', 'Kèm bút cảm ứng'];
-    } else if (searchStr.includes('loa') || searchStr.includes('speaker') || searchStr.includes('headphone') || searchStr.includes('tai nghe') || searchStr.includes('tai-nghe')) {
-      name = 'Loa Bluetooth / Tai nghe';
-      category = 'Điện tử & Công nghệ';
-      price = 80000;
-      priceMin = 40000;
-      priceMax = 150000;
-      priceReason = 'Thiết bị âm thanh giải trí có nhu cầu cao vào dịp lễ và cuối tuần.';
-      description = ['Âm thanh trung thực', 'Thời lượng pin lâu', 'Hỗ trợ chống ồn'];
-    } else if (searchStr.includes('xe dap') || searchStr.includes('xe-dap') || searchStr.includes('bicycle') || searchStr.includes('xe đạp')) {
-      name = 'Xe đạp thể thao / Dã ngoại';
-      category = 'Du lịch & Dã ngoại';
-      price = 80000;
-      priceMin = 50000;
-      priceMax = 150000;
-      priceReason = 'Xe đạp dã ngoại hoặc đạp xe quanh thành phố rất thích hợp cho những kỳ nghỉ ngắn.';
-      description = ['Khung sườn chắc chắn', 'Hệ thống phanh nhạy', 'Đã được bảo dưỡng định kỳ'];
-    }
-
-    return sendSuccess(res, {
-      name,
-      category,
-      price,
-      priceMin,
-      priceMax,
-      priceReason,
-      condition,
-      description,
-      confidence: 'low',
-      aiPowered: false,
-      aiError: serverAiError,
+    return res.status(400).json({
+      success: false,
+      error: {
+        message: serverAiError || 'GEMINI_ANALYSIS_FAILED'
+      }
     });
   } catch (error) { next(error); }
 };

@@ -21,57 +21,7 @@ export const getActivities = async (req: Request, res: Response) => {
   }
 
   // Fetch activities from DB
-  let logs = await ActivityLogModel.find({ userId }).sort({ timestamp: -1 });
-
-  // If no logs exist, seed realistic default events to wow the user with a rich, completed timeline
-  if (logs.length === 0) {
-    const ip = getClientIp(req);
-    const parsedUa = parseUserAgent(req.headers["user-agent"]);
-    const location = estimateLocation(ip);
-    const risk = evaluateRiskLevel(req.headers["user-agent"]);
-
-    const seedLogs = [
-      {
-        userId,
-        action: "Đăng nhập",
-        description: `Đăng nhập thành công từ ${parsedUa.browser} trên ${parsedUa.device}`,
-        type: "login" as const,
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        ip,
-        userAgent: req.headers["user-agent"] || "Mozilla/5.0",
-        location,
-        device: `${parsedUa.browser} / ${parsedUa.device}`,
-        riskLevel: risk,
-      },
-      {
-        userId,
-        action: "Cập nhật hồ sơ",
-        description: "Cập nhật thông tin số điện thoại liên kết",
-        type: "profile_update" as const,
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
-        ip: "14.232.88.54",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/537.36",
-        location: "Đà Nẵng, Việt Nam",
-        device: "Safari / macOS",
-        riskLevel: "safe" as const,
-      },
-      {
-        userId,
-        action: "Thay đổi mật khẩu",
-        description: "Mật khẩu đã được cập nhật thành công",
-        type: "password_change" as const,
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
-        ip: "27.67.24.120",
-        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X)",
-        location: "TP. Hồ Chí Minh, Việt Nam",
-        device: "Safari Mobile / iOS Mobile",
-        riskLevel: "low" as const,
-      }
-    ];
-
-    const createdLogs = await ActivityLogModel.create(seedLogs);
-    logs = createdLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }
+  const logs = await ActivityLogModel.find({ userId }).sort({ timestamp: -1 });
 
   return sendSuccess(res, logs);
 };
@@ -126,24 +76,6 @@ export const getSessions = async (req: Request, res: Response) => {
       location,
       lastActive: "Current",
       isCurrent: true,
-    },
-    {
-      id: "sess_mac",
-      device: "MacBook Pro",
-      browser: "Mozilla Firefox",
-      ip: "14.232.88.54",
-      location: "Đà Nẵng, Việt Nam",
-      lastActive: "2 giờ trước",
-      isCurrent: false,
-    },
-    {
-      id: "sess_iphone",
-      device: "Apple iPhone 15",
-      browser: "Safari Mobile",
-      ip: "27.67.24.120",
-      location: "TP. Hồ Chí Minh, Việt Nam",
-      lastActive: "1 ngày trước",
-      isCurrent: false,
     },
   ];
 

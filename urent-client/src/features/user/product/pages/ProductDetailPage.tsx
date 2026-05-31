@@ -10,7 +10,6 @@ import {
   MessageCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PRODUCTS } from "../../dataset/products";
 import type { Product } from "../../shared/types";
 import { ProductBookingCard } from "../components/ProductBookingCard";
 import { ProductSpecRow } from "../components/ProductSpecRow";
@@ -125,13 +124,11 @@ export function ProductDetailPage({
           const fetched = await productService.getProductById(productId);
           if (active) setProduct(fetched);
         } else {
-          const found = PRODUCTS.find((item) => String(item.id) === String(productId));
-          if (active) setProduct(found ?? null);
+          if (active) setProduct(null);
         }
       } catch (err: any) {
-        console.error("Failed to load product detail from BE API, falling back to mock:", err);
-        const found = PRODUCTS.find((item) => String(item.id) === String(productId));
-        if (active) setProduct(found ?? null);
+        console.error("Failed to load product detail from BE API:", err);
+        if (active) setProduct(null);
       } finally {
         if (active) setIsLoading(false);
       }

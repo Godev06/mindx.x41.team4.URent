@@ -14,38 +14,7 @@ interface Review {
   helpful: number;
 }
 
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: 1,
-    author: "Minh Tuấn",
-    avatar: "https://randomuser.me/api/portraits/men/11.jpg",
-    rating: 5,
-    date: "12 tháng 4, 2026",
-    text: "Thiết bị rất tốt, đúng như mô tả. Chủ thiết bị phản hồi nhanh và hỗ trợ nhiệt tình. Sẽ thuê lại lần sau!",
-    verified: true,
-    helpful: 8,
-  },
-  {
-    id: 2,
-    author: "Lan Anh",
-    avatar: "https://randomuser.me/api/portraits/women/22.jpg",
-    rating: 4,
-    date: "2 tháng 4, 2026",
-    text: "Chất lượng ổn, giao nhận đúng hẹn. Có thể cải thiện thêm phụ kiện đi kèm.",
-    verified: true,
-    helpful: 3,
-  },
-  {
-    id: 3,
-    author: "Hải Đăng",
-    avatar: "https://randomuser.me/api/portraits/men/55.jpg",
-    rating: 5,
-    date: "20 tháng 3, 2026",
-    text: "Rất hài lòng. Thiết bị sạch sẽ, hoạt động hoàn hảo suốt thời gian thuê.",
-    verified: false,
-    helpful: 5,
-  },
-];
+
 
 function StarRating({ value, size = 14 }: { value: number; size?: number }) {
   return (
@@ -105,7 +74,7 @@ export function ProductReviews({
   reviews = 0,
 }: ProductReviewsProps) {
   const { t } = useI18n();
-  const [allReviews, setAllReviews] = useState<Review[]>(MOCK_REVIEWS);
+  const [allReviews, setAllReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string | number>>(new Set());
 
@@ -113,7 +82,7 @@ export function ProductReviews({
     async function loadReviews() {
       const isObjectId = typeof productId === "string" && productId.length === 24 && /^[0-9a-fA-F]+$/.test(productId);
       if (!productId || !isObjectId) {
-        setAllReviews(MOCK_REVIEWS);
+        setAllReviews([]);
         return;
       }
       try {

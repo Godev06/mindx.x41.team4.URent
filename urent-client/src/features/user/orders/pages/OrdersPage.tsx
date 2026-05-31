@@ -1,8 +1,6 @@
 import { ChevronRight, Search, Clock, CheckCircle2, TrendingUp, ShoppingBag, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { ORDERS } from "../../dataset/orders";
-import { PRODUCTS } from "../../dataset/products";
 import { OrderCard } from "../components/OrderCard";
 import { useTheme } from "../../settings/hooks/useTheme";
 import { useI18n } from "../../shared/context/LanguageContext";
@@ -27,7 +25,7 @@ export function OrdersPage() {
   useEffect(() => {
     async function fetchOrders() {
       if (!isAuthenticated) {
-        setOrders(ORDERS);
+        setOrders([]);
         setIsLoading(false);
         return;
       }
@@ -53,8 +51,8 @@ export function OrdersPage() {
         }));
         setOrders(mapped);
       } catch (err) {
-        console.error("Failed to fetch real orders, falling back to mock:", err);
-        setOrders(ORDERS);
+        console.error("Failed to fetch real orders:", err);
+        setOrders([]);
       } finally {
         setIsLoading(false);
       }
@@ -384,8 +382,7 @@ export function OrdersPage() {
           </div>
         ) : displayedOrders.length > 0 ? (
           displayedOrders.map((order) => {
-            const product = PRODUCTS.find((p) => p.name === order.productName);
-            const image = order.imageUrl || product?.imageUrl;
+            const image = order.imageUrl || "";
             const navigationId = order._id || order.id;
             return (
               <div
