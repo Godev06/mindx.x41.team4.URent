@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { UserModel } from "../models/user.model";
+import { sendSuccess, sendError } from "../utils/api-response";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -7,20 +8,21 @@ export const getAllUsers = async (req: Request, res: Response) => {
       createdAt: -1,
     });
 
-    res.json(users);
+    return sendSuccess(res, users);
   } catch (error) {
-    res.status(500).json({
+    return sendError(res, {
+      code: "SERVER_ERROR",
       message: "Server error",
-    });
+    }, 500);
   }
 };
+
 export const updateUserRole = async (
   req: Request,
   res: Response,
 ) => {
   try {
     const { id } = req.params;
-
     const { role } = req.body;
 
     const updatedUser = await UserModel.findByIdAndUpdate(
@@ -33,18 +35,18 @@ export const updateUserRole = async (
       },
     );
 
-    res.json(updatedUser);
+    return sendSuccess(res, updatedUser);
   } catch (error) {
-    res.status(500).json({
+    return sendError(res, {
+      code: "UPDATE_FAILED",
       message: "Update failed",
-    });
+    }, 500);
   }
 };
 
 export const updateTrustScore = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-
     const { trustScore } = req.body;
 
     const updatedUser = await UserModel.findByIdAndUpdate(
@@ -57,11 +59,12 @@ export const updateTrustScore = async (req: Request, res: Response) => {
       },
     );
 
-    res.json(updatedUser);
+    return sendSuccess(res, updatedUser);
   } catch (error) {
-    res.status(500).json({
+    return sendError(res, {
+      code: "UPDATE_FAILED",
       message: "Update failed",
-    });
+    }, 500);
   }
 };
 
@@ -72,18 +75,25 @@ export const deleteUser = async (req: Request, res: Response) => {
     // ⛔ Không cho phép xóa bất kỳ user nào có role "admin"
     const target = await UserModel.findById(id).select("role").lean();
     if (!target) {
-      return res.status(404).json({ message: "Không tìm thấy người dùng." });
+      return sendError(res, {
+        code: "USER_NOT_FOUND",
+        message: "Không tìm thấy người dùng.",
+      }, 404);
     }
     if (target.role === "admin") {
-      return res.status(403).json({
+      return sendError(res, {
+        code: "FORBIDDEN",
         message: "Không thể xóa tài khoản có quyền Admin.",
-      });
+      }, 403);
     }
 
     await UserModel.findByIdAndDelete(id);
 
-    return res.json({ success: true, message: "Đã xóa người dùng thành công." });
+    return sendSuccess(res, { message: "Đã xóa người dùng thành công." });
   } catch (error) {
-    res.status(500).json({ message: "Xóa thất bại." });
+    return sendError(res, {
+      code: "DELETE_FAILED",
+      message: "Xóa thất bại.",
+    }, 500);
   }
 };

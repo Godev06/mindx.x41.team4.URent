@@ -5,7 +5,6 @@ import { apiClient } from "../../../lib/api/apiClient";
 import { useToast } from "../../user/shared/hooks/useToast";
 import {
   ArrowLeft,
-  MessageSquare,
   AlertTriangle,
   ShieldCheck,
   QrCode,
@@ -14,7 +13,6 @@ import {
   CheckSquare,
   Mail,
   User,
-  Clock
 } from "lucide-react";
 
 export function AdminOrdersDetailPage() {
@@ -23,40 +21,25 @@ export function AdminOrdersDetailPage() {
   const { showToast } = useToast();
 
   const [order, setOrder] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   useEffect(() => {
-    const fetchOrderAndEscrowChat = async () => {
+    const fetchOrder = async () => {
       setIsLoading(true);
       try {
         const orderRes = await apiClient.get(`/api/v1/orders/${id}`);
         if (orderRes.data && orderRes.data.success) {
-          const fetchedOrder = orderRes.data.data;
-          setOrder(fetchedOrder);
-
-          // Now fetch the escrow chat between renter and owner if they both exist
-          const renterId = fetchedOrder.renterId?._id || fetchedOrder.renterId;
-          const ownerId = fetchedOrder.ownerId?._id || fetchedOrder.ownerId;
-
-          if (renterId && ownerId) {
-            const chatRes = await apiClient.get(`/api/v1/admin/conversations/escrow`, {
-              params: { renterId, ownerId }
-            });
-            if (chatRes.data && chatRes.data.success) {
-              setMessages(chatRes.data.data.messages || []);
-            }
-          }
+          setOrder(orderRes.data.data);
         }
       } catch (err) {
-        console.error("Failed to load order details or escrow chat logs:", err);
+        console.error("Failed to load order details:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchOrderAndEscrowChat();
+    fetchOrder();
   }, [id]);
 
   const handleUpdateStatus = async (newStatus: string) => {
@@ -116,7 +99,7 @@ export function AdminOrdersDetailPage() {
       <AdminLayout>
         <div className="flex h-[400px] flex-col items-center justify-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-800 border-t-cyan-500" />
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading order dispute detail...</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Loading order details...</p>
         </div>
       </AdminLayout>
     );
@@ -139,7 +122,6 @@ export function AdminOrdersDetailPage() {
   const trustScore = order.renterId?.trustScore ?? 100;
   const renterName = order.customerName || order.renterId?.displayName || "Platform Renter";
   const renterEmail = order.renterId?.email || "No email linked";
-  const ownerName = order.ownerId?.displayName || "Item Owner";
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -191,10 +173,10 @@ export function AdminOrdersDetailPage() {
             </button>
 
             <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-              Order Dispute Management
+              Order Detail Management
             </h1>
             <p className="mt-2 text-sm font-semibold text-slate-400">
-              Audit secure escrow chat logs, QR pickup codes, and enforce system security controls
+              Audit secure escrow operations, QR verification codes, and manage dispute resolutions
             </p>
           </div>
 
@@ -264,94 +246,41 @@ export function AdminOrdersDetailPage() {
           </div>
         </div>
 
-        {/* CHAT LOGS AND PREVIOUS HISTORY */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* AUDITED CHAT COMPARTMENT */}
-          <div className="lg:col-span-2 rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-cyan-400" />
-                  Audited Chat Logs
-                </h3>
-                <p className="text-xs font-medium text-slate-500 mt-1">Escrowed messaging session (Read-Only)</p>
-              </div>
+        {/* DETAILS AND AUDITOR PANEL */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* RENTER REGISTRY */}
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+              <User className="h-4.5 w-4.5 text-slate-400" />
+              Order Summary & Details
+            </h3>
 
-              <button className="flex items-center gap-1.5 self-start rounded-xl bg-rose-500/10 border border-rose-500/20 px-4 py-2 text-xs font-bold text-rose-400 hover:bg-rose-500/20 transition-all duration-300">
-                <AlertTriangle className="h-4 w-4" />
-                Raise Dispute Flag
-              </button>
-            </div>
-
-            {/* CHAT THREAD CONNER */}
-            <div className="space-y-4.5 bg-slate-950/20 rounded-2xl p-5 border border-slate-850 h-[320px] overflow-y-auto divide-y-0">
-              {messages.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center text-slate-500">
-                  <MessageSquare className="h-8 w-8 text-slate-700 animate-pulse mb-2" />
-                  <p className="text-xs font-semibold text-white">No Escrow Chats Recorded</p>
-                  <p className="text-[10px] text-slate-500">Owner and Renter haven't exchanged messages inside platform chat.</p>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-slate-850 bg-slate-950/40 p-4.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Product Name</p>
+                  <span className="text-[10px] font-black text-cyan-400 font-mono">{order.orderCode}</span>
                 </div>
-              ) : (
-                messages.map((message, index) => {
-                  const isRenter = String(message.senderId) === String(order.renterId?._id || order.renterId);
-                  const senderName = isRenter ? renterName : ownerName;
-                  
-                  return (
-                    <div
-                      key={message._id || index}
-                      className={`flex ${!isRenter ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-md rounded-2xl p-4 shadow-md ${!isRenter
-                            ? "bg-cyan-500/10 text-cyan-100 border border-cyan-500/25 rounded-tr-none"
-                            : "bg-slate-900/80 text-slate-100 border border-slate-800 rounded-tl-none"
-                          }`}
-                      >
-                        <div className="flex items-center justify-between gap-6">
-                          <span className="text-[10px] font-bold text-cyan-400/80 uppercase tracking-wider">{senderName}</span>
-                          <span className="text-[9px] font-semibold text-slate-500 flex items-center gap-1">
-                            <Clock className="h-2.5 w-2.5" />
-                            {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
+                <p className="text-sm font-bold text-white mt-1.5">{order.productName}</p>
 
-                        <p className="mt-2 text-xs font-medium leading-relaxed">{message.content}</p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                <div className="mt-4 flex items-center justify-between text-xs font-semibold border-t border-slate-800/80 pt-3">
+                  <span className="text-slate-500">Transaction Status</span>
+                  <span className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusClass(order.status)}`}>
+                    {getStatusLabel(order.status)}
+                  </span>
+                </div>
+
+                <div className="mt-2.5 flex items-center justify-between text-xs font-semibold">
+                  <span className="text-slate-500">Total Price</span>
+                  <p className="text-sm font-black text-cyan-400">${order.totalPrice.toLocaleString()}</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* RENTAL REGISTRY & CONTROLS */}
-          <div className="space-y-6">
-            {/* PREVIOUS RENTAL RECORD */}
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/20 p-6 backdrop-blur-md shadow-lg shadow-slate-950/10">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
-                <User className="h-4.5 w-4.5 text-slate-400" />
-                Renter History Registry
-              </h3>
-
-              <div className="space-y-3">
-                <div className="rounded-xl border border-slate-850 bg-slate-950/40 p-3.5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-white">{order.productName}</p>
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">CURRENT</span>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between text-xs font-semibold">
-                    <span className={`rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getStatusClass(order.status)}`}>
-                      {getStatusLabel(order.status)}
-                    </span>
-                    <p className="text-[11px] font-bold text-slate-500">${order.totalPrice}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* AUDITOR DISPUTE PANEL */}
-            <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 backdrop-blur-md shadow-lg shadow-rose-950/5">
+          {/* AUDITOR DISPUTE PANEL */}
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/5 p-6 backdrop-blur-md shadow-lg shadow-rose-950/5 flex flex-col justify-between">
+            <div>
               <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
                 <AlertOctagon className="h-4.5 w-4.5" />
                 Auditor Dispute Panel
@@ -359,35 +288,35 @@ export function AdminOrdersDetailPage() {
               <p className="mt-2 text-xs font-medium text-slate-400 leading-relaxed">
                 Take executive security actions to lock listings, restrict accounts, or close active rental escalations.
               </p>
+            </div>
 
-              <div className="mt-5 space-y-3 font-semibold text-xs">
-                <button
-                  onClick={() => handleUpdateStatus("pending")}
-                  disabled={isActionLoading}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-yellow-500/10 border border-yellow-500/25 py-3 text-yellow-400 hover:bg-yellow-500/20 transition disabled:opacity-50"
-                >
-                  <AlertTriangle className="h-4 w-4" />
-                  Flag Listing For Review (Pending)
-                </button>
+            <div className="mt-6 space-y-3 font-semibold text-xs">
+              <button
+                onClick={() => handleUpdateStatus("pending")}
+                disabled={isActionLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-yellow-500/10 border border-yellow-500/25 py-3 text-yellow-400 hover:bg-yellow-500/20 transition disabled:opacity-50"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                Flag Listing For Review (Pending)
+              </button>
 
-                <button
-                  onClick={handleSuspendRenter}
-                  disabled={isActionLoading}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/25 py-3 text-rose-400 hover:bg-rose-500/20 transition disabled:opacity-50"
-                >
-                  <UserX className="h-4 w-4" />
-                  Restrict Renter (Trust to 10%)
-                </button>
+              <button
+                onClick={handleSuspendRenter}
+                disabled={isActionLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/25 py-3 text-rose-400 hover:bg-rose-500/20 transition disabled:opacity-50"
+              >
+                <UserX className="h-4 w-4" />
+                Restrict Renter (Trust to 10%)
+              </button>
 
-                <button
-                  onClick={() => handleUpdateStatus("delivered")}
-                  disabled={isActionLoading}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-500/10 border border-teal-500/25 py-3 text-teal-400 hover:bg-teal-500/20 transition disabled:opacity-50"
-                >
-                  <CheckSquare className="h-4 w-4" />
-                  Mark Dispute Resolved (Delivered)
-                </button>
-              </div>
+              <button
+                onClick={() => handleUpdateStatus("delivered")}
+                disabled={isActionLoading}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-teal-500/10 border border-teal-500/25 py-3 text-teal-400 hover:bg-teal-500/20 transition disabled:opacity-50"
+              >
+                <CheckSquare className="h-4 w-4" />
+                Mark Dispute Resolved (Delivered)
+              </button>
             </div>
           </div>
         </div>
