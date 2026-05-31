@@ -43,18 +43,16 @@ if (!isVercel) {
       } catch (e) {
         console.warn("⚠️ Failed to clean up mock notifications on startup:", e);
       }
+      // Start HTTP server after DB connection
+      httpServer.listen(PORT, () => {
+        console.log(
+          `  \x1b[32m➜\x1b[0m  \x1b[1]\x1b[37mAPI Listening:\x1b[0m   \x1b[36mhttp://localhost:${PORT}/\x1b[0m`
+        );
+      });
     })
     .catch((err) => {
       console.error("❌ DB connection failed.", err);
     });
-
-  if (process.env.NODE_ENV !== "production") {
-    httpServer.listen(PORT, () => {
-      console.log(
-        `  \x1b[32m➜\x1b[0m  \x1b[1m\x1b[37mAPI Local:\x1b[0m   \x1b[36mhttp://localhost:${PORT}/\x1b[0m`,
-      );
-    });
-  }
 }
 
 export default app;
