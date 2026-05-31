@@ -1,7 +1,1 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "version": 2,
-  "installCommand": "npm install --prefix urent-client",
-  "buildCommand": "npm run build --prefix urent-client",
-  "outputDirectory": "urent-client/dist"
-}
+// Vercel configuration removed
