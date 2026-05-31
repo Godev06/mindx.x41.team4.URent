@@ -2,6 +2,10 @@
 
 @import "tailwindcss";
 @import "./styles/theme.css";
+/* added theme import */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
 
 @layer base {
   html {
@@ -9,6 +13,20 @@
     -moz-osx-font-smoothing: grayscale;
     --color-primary: #0f766e;
     --color-secondary: #f97316;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+
+  html.dark body {
+    @apply bg-slate-900 text-slate-100;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply text-teal-700 dark:text-teal-400;
   }
 
   a {

@@ -1,14 +1,18 @@
 import type { Server as HttpServer, IncomingMessage } from "http";
 import { WebSocket, WebSocketServer } from "ws";
-import { getConversationAccessState } from "../services/message.service";
-import { verifyAccessToken } from "../utils/auth-token";
-import { resolveAppIdentity } from "../services/auth-identity.service";
+
 import { connectDB } from "../config/db-lazy";
-import { ConversationParticipantModel } from "../models/conversation-participant.model";
 import { ConversationModel } from "../models/conversation.model";
+import { ConversationParticipantModel } from "../models/conversation-participant.model";
 import { UserModel } from "../models/user.model";
 
+import { getConversationAccessState } from "../services/message.service";
+import { resolveAppIdentity } from "../services/auth-identity.service";
+
+import { verifyAccessToken } from "../utils/auth-token";
+
 type RoomMap = Map<string, Set<WebSocket>>;
+
 const rooms: RoomMap = new Map();
 
 export const roomForConversation = (conversationId: string) =>
@@ -18,30 +22,69 @@ const joinRoom = (ws: WebSocket, room: string) => {
   if (!rooms.has(room)) {
     rooms.set(room, new Set());
   }
+
   rooms.get(room)!.add(ws);
 };
 
 const leaveRoom = (ws: WebSocket, room: string) => {
-  if (rooms.has(room)) {
-    rooms.get(room)!.delete(ws);
-    if (rooms.get(room)!.size === 0) {
-      rooms.delete(room);
+  const clients = rooms.get(room);
+
+  if (!clients) return;
+
+  clients.delete(ws);
+
+  if (clients.size === 0) {
+    rooms.delete(room);
+  }
+};
+
+const cleanupSocket = (ws: WebSocket) => {
+  for (const [room, clients] of rooms.entries()) {
+    if (clients.has(ws)) {
+      clients.delete(ws);
+
+      if (clients.size === 0) {
+        rooms.delete(room);
+      }
     }
   }
 };
 
+const broadcastToRoom = (room: string, payload: string) => {
+  const clients = rooms.get(room);
+
+  if (!clients) return;
+
+  for (const client of clients) {
+    try {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(payload);
+      } else {
+        clients.delete(client);
+      }
+    } catch {
+      clients.delete(client);
+    }
+  }
+
+  if (clients.size === 0) {
+    rooms.delete(room);
+  }
+};
+
 const handleWebSocketConnection = async (
-  serverWs: WebSocket,
+  ws: WebSocket,
   token?: string,
 ) => {
-  console.log("🔗 New WebSocket connection established");
+  console.log("🔗 New WebSocket connection");
 
   try {
     await connectDB();
-  } catch (err) {
-    console.error("❌ DB connection failed for WS:", err);
+  } catch (error) {
+    console.error("❌ DB connection failed:", error);
+
     try {
-      serverWs.send(
+      ws.send(
         JSON.stringify({
           type: "error",
           code: "DB_UNAVAILABLE",
@@ -49,189 +92,306 @@ const handleWebSocketConnection = async (
         }),
       );
     } catch {
-      // ignore
+      //
     }
-    serverWs.close(1011, "DB Unavailable");
+
+    ws.close(1011, "DB unavailable");
     return;
   }
 
   if (!token) {
-    console.error("❌ WebSocket auth failed: Missing token");
-    serverWs.send(
+    ws.send(
       JSON.stringify({
         type: "error",
         code: "UNAUTHORIZED",
         message: "Missing token",
       }),
     );
-    serverWs.close(1008, "Unauthorized");
+
+    ws.close(1008, "Unauthorized");
     return;
   }
 
   let userId: string;
   let userRole = "user";
+
   try {
     const identity = await verifyAccessToken(token);
     const appIdentity = await resolveAppIdentity(identity);
+
     userId = appIdentity.sub;
-  } catch (err) {
-    console.error("❌ WebSocket auth failed: Invalid token", err);
-    serverWs.send(
+  } catch (error) {
+    console.error("❌ Invalid token:", error);
+
+    ws.send(
       JSON.stringify({
         type: "error",
         code: "UNAUTHORIZED",
         message: "Invalid token",
       }),
     );
-    serverWs.close(1008, "Unauthorized");
+
+    ws.close(1008, "Unauthorized");
     return;
   }
 
-  // Tự động tham gia vào tất cả các phòng chat của user khi kết nối thành công
   try {
-    // Join personal notification room
-    joinRoom(serverWs, `user:${userId}`);
-    console.log(`[WS] Auto-joined user ${userId} to personal room user:${userId}`);
+    joinRoom(ws, `user:${userId}`);
 
-    const dbUser = await UserModel.findById(userId).select("role").lean();
-    userRole = dbUser?.role || "user";
+    console.log(
+      `[WS] Joined personal room user:${userId}`,
+    );
+
+    const dbUser = await UserModel.findById(userId)
+      .select("role")
+      .lean();
+
+    userRole = dbUser?.role ?? "user";
 
     if (userRole === "admin") {
-      joinRoom(serverWs, "room:admin_pool");
-      console.log(`[WS] Auto-joined admin ${userId} to general admin pool room:admin_pool`);
+      joinRoom(ws, "room:admin_pool");
+
+      console.log(
+        `[WS] Admin ${userId} joined room:admin_pool`,
+      );
     }
 
-    const participants = await ConversationParticipantModel.find({
-      userId,
-      deletedAt: null,
-    }).select("conversationId").lean();
+    const participants =
+      await ConversationParticipantModel.find({
+        userId,
+        deletedAt: null,
+      })
+        .select("conversationId")
+        .lean();
 
     for (const participant of participants) {
-      const room = roomForConversation(String(participant.conversationId));
-      joinRoom(serverWs, room);
-      console.log(`[WS] Auto-joined user ${userId} to room ${room}`);
+      const room = roomForConversation(
+        String(participant.conversationId),
+      );
+
+      joinRoom(ws, room);
+
+      console.log(`[WS] Auto joined ${room}`);
     }
-  } catch (err) {
-    console.error(`[WS] Failed to auto-join rooms for user ${userId}:`, err);
+  } catch (error) {
+    console.error(
+      `[WS] Failed auto joining rooms for ${userId}`,
+      error,
+    );
   }
 
-  serverWs.on("message", async (raw) => {
-    // Ensure DB is connected for every WS message in case of reconnect / cold start.
-    await connectDB();
+  ws.on("message", async (raw) => {
     try {
-      const data = JSON.parse(String(raw));
+      await connectDB();
 
-      if (data.type === "conversation.join") {
-        const { conversationId } = data.payload || {};
-        if (!conversationId) {
-          serverWs.send(
-            JSON.stringify({
-              type: "ack",
-              id: data.id,
-              success: false,
-              error: { code: "VALIDATION_ERROR" },
-            }),
-          );
-          return;
-        }
+      const data = JSON.parse(raw.toString());
 
-        const validId = /^[0-9a-fA-F]{24}$/.test(conversationId);
-        if (!validId) {
-          serverWs.send(
-            JSON.stringify({
-              type: "ack",
-              id: data.id,
-              success: false,
-              error: { code: "VALIDATION_ERROR" },
-            }),
-          );
-          return;
-        }
+      switch (data.type) {
+        case "conversation.join": {
+          const conversationId =
+            data.payload?.conversationId;
 
-        const state = await getConversationAccessState(conversationId, userId);
-        let isAllowed = state.isMember;
-        if (!isAllowed && userRole === "admin") {
-          const conversation = await ConversationModel.findById(conversationId).select("type").lean();
-          if (conversation?.type === "support") {
-            isAllowed = true;
+          if (
+            !conversationId ||
+            !/^[0-9a-fA-F]{24}$/.test(conversationId)
+          ) {
+            ws.send(
+              JSON.stringify({
+                type: "ack",
+                id: data.id,
+                success: false,
+                error: {
+                  code: "VALIDATION_ERROR",
+                },
+              }),
+            );
+
+            return;
           }
-        }
 
-        if (!state.exists || !isAllowed) {
-          serverWs.send(
+          const state =
+            await getConversationAccessState(
+              conversationId,
+              userId,
+            );
+
+          let allowed = state.isMember;
+
+          if (!allowed && userRole === "admin") {
+            const conversation =
+              await ConversationModel.findById(
+                conversationId,
+              )
+                .select("type")
+                .lean();
+
+            if (conversation?.type === "support") {
+              allowed = true;
+            }
+          }
+
+          if (!state.exists || !allowed) {
+            ws.send(
+              JSON.stringify({
+                type: "ack",
+                id: data.id,
+                success: false,
+                error: {
+                  code: "FORBIDDEN",
+                },
+              }),
+            );
+
+            return;
+          }
+
+          joinRoom(
+            ws,
+            roomForConversation(conversationId),
+          );
+
+          ws.send(
             JSON.stringify({
               type: "ack",
               id: data.id,
-              success: false,
-              error: { code: "FORBIDDEN" },
+              success: true,
+              data: {
+                conversationId,
+              },
             }),
           );
-          return;
+
+          break;
         }
 
-        joinRoom(serverWs, roomForConversation(conversationId));
-        serverWs.send(
-          JSON.stringify({
-            type: "ack",
-            id: data.id,
-            success: true,
-            data: { conversationId },
-          }),
-        );
-      }
+        case "conversation.leave": {
+          const conversationId =
+            data.payload?.conversationId;
 
-      if (data.type === "conversation.leave") {
-        const { conversationId } = data.payload || {};
-        if (conversationId) {
-          leaveRoom(serverWs, roomForConversation(conversationId));
-          serverWs.send(
-            JSON.stringify({ type: "ack", id: data.id, success: true }),
+          if (!conversationId) return;
+
+          leaveRoom(
+            ws,
+            roomForConversation(conversationId),
           );
+
+          ws.send(
+            JSON.stringify({
+              type: "ack",
+              id: data.id,
+              success: true,
+            }),
+          );
+
+          break;
         }
+
+        default:
+          break;
       }
-    } catch (err) {
-      console.error("WebSocket message error:", err);
+    } catch (error) {
+      console.error(
+        "❌ WebSocket message error:",
+        error,
+      );
     }
   });
 
-  serverWs.on("close", (code, reason) => {
-    console.log(`🔌 WebSocket connection closed. Code: ${code}, Reason: ${reason}`);
-    for (const [, clients] of rooms.entries()) {
-      if (clients.has(serverWs)) {
-        clients.delete(serverWs);
-      }
-    }
+  ws.on("close", (code, reason) => {
+    console.log(
+      `🔌 Closed (${code}) ${reason?.toString() || ""}`,
+    );
+
+    cleanupSocket(ws);
+  });
+
+  ws.on("error", (error) => {
+    console.error("❌ WebSocket error:", error);
+
+    cleanupSocket(ws);
   });
 };
 
-export const attachWebSocketServer = (httpServer: HttpServer) => {
-  const wss = new WebSocketServer({ noServer: true });
-
-  console.log("🔌 WebSocket server attached to HTTP server");
-
-  httpServer.on("upgrade", (request: IncomingMessage, socket, head) => {
-    try {
-      const host = request.headers.host ?? "localhost";
-      const url = new URL(request.url ?? "/", `http://${host}`);
-
-      if (url.pathname !== "/ws") {
-        socket.destroy();
-        return;
-      }
-
-      const token = url.searchParams.get("token") ?? undefined;
-
-      wss.handleUpgrade(request, socket, head, (ws) => {
-        handleWebSocketConnection(ws, token).catch((err) => {
-          console.error("❌ Uncaught WebSocket connection error:", err);
-          ws.close(1011, "Internal Server Error");
-        });
-      });
-    } catch (err) {
-      console.error("❌ WebSocket upgrade error:", err);
-      socket.destroy();
-    }
+export const attachWebSocketServer = (
+  httpServer: HttpServer,
+) => {
+  const wss = new WebSocketServer({
+    noServer: true,
   });
+
+  console.log("🔌 WebSocket server attached");
+
+  httpServer.on(
+    "upgrade",
+    (request: IncomingMessage, socket, head) => {
+      try {
+        const host =
+          request.headers["x-forwarded-host"] ||
+          request.headers.host ||
+          "localhost";
+
+        const protocol =
+          request.headers["x-forwarded-proto"] ||
+          "http";
+
+        const url = new URL(
+          request.url ?? "/",
+          `${protocol}://${host}`,
+        );
+
+        console.log("[WS UPGRADE]", {
+          pathname: url.pathname,
+          host,
+          protocol,
+        });
+
+        if (url.pathname !== "/ws") {
+          socket.write(
+            "HTTP/1.1 404 Not Found\r\n\r\n",
+          );
+
+          socket.destroy();
+
+          return;
+        }
+
+        const token =
+          url.searchParams.get("token") ??
+          undefined;
+
+        wss.handleUpgrade(
+          request,
+          socket,
+          head,
+          (ws) => {
+            handleWebSocketConnection(
+              ws,
+              token,
+            ).catch((error) => {
+              console.error(
+                "❌ Unhandled WS error:",
+                error,
+              );
+
+              ws.close(
+                1011,
+                "Internal Server Error",
+              );
+            });
+          },
+        );
+      } catch (error) {
+        console.error(
+          "❌ WebSocket upgrade error:",
+          error,
+        );
+
+        socket.destroy();
+      }
+    },
+  );
+
+  return wss;
 };
 
 export const emitConversationMessageCreated = (
@@ -240,89 +400,72 @@ export const emitConversationMessageCreated = (
   conversationType?: string,
 ) => {
   try {
-    const room = roomForConversation(conversationId);
     const payload = JSON.stringify({
       type: "conversation.message.created",
-      data: { conversationId, message },
+      data: {
+        conversationId,
+        message,
+      },
     });
 
-    if (rooms.has(room)) {
-      for (const client of rooms.get(room)!) {
-        try {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(payload);
-          }
-        } catch {
-          // Ignore broken pipe
-        }
-      }
-    }
+    broadcastToRoom(
+      roomForConversation(conversationId),
+      payload,
+    );
 
     if (conversationType === "support") {
-      const adminPool = "room:admin_pool";
-      if (rooms.has(adminPool)) {
-        for (const client of rooms.get(adminPool)!) {
-          try {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(payload);
-            }
-          } catch {
-            // Ignore broken pipe
-          }
-        }
-      }
+      broadcastToRoom(
+        "room:admin_pool",
+        payload,
+      );
     }
   } catch (error) {
-    console.error("[WS emitConversationMessageCreated] Failed:", error);
+    console.error(
+      "[WS emitConversationMessageCreated]",
+      error,
+    );
   }
 };
 
 export const emitConversationReadUpdated = (
   conversationId: string,
-  payload: { userId: string; lastReadAt: string },
+  payload: {
+    userId: string;
+    lastReadAt: string;
+  },
 ) => {
-  const room = roomForConversation(conversationId);
-  if (!rooms.has(room)) return;
-
   const msg = JSON.stringify({
     type: "conversation.read.updated",
-    data: { conversationId, ...payload },
+    data: {
+      conversationId,
+      ...payload,
+    },
   });
 
-  for (const client of rooms.get(room)!) {
-    try {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(msg);
-      }
-    } catch {
-      // Ignore
-    }
-  }
+  broadcastToRoom(
+    roomForConversation(conversationId),
+    msg,
+  );
 };
 
 export const emitNotificationToUser = (
   userId: string,
-  notification: unknown
+  notification: unknown,
 ) => {
   try {
-    const room = `user:${userId}`;
     const payload = JSON.stringify({
       type: "notification.created",
       data: notification,
     });
 
-    if (rooms.has(room)) {
-      for (const client of rooms.get(room)!) {
-        try {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(payload);
-          }
-        } catch {
-          // Ignore
-        }
-      }
-    }
+    broadcastToRoom(
+      `user:${userId}`,
+      payload,
+    );
   } catch (error) {
-    console.error("[WS emitNotificationToUser] Failed:", error);
+    console.error(
+      "[WS emitNotificationToUser]",
+      error,
+    );
   }
 };
