@@ -12,7 +12,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Separate vendor libraries into their own chunk
-          vendor: (id) => id.includes('node_modules'),
+          vendor: (id: string) => id.includes('node_modules') ? 'vendor' : null,
         },
       },
     },
@@ -20,3 +20,4 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
   },
 })
+
