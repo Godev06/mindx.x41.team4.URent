@@ -49,3 +49,9 @@
 .dark .glass-card {
   background: rgba(0, 0, 0, 0.25);
 }
+
+/* Hide default browser password reveal and clear buttons (e.g. in Microsoft Edge) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

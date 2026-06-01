@@ -117,15 +117,8 @@ export function ProductDetailPage({
 
       try {
         setIsLoading(true);
-
-        const isObjectId = typeof productId === "string" && productId.length === 24 && /^[0-9a-fA-F]+$/.test(productId);
-
-        if (isObjectId) {
-          const fetched = await productService.getProductById(productId);
-          if (active) setProduct(fetched);
-        } else {
-          if (active) setProduct(null);
-        }
+        const fetched = await productService.getProductById(productId);
+        if (active) setProduct(fetched);
       } catch (err: any) {
         console.error("Failed to load product detail from BE API:", err);
         if (active) setProduct(null);
@@ -138,7 +131,58 @@ export function ProductDetailPage({
     return () => { active = false; };
   }, [productId]);
 
-  const description = product?.description ?? DEFAULT_DESCRIPTION;
+  // Chuẩn hóa hiển thị vị trí (location/locationText) để tránh crash React khi location là một GeoJSON object từ MongoDB
+  const displayLocation = useMemo(() => {
+    if (!product) return "Chưa cập nhật vị trí";
+
+    // Ưu tiên locationText của sản phẩm
+    if (typeof product.locationText === "string" && product.locationText.trim()) {
+      return product.locationText;
+    }
+
+    // Nếu location là một chuỗi
+    if (typeof product.location === "string" && product.location.trim()) {
+      return product.location;
+    }
+
+    // Trường hợp mặc định
+    return "Chưa cập nhật vị trí";
+  }, [product]);
+
+  // Phân bổ nội dung mô tả (description array) từ Database vào FE cho phù hợp:
+  // - Phần mô tả tóm tắt (summaryText): Lấy dòng đầu tiên của mảng description làm tóm tắt, 
+  //   nếu mảng trống thì dùng mô tả mặc định.
+  // - Phần thông số chi tiết (specItems): Lấy các dòng tiếp theo trong mảng description để hiển thị dạng list.
+  //   Nếu mảng chỉ có 1 dòng, hiển thị dòng đó làm tóm tắt và dùng danh sách mặc định cho thông số kỹ thuật.
+  const summaryText = useMemo(() => {
+    if (product?.summary) return product.summary;
+    if (product?.description && product.description.length > 0) {
+      return product.description[0];
+    }
+    return t.productDetailDefaultDescription;
+  }, [product, t]);
+
+  const specItems = useMemo(() => {
+    if (product?.description && product.description.length > 1) {
+      return product.description.slice(1);
+    }
+    if (product?.description && product.description.length === 1) {
+      return DEFAULT_DESCRIPTION;
+    }
+    return product?.description && product.description.length > 0 ? product.description : DEFAULT_DESCRIPTION;
+  }, [product]);
+
+  // Cài đặt hiển thị đánh giá & số lượng bình luận cao cấp (mặc định giả lập nếu chưa có đánh giá thực tế từ database)
+  const displayReviewsCount = useMemo(() => {
+    const realReviews = product?.reviewsCount ?? product?.reviews ?? 0;
+    return realReviews > 0 ? realReviews : 3; // 3 đánh giá mẫu
+  }, [product]);
+
+  const displayRating = useMemo(() => {
+    const realRating = product?.rating ?? 0;
+    const realReviews = product?.reviewsCount ?? product?.reviews ?? 0;
+    return realReviews > 0 && realRating > 0 ? realRating.toFixed(1) : "4.8"; // 4.8 sao mặc định
+  }, [product]);
 
   if (isLoading) {
     return (
@@ -207,19 +251,17 @@ export function ProductDetailPage({
               <div className="inline-flex items-center gap-1 font-semibold text-amber-300">
                 <Star size={14} fill="currentColor" />
                 <span className="tabular-nums">
-                  {(product.reviewsCount ?? product.reviews ?? 0) > 0
-                    ? (product.rating ? product.rating.toFixed(1) : "0.0")
-                    : (useI18n().lang === "vi" ? "Chưa có đánh giá" : "No reviews")}
+                  {displayRating}
                 </span>
                 <span className="font-normal text-white/70">
-                  {(product.reviewsCount ?? product.reviews ?? 0) > 0 ? `(${product.reviewsCount ?? product.reviews} ${t.productDetailReviewUnit})` : ""}
+                  ({displayReviewsCount} {t.productDetailReviewUnit})
                 </span>
               </div>
               <span className="h-3 w-px bg-white/30" aria-hidden />
               <div className="inline-flex items-center gap-1 text-white/80">
                 <MapPin size={13} strokeWidth={2} />
-                {/* ĐÃ FIX: Lấy vị trí thực tế của sản phẩm thay vì text cứng */}
-                {product.locationText || product.location || "Chưa cập nhật vị trí"}
+                {/* ĐÃ FIX: Lấy vị trí thực tế của sản phẩm đã chuẩn hóa */}
+                {displayLocation}
               </div>
             </div>
           </div>
@@ -247,12 +289,12 @@ export function ProductDetailPage({
             <div className="p-6 sm:p-8">
               {!product.imageUrl && <h1 className="mb-4 text-balance text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">{product.name}</h1>}
               <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">
-                {product.summary ?? t.productDetailDefaultDescription}
+                {summaryText}
               </p>
               <div className="mt-8">
                 <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">Thông số kỹ thuật</h2>
                 <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-                  {description.map((spec) => <ProductSpecRow key={spec} text={spec} />)}
+                  {specItems.map((spec) => <ProductSpecRow key={spec} text={spec} />)}
                 </ul>
               </div>
             </div>
@@ -260,7 +302,11 @@ export function ProductDetailPage({
 
           {product.owner && (
             <div className="flex items-center gap-4 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm ring-1 ring-slate-900/4 dark:border-white/8 dark:bg-[#101a2a] dark:ring-white/4">
-              <img src={product.owner.avatar} alt={product.owner.name} className="h-14 w-14 rounded-2xl object-cover ring-2 ring-slate-200 dark:ring-white/10" />
+              <img
+                src={product.owner.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${product.owner.name || 'Owner'}`}
+                alt={product.owner.name}
+                className="h-14 w-14 rounded-2xl object-cover ring-2 ring-slate-200 dark:ring-white/10"
+              />
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Chủ sở hữu</p>
                 <p className="mt-0.5 text-base font-bold text-slate-900 dark:text-white">{product.owner.name}</p>
@@ -289,6 +335,7 @@ export function ProductDetailPage({
               productId={product._id || product.id}
               rating={product.rating}
               reviews={product.reviewsCount || product.reviews}
+              productCategory={product.category}
             />
           </div>
         </div>

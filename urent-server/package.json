@@ -19,6 +19,7 @@
     "serve": "node build/src/server.js",
     "start:prod": "npm run build && npm run start",
     "seed:admin": "tsx scripts/seed-admin.ts",
+    "db:sync-reviews": "tsx scripts/sync-reviews.ts",
     "unify:categories": "tsx scripts/unify-categories.ts"
   },
   "keywords": [],

@@ -19,6 +19,8 @@ import {
   X,
   Tent,
   Shirt,
+  MapPin,
+  Calendar,
 } from "lucide-react";
 
 import type { Product } from "../../shared/types";
@@ -125,6 +127,14 @@ function FilterPanel({
   onResetPrice,
   dataMinPriceVnd,
   dataMaxPriceVnd,
+  startDate,
+  endDate,
+  onStartDateChange,
+  onEndDateChange,
+  userLocation,
+  onGetLocation,
+  radiusKm,
+  onRadiusChange,
   t,
 }: FilterPanelProps) {
   return (
@@ -175,6 +185,102 @@ function FilterPanel({
               </label>
             );
           })}
+        </div>
+      </div>
+
+      {/* FILTER: GPS GEOLOCATION */}
+      <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
+        <div className="mb-3 flex items-center gap-2">
+          <MapPin size={16} className="text-slate-600 dark:text-slate-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            {t.productListingLocationGPS || "Tìm gần đây (GPS)"}
+          </h3>
+        </div>
+        
+        <div className="space-y-3">
+          <button
+            type="button"
+            onClick={onGetLocation}
+            className={`flex w-full items-center justify-center gap-2 rounded-xl border py-2.5 text-xs font-bold transition-all duration-150 ${userLocation
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+              : "border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            <MapPin size={14} className={userLocation ? "animate-bounce text-emerald-500" : "text-slate-400"} />
+            <span>
+              {userLocation 
+                ? `${t.productListingGPSActive || "Đã định vị"} (${userLocation.lat.toFixed(4)}, ${userLocation.lng.toFixed(4)})` 
+                : t.productListingGPSBtn || "Lấy vị trí hiện tại"
+              }
+            </span>
+          </button>
+
+          {userLocation && (
+            <div className="space-y-1.5 animate-fadeIn">
+              <div className="flex items-center justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
+                <span>{t.productListingRadius || "Bán kính tìm kiếm"}</span>
+                <span className="font-bold text-teal-600 dark:text-teal-400">{radiusKm} km</span>
+              </div>
+              <input
+                type="range"
+                min="1"
+                max="50"
+                value={radiusKm}
+                onChange={(e) => onRadiusChange(Number(e.target.value))}
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-slate-200 accent-teal-600 dark:bg-slate-700 dark:accent-teal-400"
+              />
+              <div className="flex justify-between text-[10px] text-slate-400">
+                <span>1 km</span>
+                <span>25 km</span>
+                <span>50 km</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* FILTER: CALENDAR AVAILABILITY */}
+      <div className="rounded-2xl border border-slate-200/70 bg-white/95 p-4 shadow-md dark:border-slate-700/60 dark:bg-slate-900/80">
+        <div className="mb-3 flex items-center gap-2">
+          <Calendar size={16} className="text-slate-600 dark:text-slate-400" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+            {t.productListingAvailability || "Lịch trống để thuê"}
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+            {t.productListingStartDate || "Ngày bắt đầu"}
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => onStartDateChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+            />
+          </label>
+
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+            {t.productListingEndDate || "Ngày kết thúc"}
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => onEndDateChange(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-sm text-slate-900 focus:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-teal-500 dark:focus:ring-teal-500/20"
+            />
+          </label>
+
+          {(startDate || endDate) && (
+            <button
+              type="button"
+              onClick={() => {
+                onStartDateChange("");
+                onEndDateChange("");
+              }}
+              className="w-full text-center text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-350"
+            >
+              {t.productListingClearDates || "Xóa chọn ngày"}
+            </button>
+          )}
         </div>
       </div>
 

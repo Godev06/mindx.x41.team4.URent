@@ -27,7 +27,10 @@ mindx.x41.team4.URent/
     ├── system-architecture.md      # Dual-Auth sequence, Websocket gateway, and AI Vision pipelines
     ├── api-specification.md        # Comprehensive REST endpoints and real-time Socket.IO schemas
     ├── database-schema.md          # MongoDB NoSQL structure, index strategies, and Mongoose definitions
-    └── deployment-operation.md     # Env variables checklist, serverless routing, and VPS hosting
+    ├── deployment-operation.md     # Env variables checklist, serverless routing, and VPS hosting
+    ├── ROADMAP_4_SPRINTS.md        # Comprehensive 4-Sprint Agile development plan & deliverables
+    ├── SUMMARY_FUTURE_OUTLOOK.md   # Architectural accomplishments & high-level roadmap summary
+    └── FUTURE_ORIENTATION.md       # Strategic long-term vision, next-gen tech (AI eKYC, TrustScore), & monetization
 ```
 
 ---

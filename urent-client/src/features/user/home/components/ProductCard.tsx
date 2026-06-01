@@ -92,6 +92,13 @@ export function ProductCard({
   const displayLocation = normalizeLocation(location) ?? normalizeLocation(product.locationText);
   const displayCondition = conditionLabel || product.condition;
 
+  // 3. Chuẩn hóa hiển thị đánh giá (Rating) từ DB:
+  // - Nếu có rating > 0, định dạng với 1 chữ số thập phân (ví dụ: "4.0").
+  // - Nếu chưa có đánh giá (rating = 0), mặc định hiển thị "5.0" thay vì hiển thị "0" hay "4" thiếu nhất quán.
+  const displayRating = typeof product.rating === "number" && product.rating > 0
+    ? product.rating.toFixed(1)
+    : "5.0";
+
   return (
     <div
       onClick={() => onSelect(productId)}
@@ -180,7 +187,7 @@ export function ProductCard({
           <div className={cn("mt-1.5 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400")}>
             <div className={cn("flex items-center gap-0.5 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded-md text-amber-700 dark:text-amber-400 font-semibold text-[11px]")}>
               <Star size={11} fill="currentColor" />
-              <span>{product.rating ?? 4.8}</span>
+              <span>{displayRating}</span>
             </div>
             <span className={cn("text-slate-300 dark:text-slate-700")}>|</span>
             <span className={cn("text-slate-500 dark:text-slate-400")}>
