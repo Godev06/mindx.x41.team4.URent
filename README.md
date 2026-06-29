@@ -10,7 +10,7 @@ A full-stack rental marketplace built with React, TypeScript, Node.js, Express, 
 
 ## 🚀 Live Demo
 
-- Website: https://urent.vercel.app
+- Website: https://urent-production.up.railway.app/
 - API Docs: http://localhost:5003/api-docs (local)
 
 ## ✨ Why this project stands out
@@ -21,23 +21,9 @@ A full-stack rental marketplace built with React, TypeScript, Node.js, Express, 
 - Modern frontend architecture with Vite + React + TypeScript
 - Production-oriented documentation and deployment notes for recruiter and team use
 
-## 📸 Suggested Screenshots
-
-Recommended order for a polished demo gallery:
-
-1. Landing page / marketplace homepage
-2. Product detail and booking flow
-3. Search and filtering experience
-4. User dashboard and inventory management
-5. Real-time chat / messaging
-6. AI price estimation experience
-7. Authentication and onboarding
-8. Mobile-responsive view
-
 ## ⭐ Key Features
 
 - Secure authentication with Firebase and JWT-backed sessions
-- Product discovery with geolocation and map-based browsing
 - Real-time messaging between renters and owners
 - AI-assisted price estimation for listed items
 - Cloudinary-powered media upload and management
