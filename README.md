@@ -1,103 +1,149 @@
-# 🚀 URent - Multi-Purpose Rental Ecosystem
+# URent
 
-[![React Version](https://img.shields.io/badge/React-19.2-00D8FF?logo=react&logoColor=white)](https://react.dev)
-[![Vite Version](https://img.shields.io/badge/Vite-6.4-646CFF?logo=vite&logoColor=white)](https://vite.dev)
-[![TypeScript Version](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![TailwindCSS Version](https://img.shields.io/badge/TailwindCSS-4.2-38B2AC?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-[![Express Version](https://img.shields.io/badge/Express-5.2-000000?logo=express&logoColor=white)](https://expressjs.com)
-[![Mongoose Version](https://img.shields.io/badge/Mongoose-8.18-800000?logo=mongodb&logoColor=white)](https://mongoosejs.com)
-[![Socket.io Version](https://img.shields.io/badge/Socket.IO-4.8-010101?logo=socketdotio&logoColor=white)](https://socket.io)
-[![Firebase Admin](https://img.shields.io/badge/Firebase_Admin-13.10-FFCA28?logo=firebase&logoColor=white)](https://firebase.google.com)
-[![Google Gemini API](https://img.shields.io/badge/Gemini_AI-2.5_Flash-4285F4?logo=googlegemini&logoColor=white)](https://ai.google.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript)](https://www.typescriptlang.org)
+[![React](https://img.shields.io/badge/React-19.x-61DAFB?logo=react)](https://react.dev)
+[![Express](https://img.shields.io/badge/Express-5.x-000000?logo=express)](https://expressjs.com)
 
-Welcome to the **URent** ecosystem, an enterprise-grade multi-purpose rental platform designed for listing, renting, and tracking assets—from consumer electronics and camping gear to event spaces and transportation. 
+A full-stack rental marketplace built with React, TypeScript, Node.js, Express, MongoDB, Socket.IO, Firebase, and AI-powered pricing assistance.
 
-URent integrates modern technologies including Google Firebase dual-authentication, stateful real-time chat, dynamic Google Maps geospatial discovery, and a secure Google Gemini-driven asset valuation engine.
+## 🚀 Live Demo
 
----
+- Website: https://urent.vercel.app
+- API Docs: http://localhost:5003/api-docs (local)
 
-## 📖 Centralized Documentation Hub
+## ✨ Why this project stands out
 
-To onboard developers, support operations, and guide architects, the project's technical documentation is unified under the root `/docs` directory:
+- End-to-end marketplace experience with authentication, listings, booking, messaging, reviews, and admin workflows
+- AI-assisted product valuation using Google Gemini
+- Real-time chat and notifications powered by Socket.IO
+- Modern frontend architecture with Vite + React + TypeScript
+- Production-oriented documentation and deployment notes for recruiter and team use
 
-```text
-mindx.x41.team4.URent/
-└── docs/
-    ├── onboarding-development.md   # 30-minute quickstart, file mappings, standards, & Git Flow
-    ├── system-architecture.md      # Dual-Auth sequence, Websocket gateway, and AI Vision pipelines
-    ├── api-specification.md        # Comprehensive REST endpoints and real-time Socket.IO schemas
-    ├── database-schema.md          # MongoDB NoSQL structure, index strategies, and Mongoose definitions
-    ├── deployment-operation.md     # Env variables checklist, serverless routing, and VPS hosting
-    ├── ROADMAP_4_SPRINTS.md        # Comprehensive 4-Sprint Agile development plan & deliverables
-    ├── SUMMARY_FUTURE_OUTLOOK.md   # Architectural accomplishments & high-level roadmap summary
-    └── FUTURE_ORIENTATION.md       # Strategic long-term vision, next-gen tech (AI eKYC, TrustScore), & monetization
-```
+## 📸 Suggested Screenshots
 
----
+Recommended order for a polished demo gallery:
+
+1. Landing page / marketplace homepage
+2. Product detail and booking flow
+3. Search and filtering experience
+4. User dashboard and inventory management
+5. Real-time chat / messaging
+6. AI price estimation experience
+7. Authentication and onboarding
+8. Mobile-responsive view
+
+## ⭐ Key Features
+
+- Secure authentication with Firebase and JWT-backed sessions
+- Product discovery with geolocation and map-based browsing
+- Real-time messaging between renters and owners
+- AI-assisted price estimation for listed items
+- Cloudinary-powered media upload and management
+- Admin tools for content and user oversight
 
 ## 🛠 Technology Stack
 
-### Frontend Client (`urent-client`)
-- **Core Engine**: React 19 (Concurrent Mode ready)
-- **Asset Bundler**: Vite 6 (ultra-fast compilation pipeline)
-- **Styling Architecture**: TailwindCSS v4 with custom system properties and modern dark mode support
-- **Client Routing**: React Router v7 (clean, robust route declarations)
-- **HTTP Client**: Axios with centralized interception layers (automatic token injections & session expires)
-- **Third-Party Services**: Google Maps API (geospatial mapping) & Firebase Web SDK (OAuth verification)
+| Layer                | Technologies                                        |
+| -------------------- | --------------------------------------------------- |
+| Frontend             | React, Vite, TypeScript, Tailwind CSS, React Router |
+| Backend              | Node.js, Express, TypeScript, Mongoose, Socket.IO   |
+| Data & Media         | MongoDB, Cloudinary                                 |
+| Auth & Notifications | Firebase, JWT, Nodemailer                           |
+| AI                   | Google Gemini API                                   |
+| Deployment           | Vercel, Node.js server runtime                      |
 
-### Backend Server (`urent-server`)
-- **Runtime Environment**: Node.js 20+ (ES Modules compilation via `tsx`)
-- **Server Framework**: Express 5 (TypeScript declarations and async routing improvements)
-- **Database ODM**: Mongoose 8 (flexible schema typing, indexes, and automated timestamps)
-- **Real-Time Layer**: Socket.IO 4 (secure WebSocket upgrade channels and namespaces)
-- **Cloud Media Storage**: Cloudinary (profile avatar uploads and product photography storage)
-- **Email Service**: Nodemailer (SMTP dispatcher for email verification OTP codes)
-- **Authentication**: JWT verification coupled with Firebase Admin SDK for hybrid credential parsing
-- **Security Utilities**: BcryptJS, Zod input validation schemas, and `express-rate-limit`
+## 🧭 System Architecture
 
----
+```mermaid
+flowchart LR
+  User[User] --> Frontend[React Frontend]
+  Frontend --> Backend[Express API]
+  Backend --> DB[(MongoDB)]
+  Frontend --> Firebase[Firebase Auth]
+  Backend --> Cloudinary[Cloudinary]
+  Frontend --> Maps[Google Maps]
+  Backend --> Gemini[Gemini API]
+  Backend --> Socket[Socket.IO]
+```
 
-## 🚀 One-Command Quickstart
+## 📁 Folder Structure
 
-URent utilizes **npm workspaces** to orchestrate monorepo workflows without manually navigating sub-directories.
+```text
+urent-workspace/
+├── urent-client/        # React + Vite frontend
+├── urent-server/        # Express + TypeScript backend
+├── docs/                # Architecture, deployment, API, and roadmap docs
+├── scripts/             # Utility and automation scripts
+└── package.json         # Monorepo scripts and metadata
+```
 
-### 1. Configure Environments
-- Duplicate `urent-client/.env.example` into `urent-client/.env` and update values.
-- Duplicate `urent-server/.env.example` into `urent-server/.env` and update values.
+## ⚙️ Installation
 
-### 2. Install and Run
-From the root repository directory:
 ```bash
-# 1. Install all dependencies across workspaces
+git clone https://github.com/your-username/URent.git
+cd URent
 npm install
+```
 
-# 2. Boot up both client and server in dev concurrently
+## 🔐 Environment Variables
+
+Copy the example files and update them:
+
+```bash
+cp urent-client/.env.example urent-client/.env
+cp urent-server/.env.example urent-server/.env
+```
+
+Required variables include:
+
+- Client: `VITE_API_URL`, `VITE_FIREBASE_*`
+- Server: `PORT`, `MONGO_URI`, `JWT_SECRET`, `CLOUDINARY_*`, `FIREBASE_*`
+
+## ▶️ Running Locally
+
+```bash
 npm run dev
 ```
 
-The system will automatically bind to the default local port mappings:
-- **Frontend Client**: [http://localhost:5173/](http://localhost:5173/)
-- **Backend API**: [http://localhost:5003/api/v1](http://localhost:5003/api/v1)
-- **Swagger Documentation**: [http://localhost:5003/api-docs](http://localhost:5003/api-docs)
+- Frontend: http://localhost:5173
+- Backend: http://localhost:5003
+- Swagger: http://localhost:5003/api-docs
+
+## 🚢 Deployment
+
+The project is designed for Vercel-friendly frontend hosting and a Node.js-compatible backend runtime. For production deployment guidance, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+## 📚 API Documentation
+
+- Local Swagger UI: http://localhost:5003/api-docs
+- Reference docs: [docs/API.md](docs/API.md)
+
+## 🔮 Future Improvements
+
+- CI/CD pipeline and automated releases
+- Better test coverage and end-to-end validation
+- Analytics and admin dashboards
+- Enhanced moderation and trust scoring
+- Mobile-first polish and performance tuning
+
+## 👥 Contributors
+
+- Team URent
+- Open to contributions from interns, junior developers, and collaborators
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-## 💎 Primary Feature Modules
+<details>
+<summary>Developer Notes</summary>
 
-### 1. Secure Authentication Flow (Dual-Auth)
-- **OAuth Google Sign-In**: Authenticates natively via Firebase, submits ID Tokens, and handles MongoDB user mapping.
-- **Local OTP System**: Custom registration with SMTP 6-digit verification code delivery and session-controlled JWT generation.
-
-### 2. AI Pricing Vision Engine
-- **Structured Image Analysis**: Uses Google Gemini 2.5 Flash to automatically detect brand, model, and physical condition.
-- **Pricing Optimization**: Returns optimal daily pricing bounds and safety deposits.
-- **Client Compression & Caching**: Processes image resizing using Canvas (JPEG, max 768px) and implements persistent session caches.
-
-### 3. Stateful Real-Time Communication
-- **Instant Messaging**: Chat with listing owners via WebSockets.
-- **Dynamic Indicators**: Real-time read status updates and message count badges.
-- **Rich Message Metadata**: Seamlessly send text, map locations, or product cards.
-
-### 4. Geospatial Discovery
-- **Map Visualizations**: Discover products near you with Google Maps markers.
-- **2dsphere Query Optimizations**: Utilizes MongoDB's geospatial indices to calculate physical product proximity.
+- Architecture overview: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Deployment guide: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- Contribution rules: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Security policy: [SECURITY.md](SECURITY.md)
+</details>

@@ -2,6 +2,22 @@
   "name": "urent-workspace",
   "private": true,
   "version": "1.0.0",
+  "description": "URent is a full-stack rental marketplace with AI-assisted pricing, real-time chat, geolocation, Firebase auth, and Cloudinary media workflows.",
+  "homepage": "https://urent.vercel.app",
+  "keywords": [
+    "rental-platform",
+    "react",
+    "typescript",
+    "nodejs",
+    "express",
+    "mongodb",
+    "socketio",
+    "firebase",
+    "cloudinary",
+    "ai",
+    "fullstack",
+    "marketplace"
+  ],
   "workspaces": [
     "urent-client",
     "urent-server"
